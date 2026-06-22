@@ -30,6 +30,7 @@
 
     <!-- Core Css -->
     <link rel="stylesheet" href="{{asset('design/assets/css/styles.css')}}" />
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="{{asset('design/assets/libs/jvectormap/jquery-jvectormap.css')}}">
     <link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.css"/>
     <link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick-theme.css"/>
@@ -86,167 +87,8 @@
         }
 
 
-        /* Enhanced Sidebar Styles */
-        .sidebar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 100vh;
-            width: var(--sidebar-width);
-            background: #FFFCFC;
-            border-right: 1px solid var(--border-color);
-            transition: width var(--transition-duration) cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 1000;
-            overflow-y: auto;
-            overflow-x: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* Collapsed state */
-        .sidebar.sidebar-offcanvas.collapsed {
-            width: var(--sidebar-collapsed-width) !important;
-        }
-
-        /* Sidebar content adjustments for collapsed state */
-        .sidebar.collapsed .nav .nav-item .nav-link .menu-title,
-        .sidebar.collapsed .nav li h5 {
-            opacity: 0 !important;
-            width: 0 !important;
-            overflow: hidden !important;
-            transition: all var(--transition-duration) ease !important;
-        }
-
-        .sidebar.collapsed .nav .nav-item .nav-link {
-            justify-content: center !important;
-            padding: 12px !important;
-        }
-
-        .sidebar.collapsed .navbar-brand .brand-logo {
-            display: none !important;
-        }
-
-        .sidebar.collapsed .navbar-brand .brand-logo-mini {
-            display: block !important;
-        }
-
-        /* Main content responsive to sidebar */
-
-        /* Navbar adjustments */
-        .navbar.fixed-top {
-            position: fixed !important;
-            top: 0 !important;
-            left: var(--sidebar-width) !important;
-            width: calc(100% - var(--sidebar-width)) !important;
-            transition: left var(--transition-duration) ease, width var(--transition-duration) ease !important;
-            z-index: 999 !important;
-        }
-
-        .sidebar.collapsed ~ * .navbar.fixed-top {
-            left: var(--sidebar-collapsed-width) !important;
-            width: calc(100% - var(--sidebar-collapsed-width)) !important;
-        }
-
-        /* Content area */
-        .main-panel {
-            width: 100% !important;
-            padding-top: var(--topbar-height) !important;
-            min-height: calc(100vh - var(--topbar-height)) !important;
-        }
-
-        /* Enhanced toggle button */
-        .navbar-toggler[data-toggle="minimize"] {
-            background: transparent !important;
-            border: none !important;
-            color: #6c757d !important;
-            font-size: 18px !important;
-            padding: 8px 12px !important;
-            border-radius: 6px !important;
-            transition: all 0.2s ease !important;
-        }
-
-        .navbar-toggler[data-toggle="minimize"]:hover {
-            background: #f8f9fa !important;
-            color: #495057 !important;
-        }
-
-        /* Mobile responsive */
-        @media (max-width: 768px) {
-            .sidebar.sidebar-offcanvas {
-                transform: translateX(-100%) !important;
-                width: var(--sidebar-width) !important;
-            }
-
-            .sidebar.sidebar-offcanvas.show {
-                transform: translateX(0) !important;
-            }
-
-            .navbar.fixed-top {
-                left: 0 !important;
-                width: 100% !important;
-            }
-
-            /* Mobile overlay */
-            .sidebar-overlay {
-                display: none;
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: rgba(0, 0, 0, 0.5);
-                z-index: 999;
-            }
-
-            .sidebar-overlay.show {
-                display: block;
-            }
-        }
-
-        /* Smooth transitions for nav items */
-        .nav .nav-item .nav-link {
-            transition: all 0.2s ease !important;
-        }
-
-        .nav .nav-item .nav-link:hover {
-            transform: translateX(2px) !important;
-            background: #f1f5f9 !important;
-        }
-
-        /* Logo transitions */
-        .navbar-brand .brand-logo,
-        .navbar-brand .brand-logo-mini {
-            transition: all var(--transition-duration) ease !important;
-        }
-
-        .navbar-brand .brand-logo-mini {
-            display: none !important;
-        }
-
-        /* Submenu handling for collapsed state */
-        .sidebar.collapsed .nav .nav-item .collapse {
-            display: none !important;
-        }
-
         .badges {
             color: #FFF;
-        }   
-
-        /* Badge positioning for collapsed state */
-        .sidebar.collapsed .nav .nav-item .nav-link .badges {
-            position: absolute !important;
-            top: 8px !important;
-            right: 8px !important;
-            transform: scale(0.8) !important;
-        }
-
-        /* Section titles in collapsed state */
-        .sidebar.collapsed .nav li h5 {
-            font-size: 7px !important;
-            text-align: center !important;
-            padding: 0 0.5rem !important;
-            margin: 10px 0 5px 0 !important;
-            line-height: 1.2 !important;
         }
 
         .loader {
@@ -261,18 +103,23 @@
             background-size: 120px 120px;
         }
 
-        /* Protected Sidebar Styles - Higher specificity */
+        /* Sidebar layout: header and profile stay fixed; only menu items scroll. */
         .main-layout .sidebar {
             position: fixed !important;
             top: 0 !important;
             left: 0 !important;
             height: 100vh !important;
+            height: 100dvh !important;
             width: var(--sidebar-width) !important;
-            background: #FFFCFC !important;
-            border-right: 1px solid var(--border-color) !important;
-            transition: all 0.3s ease !important;
+            display: flex !important;
+            flex-direction: column !important;
+            background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%) !important;
+            border-right: 1px solid #dce6f1 !important;
+            box-shadow: 10px 0 30px rgba(15, 23, 42, .06) !important;
+            transition: width var(--transition-duration) cubic-bezier(.4, 0, .2, 1),
+                        transform var(--transition-duration) cubic-bezier(.4, 0, .2, 1) !important;
             z-index: 1000 !important;
-            overflow-y: auto !important;
+            overflow-y: hidden !important;
             overflow-x: hidden !important;
         }
 
@@ -281,12 +128,13 @@
         }
 
         .main-layout .sidebar-header {
-            padding: 20px !important;
-            border-bottom: 1px solid var(--border-color) !important;
+            flex: 0 0 var(--topbar-height) !important;
+            min-height: var(--topbar-height) !important;
+            padding: 14px 18px !important;
+            border-bottom: 1px solid #e8eef5 !important;
             display: flex !important;
             align-items: center !important;
-            gap: 12px !important;
-            min-height: var(--topbar-height) !important;
+            justify-content: center !important;
         }
 
         .notification-dropdown
@@ -302,229 +150,438 @@
 
         .notification-dropdown .notif-badge
         {
-            width: 25px; 
-            height: 25px; 
+            min-width: 22px; 
+            height: 22px; 
+            padding: 0 6px;
             font-size: 10px; 
-            border-radius: 50%;
+            border-radius: 999px;
             display: inline-flex; 
             align-items: center; 
             justify-content: center;
             background-color: #ff6b59;
+            border: 2px solid #fff;
+            box-shadow: 0 6px 16px rgba(255, 107, 89, .35);
         }
 
-        .main-layout .logo {
-            display: flex !important;
-            align-items: center !important;
-            gap: 12px !important;
-            text-decoration: none !important;
-            color: var(--primary-color) !important;
-            font-weight: 700 !important;
-            font-size: 20px !important;
-        }
-
-       .main-layout .logo {
-            display: flex;
+        .notification-bell-btn {
+            width: 42px;
+            height: 42px;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 100%;
-            padding: 0 16px; /* Add padding if you want spacing inside */
-            box-sizing: border-box;
+            position: relative;
+            box-shadow: 0 10px 24px rgba(220, 38, 38, .22);
         }
 
-        .main-layout .logo img {
-            height: 40px !important;
-            width: auto !important;
-            flex-shrink: 0 !important;
-            display: block;
-            margin: 0 auto; /* Optional if using justify-content */
+        .notification-menu {
+            width: min(430px, calc(100vw - 24px));
+            border: 0;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 22px 60px rgba(15, 23, 42, .22);
         }
 
-        .main-layout .logo-text {
-            transition: all 0.3s ease !important;
+        .notification-head {
+            background: #fff;
+            border-bottom: 1px solid #eef2f7;
         }
 
-        .main-layout .sidebar.collapsed .logo-text {
-            opacity: 0 !important;
-            width: 0 !important;
-            overflow: hidden !important;
+        .notification-list {
+            max-height: 390px;
+            overflow-y: auto;
+            background: #f8fafc;
         }
 
-        .sidebar-nav {
-            padding: 24px 0;
+        .notification-row {
+            display: flex;
+            gap: 12px;
+            padding: 14px;
+            margin-bottom: 8px;
+            border: 1px solid #edf2f7;
+            border-radius: 8px;
+            background: #fff;
+            cursor: pointer;
+            transition: background-color .15s ease, border-color .15s ease, transform .15s ease;
         }
 
-        .nav-section {
-            margin-bottom: 32px;
+        .notification-row:hover {
+            background: #f9fbff;
+            border-color: #dbeafe;
+            transform: translateY(-1px);
         }
 
-        .nav-section-title {
-            padding: 0 20px 8px;
-            color: var(--text-muted);
+        .notification-row > .d-flex.align-items-center {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .notification-row > .d-flex.justify-content-end {
+            margin-top: 0 !important;
+            align-items: center;
+            flex: 0 0 auto;
+        }
+
+        .notification-row.is-unread {
+            border-left: 4px solid #2563eb;
+        }
+
+        .notification-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 auto;
+        }
+
+        .notification-icon.client {
+            background: #e8f1ff;
+            color: #2563eb;
+        }
+
+        .notification-icon.transaction {
+            background: #e9f8ef;
+            color: #16a34a;
+        }
+
+        .notification-icon.order {
+            background: #fff4de;
+            color: #d97706;
+        }
+
+        .notification-copy {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .notification-title {
+            font-size: 13px;
+            line-height: 1.35;
+            color: #0f172a;
+            margin: 0;
+            overflow-wrap: anywhere;
+        }
+
+        .notification-row p.fs-3 {
+            font-size: 13px !important;
+            line-height: 1.35;
+            color: #0f172a;
+        }
+
+        .notification-row .badges {
+            border-radius: 999px;
+            padding: 3px 7px;
+            font-weight: 700;
+        }
+
+        .notification-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 7px;
+            align-items: center;
+        }
+
+        .notification-chip {
+            display: inline-flex;
+            align-items: center;
+            min-height: 20px;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+            background: #eef2f7;
+            color: #475569;
+        }
+
+        .notification-chip.new {
+            background: #e0ecff;
+            color: #1d4ed8;
+        }
+
+        .notification-action {
+            align-self: center;
+            flex: 0 0 auto;
+        }
+
+        .notification-action .btn {
+            border-radius: 999px;
+            padding: 5px 12px;
             font-size: 12px;
             font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            transition: all 0.3s ease;
         }
 
-        .sidebar.collapsed .nav-section-title {
+        .notification-empty {
+            background: #fff;
+            padding: 34px 20px;
+        }
+
+        .notification-live-toast {
+            position: fixed;
+            top: 92px;
+            right: 22px;
+            z-index: 2000;
+            display: none;
+            min-width: 260px;
+            max-width: calc(100vw - 44px);
+            padding: 12px 14px;
+            border-radius: 8px;
+            background: #111827;
+            color: #fff;
+            box-shadow: 0 18px 45px rgba(15, 23, 42, .32);
+        }
+
+        .notification-live-toast.show {
+            display: block;
+            animation: notificationToastIn .2s ease-out;
+        }
+
+        @keyframes notificationToastIn {
+            from {
+                opacity: 0;
+                transform: translateY(-8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .main-layout .sidebar .logo {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            text-decoration: none !important;
+        }
+
+        .main-layout .sidebar .logo-full {
+            display: block;
+            width: auto !important;
+            max-width: 190px !important;
+            height: 46px !important;
+            object-fit: contain;
+        }
+
+        .main-layout .sidebar .logo-mini {
+            display: none;
+            width: 42px !important;
+            height: 42px !important;
+            object-fit: contain;
+        }
+
+        .main-layout .sidebar.collapsed .logo-full {
+            display: none;
+        }
+
+        .main-layout .sidebar.collapsed .logo-mini {
+            display: block;
+        }
+
+        .main-layout .sidebar-nav {
+            flex: 1 1 auto;
+            min-height: 0;
+            padding: 18px 10px 24px;
+            overflow-x: hidden;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 transparent;
+        }
+
+        .main-layout .sidebar-nav::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .main-layout .sidebar-nav::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 999px;
+        }
+
+        .main-layout .sidebar .nav-section {
+            margin: 0;
+        }
+
+        .main-layout .sidebar .nav-section-title {
+            padding: 0 12px 10px;
+            color: #94a3b8;
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1.4px;
+            transition: opacity .2s ease;
+        }
+
+        .main-layout .sidebar.collapsed .nav-section-title {
             opacity: 0;
         }
 
-        .nav-item {
-            margin: 4px 12px;
+        .main-layout .sidebar .nav-item {
+            margin: 3px 0;
         }
 
-        .nav-link {
+        .main-layout .sidebar .nav-link {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 12px 16px;
-            color: #334155;
+            gap: 11px;
+            width: 100%;
+            min-height: 44px;
+            padding: 10px 12px;
+            color: #475569;
             text-decoration: none;
-            border-radius: 8px;
-            transition: all 0.2s ease;
-            font-weight: 500;
+            border-radius: 10px;
+            transition: color .18s ease, background-color .18s ease, box-shadow .18s ease;
+            font-size: 13px;
+            font-weight: 600;
             position: relative;
         }
 
-        .nav-link:hover {
-            background: #dbeafe;
-            color: var(--primary-color);
-            transform: translateX(2px);
-        }
-        /* .nav-link.active {
-            background: #ffd1c8;
-            color: var(--bs-danger);
-            border-left: 3px solid var(--bs-danger);
-        } */
-        .nav-link.active {
-            background: #dbeafe;
-            color: var(--primary-color);
-            border-left: 3px solid var(--primary-color);
+        .main-layout .sidebar .nav-link:hover,
+        .main-layout .sidebar .nav-link:focus-visible {
+            background: #eaf7fc;
+            color: #0f6f95;
+            outline: none;
         }
 
-        .nav-icon {
-            width: 20px;
-            height: 20px;
+        .main-layout .sidebar .nav-link.active {
+            color: #075d80;
+            background: linear-gradient(135deg, #dff5fc 0%, #edf9fd 100%);
+            box-shadow: inset 3px 0 0 #25a9d6;
+        }
+
+        .main-layout .sidebar .nav-icon {
+            width: 24px;
+            height: 24px;
             display: flex;
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
+            color: #64748b;
+            font-size: 17px;
         }
 
-        .nav-text {
-            transition: all 0.3s ease;
+        .main-layout .sidebar .nav-text {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
             white-space: nowrap;
+            transition: opacity .2s ease, width .2s ease;
         }
 
-        .sidebar.collapsed .nav-text {
+        .main-layout .sidebar.collapsed .nav-text,
+        .main-layout .sidebar.collapsed .nav-link > .bi-chevron-down {
             opacity: 0;
             width: 0;
             overflow: hidden;
         }
 
-        .sidebar.collapsed .nav-link {
+        .main-layout .sidebar.collapsed .nav-link {
             justify-content: center;
+            gap: 0;
+            padding-inline: 10px;
+        }
+
+        .main-layout .sidebar.collapsed .collapse {
+            display: none !important;
+        }
+
+        .main-layout .sidebar .collapse .nav {
+            margin: 3px 0 7px 35px !important;
+            padding: 4px 0 4px 10px;
+            border-left: 1px solid #d8e6ef;
+        }
+
+        .main-layout .sidebar .collapse .nav-link {
+            min-height: 36px;
+            padding: 8px 10px;
+            font-size: 12px !important;
+            border-radius: 8px;
+        }
+
+        .main-layout .sidebar-footer {
+            position: static;
+            flex: 0 0 auto;
             padding: 12px;
+            border-top: 1px solid #e8eef5;
+            background: rgba(255, 255, 255, .96);
         }
 
-        /* User Profile Section */
-        .sidebar-footer {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            padding: 20px;
-            border-top: 1px solid var(--border-color);
-            background: white;
-        }
-
-        .user-profile {
+        .main-layout .sidebar .user-profile {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 12px;
+            gap: 10px;
+            min-width: 0;
+            padding: 10px;
+            border: 1px solid #e4edf4;
             border-radius: 12px;
-            background: #f8fafc;
-            transition: all 0.3s ease;
+            background: #f8fbfd;
+            transition: padding .2s ease;
+            position: relative;
         }
 
-        .user-avatar {
-            width: 36px;
-            height: 36px;
+        .main-layout .sidebar .user-avatar {
+            width: 38px;
+            height: 38px;
             border-radius: 50%;
             flex-shrink: 0;
-            overflow: hidden;
+            object-fit: cover;
+            border: 2px solid #fff;
+            box-shadow: 0 0 0 2px #bae6f5;
         }
 
-        .user-info {
+        .main-layout .sidebar .user-info {
             flex: 1;
             min-width: 0;
-            transition: all 0.3s ease;
+            transition: opacity .2s ease, width .2s ease;
         }
 
-        .user-name {
-            font-weight: 600;
+        .main-layout .sidebar .user-name {
+            overflow: hidden;
+            margin: 0;
             color: #1e293b;
-            font-size: 14px;
-            margin: 0;
+            font-size: 13px;
+            font-weight: 700;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
         
-
-        .user-role {
+        .main-layout .sidebar .user-role {
+            overflow: hidden;
+            margin: 2px 0 0;
             color: var(--text-muted);
-            font-size: 12px;
-            margin: 0;
-        }
-
-        .user-profile {
-        position: relative;
+            font-size: 10px;
+            font-weight: 600;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
         
-        .user-profile::after {
-        position: absolute;
-        left: 35px !important;
-        top: 15px;
-        content: "";
-        width: 15px;
-        height: 15px;
-        background-color: var(--bs-success);
-        border-radius: 50%;
-        border: 2px solid var(--bs-white);
+        .main-layout .sidebar .user-profile::after {
+            position: absolute;
+            left: 39px;
+            top: 36px;
+            width: 10px;
+            height: 10px;
+            content: "";
+            background: #22c55e;
+            border: 2px solid #fff;
+            border-radius: 50%;
         }
 
-        .sidebar.collapsed .user-info {
+        .main-layout .sidebar.collapsed .user-info {
             opacity: 0;
             width: 0;
             overflow: hidden;
         }
 
-        .sidebar.collapsed .sidebar-footer {
-            padding: 16px 8px;
+        .main-layout .sidebar.collapsed .sidebar-footer {
+            padding: 10px;
         }
 
-        .sidebar.collapsed .user-profile {
-            flex-direction: column;
-            gap: 8px;
-            padding: 12px 8px;
-            align-items: center;
+        .main-layout .sidebar.collapsed .user-profile {
+            padding: 8px 6px;
             justify-content: center;
-        }
-
-        .logout-btn {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            cursor: pointer;
-            padding: 8px;
-            border-radius: 6px;
-            transition: all 0.2s ease;
-        }
-
-        .logout-btn:hover {
-            background: #fee2e2;
-            color: #dc2626;
         }
 
         .main-content {
@@ -599,6 +656,96 @@
             display: flex !important;
             align-items: center !important;
             gap: 16px !important;
+        }
+
+        .main-layout .guest-order-link {
+            min-height: 40px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            padding: 8px 14px !important;
+            color: #fff !important;
+            font-size: 13px !important;
+            font-weight: 800 !important;
+            text-decoration: none !important;
+            white-space: nowrap !important;
+            background: #16a34a !important;
+            border: 1px solid rgba(255, 255, 255, .22) !important;
+            border-radius: 8px !important;
+            box-shadow: 0 10px 22px rgba(22, 163, 74, .22) !important;
+        }
+
+        .main-layout .guest-order-link:hover {
+            color: #fff !important;
+            background: #15803d !important;
+        }
+
+        .main-layout .loyalty-scan-link {
+            min-height: 40px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            padding: 8px 14px !important;
+            color: #fff !important;
+            font-size: 13px !important;
+            font-weight: 800 !important;
+            text-decoration: none !important;
+            white-space: nowrap !important;
+            background: #0f766e !important;
+            border: 1px solid rgba(255, 255, 255, .22) !important;
+            border-radius: 8px !important;
+            box-shadow: 0 10px 22px rgba(15, 118, 110, .22) !important;
+        }
+
+        .main-layout .loyalty-scan-link:hover {
+            color: #fff !important;
+            background: #115e59 !important;
+        }
+
+        .loyalty-scan-modal .modal-content {
+            border: 0;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 24px 70px rgba(15, 23, 42, .22);
+        }
+
+        .loyalty-scan-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 18px 20px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e4e7ec;
+        }
+
+        .loyalty-scan-reader {
+            overflow: hidden;
+            min-height: 260px;
+            background: #0f172a;
+            border-radius: 8px;
+        }
+
+        .loyalty-scan-status {
+            padding: 12px 14px;
+            color: #475467;
+            font-size: 12px;
+            font-weight: 700;
+            background: #f8fafc;
+            border: 1px solid #e4e7ec;
+            border-radius: 8px;
+        }
+
+        .loyalty-scan-status.is-success {
+            color: #166534;
+            background: #f0fdf4;
+            border-color: #bbf7d0;
+        }
+
+        .loyalty-scan-status.is-error {
+            color: #991b1b;
+            background: #fef2f2;
+            border-color: #fecaca;
         }
 
         .main-layout .search-container {
@@ -728,7 +875,7 @@
         }
 
         .main-layout .profile-info {
-            padding: 16px 20px !important;
+            padding: 15px 20px !important;
             border-bottom: 1px solid var(--border-color) !important;
             margin-bottom: 8px !important;
         }
@@ -978,47 +1125,52 @@
           color: #2e7fe1ff;
       }
 
-      @media (max-width: 768px) {
-          .footer .company-info {
-              position: static;
-              align-self: center;
-              margin-bottom: 1rem;
-          }
-          
-          .footer .footer-content {
-              align-items: center;
-          }
-          
-          .footer .nav-links-container {
-              margin-top: 0;
-          }
-          
-          .footer .nav-links {
-              gap: 1.5rem;
-          }
-          
-          .footer .nav-links a {
-              font-size: 13px;
-          }
-          
-          .footer .social-links {
-              gap: 1rem;
-          }
-          
-          .footer .social-links a {
-              font-size: 18px;
-          }
-      }
+    .modal-select2 .modal-body {
+        max-height: calc(100vh - 200px);
+        overflow-y: auto;
+    }
 
-      @media (max-width: 480px) {
-          .footer .nav-links {
-              gap: 1rem;
-          }
-          
-          .footer .nav-links a {
-              font-size: 12px;
-          }
-      }
+    @media (max-width: 768px) {
+        .footer .company-info {
+            position: static;
+            align-self: center;
+            margin-bottom: 1rem;
+        }
+        
+        .footer .footer-content {
+            align-items: center;
+        }
+        
+        .footer .nav-links-container {
+            margin-top: 0;
+        }
+        
+        .footer .nav-links {
+            gap: 1.5rem;
+        }
+        
+        .footer .nav-links a {
+            font-size: 13px;
+        }
+        
+        .footer .social-links {
+            gap: 1rem;
+        }
+        
+        .footer .social-links a {
+            font-size: 18px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .footer .nav-links {
+            gap: 1rem;
+        }
+        
+        .footer .nav-links a {
+            font-size: 12px;
+        }
+    }
     </style>
     
     @yield('css')
@@ -1026,11 +1178,10 @@
 <body class="main-layout">
     <div id="loader" style="display:none;" class="loader"></div>
     
-    
     <!-- Sidebar -->
-    <nav class="sidebar" id="sidebar">
-        <div class="sidebar-header d-flex align-items-center justify-content-between text-center">
-            <a href="{{url('/')}}" class="logo text-center text-nowrap">
+    <nav class="sidebar" id="sidebar" aria-label="Main navigation">
+        <div class="sidebar-header">
+            <a href="{{url('/')}}" class="logo" aria-label="Go to dashboard">
                 <!-- Full logo (for expanded sidebar) -->
                 <img src="{{asset('images/logo_mo.png')}}"
                     class="logo-full"
@@ -1038,9 +1189,8 @@
 
                 <!-- Mini logo (for collapsed sidebar) -->
                 <img src="{{asset('images/logo_nya.png')}}"
-                    style="height:43px;width:43px;display:none;"
                     class="logo-mini"
-                    alt="Logo-Mini" />
+                    alt="" />
             </a>
         </div>
         <div class="sidebar-nav">
@@ -1073,51 +1223,250 @@
                         </a>
                     </div>
                     <div class="nav-item">
+                        <a href="javascript:void(0)" class="nav-link" data-bs-toggle="collapse" data-bs-target="#suppliesMenu" aria-expanded="{{ in_array(Route::currentRouteName(), ['product','inventories','inventory-transfers.index']) ? 'true' : 'false' }}">
+                            <div class="nav-icon">
+                                <i class="bi bi-cart-plus-fill"></i>
+                            </div>
+                            <span class="nav-text">Supplies</span>
+                            <i class="bi bi-chevron-down ms-auto"></i>
+                        </a>
+
+                        <div class="collapse @if(in_array(Route::currentRouteName(), ['product','inventories','inventory-transfers.index'])) show @endif"
+                            id="suppliesMenu">
+                            <ul class="nav flex-column ms-3">
+                                <li class="nav-item">
+                                    <a href="{{ url('/products') }}" class="nav-link @if(Route::currentRouteName() == 'products') active @endif" style="font-size: 14px">Products</a>
+                                </li>
+
+                                <li class="nav-item">
+                                    <a href="{{ route('inventory-transfers.index') }}" class="nav-link @if(Route::currentRouteName() == 'inventory-transfers.index') active @endif" style="font-size: 14px">Inventory Transfer</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="nav-item">
                         <a href="{{url('/dealer-ads')}}" class="nav-link @if(Route::currentRouteName() == 'dealer-ads')active @endif">
                             <div class="nav-icon">
-                                <i class="bi bi-shop"></i>
+                                <i class="bi bi-person-workspace"></i>
                             </div>
                             <span class="nav-text">My Dealers</span>
                         </a>
                     </div>
-                    <div class="nav-item">
+                    {{-- <div class="nav-item">
                         <a href="{{url('/orders')}}" class="nav-link @if(Route::currentRouteName() == 'orders')active @endif">
                             <div class="nav-icon">
                                 <i class="bi bi-shop"></i>
                             </div>
                             <span class="nav-text">Orders</span>
                         </a>
-                    </div>
-                @endif
-                
-                @if((auth()->user()->role == "Admin") || (auth()->user()->role == "Dealer"))
-                <div class="nav-item">
-                    <a href="{{url('/transactions')}}" class="nav-link @if(Route::currentRouteName() == 'transactions')active @endif">
-                        <div class="nav-icon">
-                            <i class="bi bi-currency-dollar"></i>
-                        </div>
-                        <span class="nav-text">Transactions</span>
-                    </a>
-                </div>
-                @endif
-                
-                @if(auth()->user()->role == "Admin")
+                    </div> --}}
                     <div class="nav-item">
-                        <a href="{{url('/ads')}}" class="nav-link @if(Route::currentRouteName() == 'ads')active @endif">
-                            <div class="nav-icon">
+                        <a href="{{ url('/orders') }}" 
+                        class="nav-link @if(Route::currentRouteName() == 'orders') active @endif position-relative">
+
+                            <div class="nav-icon position-relative">
                                 <i class="bi bi-shop"></i>
+                                @if(!empty($pendingOrdersCount) && $pendingOrdersCount > 0)
+                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                        {{ $pendingOrdersCount }}
+                                    </span>
+                                @endif
                             </div>
-                            <span class="nav-text">Area Distributor</span>
+                            
+                            <span class="nav-text">Orders</span>
                         </a>
                     </div>
                     <div class="nav-item">
+                        <a href="{{ route('ad-purchase-orders.index') }}"
+                            class="nav-link @if(in_array(Route::currentRouteName(), ['ad-purchase-orders.index','ad-purchase-orders.create','ad-purchase-orders.show'])) active @endif">
+                            <div class="nav-icon">
+                                <i class="bi bi-receipt-cutoff"></i>
+                            </div>
+                            <span class="nav-text">Purchase Orders</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="javascript:void(0)" class="nav-link" data-bs-toggle="collapse" data-bs-target="#reportsMenu" aria-expanded="{{ in_array(Route::currentRouteName(), ['dsr','aging']) ? 'true' : 'false' }}">
+                            <div class="nav-icon">
+                                <i class="bi bi-clipboard-data"></i>
+                            </div>
+                            <span class="nav-text">Reports</span>
+                            <i class="bi bi-chevron-down ms-auto"></i>
+                        </a>
+
+                        <div class="collapse @if(in_array(Route::currentRouteName(), ['dsr','aging'])) show @endif"
+                            id="reportsMenu">
+                            <ul class="nav flex-column ms-3">
+                                <li class="nav-item">
+                                    <a href="{{ url('/reports/daily-sales') }}" class="nav-link @if(Route::currentRouteName() == 'dsr') active @endif" style="font-size: 14px">Daily Sales & Remittance Report</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="{{ url('/reports/aging') }}" class="nav-link @if(Route::currentRouteName() == 'aging') active @endif" style="font-size: 14px">Aging Report</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                @endif
+                @if(auth()->user()->role == "Admin" && strtolower((string) auth()->user()->warehouse) === 'guinobatan')
+                    @php
+                        $pendingAdPurchaseOrdersCount = \App\AdPurchaseOrder::where('status', 'Pending')
+                            ->where(function ($query) {
+                                $regionVNeedles = [
+                                    'region v',
+                                    'region 5',
+                                    'region-5',
+                                    'region-v',
+                                    'bicol',
+                                    'albay',
+                                    'camarines norte',
+                                    'camarines sur',
+                                    'catanduanes',
+                                    'masbate',
+                                    'sorsogon',
+                                ];
+
+                                foreach ($regionVNeedles as $needle) {
+                                    $query->orWhereRaw('LOWER(delivery_address) LIKE ?', ['%' . $needle . '%'])
+                                        ->orWhereHas('ad', function ($adQuery) use ($needle) {
+                                            $adQuery->whereRaw('LOWER(delivery_address) LIKE ?', ['%' . $needle . '%'])
+                                                ->orWhereRaw('LOWER(location_region) LIKE ?', ['%' . $needle . '%']);
+                                        });
+                                }
+                            })
+                            ->count();
+                    @endphp
+                    <div class="nav-item">
+                        <a href="{{ route('warehouse-ad-purchase-orders.region-v') }}"
+                            class="nav-link @if(in_array(Route::currentRouteName(), ['warehouse-ad-purchase-orders.region-v','ad-purchase-orders.show'])) active @endif position-relative">
+                            <div class="nav-icon position-relative">
+                                <i class="bi bi-receipt-cutoff"></i>
+                                @if($pendingAdPurchaseOrdersCount > 0)
+                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                        {{ $pendingAdPurchaseOrdersCount > 99 ? '99+' : $pendingAdPurchaseOrdersCount }}
+                                    </span>
+                                @endif
+                            </div>
+                            <span class="nav-text">Purchase Orders</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="javascript:void(0)" class="nav-link" data-bs-toggle="collapse" data-bs-target="#reportsMenu" aria-expanded="{{ in_array(Route::currentRouteName(), ['dpo','isl']) ? 'true' : 'false' }}">
+                            <div class="nav-icon">
+                                <i class="bi bi-clipboard-data"></i>
+                            </div>
+                            <span class="nav-text">Reports</span>
+                            <i class="bi bi-chevron-down ms-auto"></i>
+                        </a>
+
+                        <div class="collapse @if(in_array(Route::currentRouteName(), ['dpo','isl'])) show @endif"
+                            id="reportsMenu">
+                            <ul class="nav flex-column ms-3">
+                                <li class="nav-item">
+                                    <a href="{{ url('/reports/dpo-report') }}" class="nav-link @if(Route::currentRouteName() == 'dpo') active @endif" style="font-size: 14px">Distributor Purchase Order Report</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="{{ route('isl') }}" class="nav-link @if(Route::currentRouteName() == 'isl') active @endif" style="font-size: 14px">Inventory Stock Level Report</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                @elseif(auth()->user()->role == "Admin" && strtolower((string) auth()->user()->warehouse) === 'lubao')
+                    @php
+                        $pendingAdPurchaseOrdersCount = \App\AdPurchaseOrder::where('status', 'Pending')->count();
+                    @endphp
+                    <div class="nav-item">
+                        <a href="{{ route('ad-purchase-orders.index') }}"
+                            class="nav-link @if(in_array(Route::currentRouteName(), ['ad-purchase-orders.index','ad-purchase-orders.create','ad-purchase-orders.show'])) active @endif position-relative">
+                            <div class="nav-icon position-relative">
+                                <i class="bi bi-receipt-cutoff"></i>
+                                @if($pendingAdPurchaseOrdersCount > 0)
+                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                        {{ $pendingAdPurchaseOrdersCount > 99 ? '99+' : $pendingAdPurchaseOrdersCount }}
+                                    </span>
+                                @endif
+                            </div>
+                            <span class="nav-text">Purchase Orders</span>
+                        </a>
+                    </div>
+                @endif
+                @if(auth()->user()->role === 'Admin' && strtolower((string) auth()->user()->warehouse) === 'lubao')
+                    <div class="nav-item">
+                        <a href="{{ route('isl') }}" class="nav-link @if(Route::currentRouteName() == 'isl') active @endif">
+                            <div class="nav-icon">
+                                <i class="bi bi-box-seam"></i>
+                            </div>
+                            <span class="nav-text">Inventory Stock Report</span>
+                        </a>
+                    </div>
+                @endif
+                {{-- @if((auth()->user()->role == "Admin") || (auth()->user()->role == "Dealer") && !in_array(auth()->user()->warehouse, ['lubao', 'guinobatan'])) --}}
+                @if((auth()->user()->role == "Admin" || auth()->user()->role == "Dealer") && !in_array(strtolower(auth()->user()->warehouse), ['lubao', 'guinobatan']))
+                    <div class="nav-item">
+                        <a href="{{url('/transactions')}}" class="nav-link @if(Route::currentRouteName() == 'transactions')active @endif">
+                            <div class="nav-icon">
+                                <i class="bi bi-currency-dollar"></i>
+                            </div>
+                            <span class="nav-text">Transactions</span>
+                        </a>
+                    </div>
+                @endif
+                
+                {{-- @if(auth()->user()->role == "Admin" && auth()->user()->warehouse != ["lubao", "guinobatan"]) --}}
+                @if(auth()->user()->role === "Admin" && !in_array(auth()->user()->warehouse, ['lubao', 'guinobatan']))
+                    <div class="nav-item">
+                        <a href="javascript:void(0)" class="nav-link" data-bs-toggle="collapse" data-bs-target="#partnersMenu" aria-expanded="{{ in_array(Route::currentRouteName(), ['ads','pds','mds']) ? 'true' : 'false' }}">
+                            <div class="nav-icon">
+                                <i class="bi bi-people-fill"></i>
+                            </div>
+                            <span class="nav-text">Authorized Distributors</span>
+                            <i class="bi bi-chevron-down ms-auto"></i>
+                        </a>
+
+                        <div class="collapse @if(in_array(Route::currentRouteName(), ['ads','pds'])) show @endif"
+                            id="partnersMenu">
+                            <ul class="nav flex-column ms-3">
+                                <li class="nav-item">
+                                    <a href="{{ url('/pds') }}" class="nav-link @if(Route::currentRouteName() == 'pds') active @endif" style="font-size: 14px">Provincial Distributor</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="{{ url('/ads') }}" class="nav-link @if(Route::currentRouteName() == 'ads') active @endif" style="font-size: 14px">Area Distributor</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="nav-item">
+                        <a href="javascript:void(0)" class="nav-link" data-bs-toggle="collapse" data-bs-target="#dealersMenu" aria-expanded="{{ in_array(Route::currentRouteName(), ['ads','pds','mds']) ? 'true' : 'false' }}">
+                            <div class="nav-icon">
+                                <i class="bi bi-shop"></i>
+                            </div>
+                            <span class="nav-text">Dealers</span>
+                            <i class="bi bi-chevron-down ms-auto"></i>
+                        </a>
+
+                        <div class="collapse @if(in_array(Route::currentRouteName(), ['mds','dealers'])) show @endif"
+                            id="dealersMenu">
+                            <ul class="nav flex-column ms-3">
+                                {{-- <li class="nav-item">
+                                    <a href="{{ url('/mds') }}" class="nav-link @if(Route::currentRouteName() == 'mds') active @endif" style="font-size: 14px">Mega Dealer</a>
+                                </li> --}}
+
+                                <li class="nav-item">
+                                    <a href="{{ url('/dealers') }}" class="nav-link @if(Route::currentRouteName() == 'dealers') active @endif" style="font-size: 14px">Dealers</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="{{ url('/mds') }}" class="nav-link @if(Route::currentRouteName() == 'mds') active @endif" style="font-size: 14px">Mega Dealers</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    {{-- <div class="nav-item">
                         <a href="{{url('/dealers')}}" class="nav-link @if(Route::currentRouteName() == 'dealers')active @endif">
                             <div class="nav-icon">
                                 <i class="bi bi-shop"></i>
                             </div>
                             <span class="nav-text">Dealers</span>
                         </a>
-                    </div>
+                    </div> --}}
                     <div class="nav-item">
                         <a href="{{url('/customers')}}" class="nav-link @if(Route::currentRouteName() == 'customers')active @endif">
                             <div class="nav-icon">
@@ -1129,19 +1478,104 @@
                     <div class="nav-item">
                         <a href="{{url('/users')}}" class="nav-link @if(Route::currentRouteName() == 'users')active @endif">
                             <div class="nav-icon">
-                                <i class="bi bi-gear"></i>
+                                <i class="bi bi-person-bounding-box"></i>
                             </div>
                             <span class="nav-text">Users</span>
                         </a>
                     </div>
-                    <div class="nav-item">
+                    {{-- <div class="nav-item">
                         <a href="{{url('/rewards')}}" class="nav-link @if(Route::currentRouteName() == 'rewards')active @endif">
                             <div class="nav-icon">
                                 <i class="bi bi-gift"></i>
                             </div>
                             <span class="nav-text">Rewards</span>
                         </a>
+                    </div> --}}
+                    <div class="nav-item">
+                        <a href="javascript:void(0)" class="nav-link" data-bs-toggle="collapse" data-bs-target="#settingsMenu" aria-expanded="{{ in_array(Route::currentRouteName(), ['vouchers', 'rewards', 'items', 'raffles']) ? 'true' : 'false' }}">
+                            <div class="nav-icon">
+                                <i class="bi bi-gear-fill"></i>
+                            </div>
+                            <span class="nav-text">Settings</span>
+                            <i class="bi bi-chevron-down ms-auto"></i>
+                        </a>
+
+                        <div class="collapse @if(in_array(Route::currentRouteName(), ['vouchers','rewards', 'items', 'raffles'])) show @endif"
+                            id="settingsMenu">
+                            <ul class="nav flex-column ms-3">
+                                <li class="nav-item">
+                                    <a href="{{ url('/items') }}" class="nav-link @if(Route::currentRouteName() == 'items') active @endif" style="font-size: 14px">Items</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="{{ url('/vouchers') }}" class="nav-link @if(Route::currentRouteName() == 'vouchers') active @endif" style="font-size: 14px">Vouchers</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="{{url('/rewards')}}" class="nav-link @if(Route::currentRouteName() == 'rewards') active @endif" style="font-size: 14px">Rewards</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="{{url('/raffles')}}" class="nav-link @if(Route::currentRouteName() == 'raffles') active @endif" style="font-size: 14px">Raffles</a>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
+                    <div class="nav-item">
+                        <a href="javascript:void(0)" class="nav-link" data-bs-toggle="collapse" data-bs-target="#reportsMenu" aria-expanded="{{ in_array(Route::currentRouteName(), ['aging','dpo','isl','monthly-sales','voucher-history']) ? 'true' : 'false' }}">
+                            <div class="nav-icon">
+                                <i class="bi bi-clipboard-data"></i>
+                            </div>
+                            <span class="nav-text">Reports</span>
+                            <i class="bi bi-chevron-down ms-auto"></i>
+                        </a>
+
+                        <div class="collapse @if(in_array(Route::currentRouteName(), ['dsr','aging', 'dpo', 'isl', 'monthly-sales', 'voucher-history'])) show @endif"
+                            id="reportsMenu">
+                            <ul class="nav flex-column ms-3">
+                                {{-- <li class="nav-item">
+                                    <a href="{{ url('/reports/daily-sales') }}" class="nav-link @if(Route::currentRouteName() == 'dsr') active @endif" style="font-size: 14px">Daily Sales & Remittance Report</a>
+                                </li> --}}
+                                <li class="nav-item">
+                                    <a href="{{ url('/reports/dpo-report') }}" class="nav-link @if(Route::currentRouteName() == 'dpo') active @endif" style="font-size: 14px">Distributor Purchase Order Report</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="{{ url('/reports/monthly-sales') }}" class="nav-link @if(Route::currentRouteName() == 'monthly-sales') active @endif" style="font-size: 14px">Monthly Sales Report</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="{{ url('/reports/isl-report') }}" class="nav-link @if(Route::currentRouteName() == 'isl') active @endif" style="font-size: 14px">Inventory Stock Level Report</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="{{ url('/reports/aging') }}" class="nav-link @if(Route::currentRouteName() == 'aging') active @endif" style="font-size: 14px">Aging Report</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="{{ url('/reports/voucher-history') }}" class="nav-link @if(Route::currentRouteName() == 'voucher-history') active @endif" style="font-size: 14px">Voucher History Report</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>  
+                    {{-- <div class="nav-item">
+                        <a href="javascript:void(0)" class="nav-link" data-bs-toggle="collapse" data-bs-target="#suppliesMenu" aria-expanded="{{ in_array(Route::currentRouteName(), ['areas','centers']) ? 'true' : 'false' }}">
+                            <div class="nav-icon">
+                                <i class="bi bi-gear-fill"></i>
+                            </div>
+                            <span class="nav-text">Settings</span>
+                            <i class="bi bi-chevron-down ms-auto"></i>
+                        </a>
+
+                        <div class="collapse @if(in_array(Route::currentRouteName(), ['areas','centers'])) show @endif"
+                            id="suppliesMenu">
+                            <ul class="nav flex-column ms-3">
+                                <li class="nav-item">
+                                    <a href="{{ url('/areas') }}" class="nav-link @if(Route::currentRouteName() == 'areas') active @endif" style="font-size: 14px">Area</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="{{ url('/products/create') }}" class="nav-link @if(Route::currentRouteName() == 'products') active @endif" style="font-size: 14px">Products</a>
+                                </li>
+
+                                <li class="nav-item">
+                                    <a href="{{ url('/inventories') }}" class="nav-link @if(Route::currentRouteName() == 'inventories') active @endif" style="font-size: 14px">Inventory</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div> --}}
                 @endif
             </div>
         </div>
@@ -1157,7 +1591,6 @@
         </div>
     </nav>
     
-
     <!-- Sidebar Overlay for Mobile -->
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
@@ -1166,7 +1599,7 @@
         <!-- Topbar -->
         <header class="topbar">
             <div class="topbar-left">
-                <button class="sidebar-toggle" id="sidebarToggle">
+                <button type="button" class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle navigation" aria-controls="sidebar" aria-expanded="true">
                     <i class="bi bi-list" style="font-size: 20px;"></i>
                 </button>
                 <div class="welcome-message">
@@ -1176,6 +1609,16 @@
             </div>
             @if((auth()->user()->role == "Admin" || auth()->user()->role == "Area Distributor"))
             <div class="topbar-right">
+                @if(auth()->user()->role == "Area Distributor")
+                    <a href="{{ route('guest-order') }}" class="guest-order-link" target="_blank" rel="noopener">
+                        <i class="bi bi-bag-plus-fill"></i>
+                        <span>Guest Order</span>
+                    </a>
+                    <button type="button" class="loyalty-scan-link border-0" data-bs-toggle="modal" data-bs-target="#loyaltyScanModal">
+                        <i class="bi bi-qr-code-scan"></i>
+                        <span>Scan Loyalty</span>
+                    </button>
+                @endif
                 <li class="nav-item d-none d-md-block me-2 mt-3 search-container">
                     <form action="{{ url('/search') }}" method="GET" class="position-relative">
                         <input 
@@ -1200,47 +1643,46 @@
                     </form>
                 </li>
                 
-
-               <div class="dropdown me-2 notification-dropdown">
+                <div class="dropdown notification-dropdown">
                     @php
-                    $notificationData = app('App\Http\Controllers\NotificationController')->getNotificationData();
-                    extract($notificationData); // This gives you all the variables like $notifications, $totalUnreadCount, etc.
+                        $notificationData = app('App\Http\Controllers\NotificationController')->getNotificationData();
+                        extract($notificationData); // This gives you all the variables like $notifications, $totalUnreadCount, etc.
                     @endphp
                     
-                    <a class="" id="notificationDropdown" 
-                        data-bs-toggle="dropdown" aria-expanded="false">
-                    <div class="rounded-circle danger">
-                        {{-- <iconify-icon icon="solar:bell-linear" class="fs-7" style="color: #DFDFEC"></iconify-icon> --}}
-                        <i class="bi bi-bell-fill fs-7" style="color: #ffffff"></i>
-                        @if($totalUnreadCount > 0)
-                        <span class="position-absolute bottom-45 start-100 translate-middle badges rounded-pill notif-badge" 
-                            id="notification-badge">
-                            {{$totalUnreadCount ?? ''}}
-                        </span>
-                        @endif
-                    </div>
+                    <a class="" id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <div class="rounded-circle danger notification-bell-btn" id="notification-bell"
+                            data-current-count="{{ $totalUnreadCount }}"
+                            data-latest-notification-id="{{ $latestNotificationId }}">
+                            {{-- <iconify-icon icon="solar:bell-linear" class="fs-7" style="color: #DFDFEC"></iconify-icon> --}}
+                            <i class="bi bi-bell-fill fs-7" style="color: #ffffff"></i>
+                            <span class="position-absolute bottom-45 start-100 translate-middle badges rounded-pill notif-badge" 
+                                id="notification-badge" style="{{ $totalUnreadCount > 0 ? '' : 'display: none;' }}">
+                                {{$totalUnreadCount ?? ''}}
+                            </span>
+                        </div>
                     </a>
                     
-                    <div class="dropdown-menu dropdown-menu-end dropdown-menu-animate-up p-0" 
-                        aria-labelledby="notificationDropdown" style="width: 380px;">
-                        <div class="px-3 py-2 border-bottom d-flex justify-content-between align-items-center">
-                        <h6 class="mb-0">
-                            Notifications 
-                        </h6>
-                        @if($totalUnreadCount > 0)
-                            <form action="{{ route('notifications.markAllAsRead') }}" method="POST" style="display: inline;">
-                                @csrf
-                                <button type="submit" class="btn btn-sm btn-link p-0 text-primary">
-                                    Mark all as read
-                                </button>
-                            </form>
+                    <div class="dropdown-menu dropdown-menu-end dropdown-menu-animate-up p-0 notification-menu" 
+                        aria-labelledby="notificationDropdown">
+                        <div class="px-3 py-3 notification-head d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0 fw-bold">Notifications</h6>
+                                <small class="text-muted">{{ $totalUnreadCount }} unread updates</small>
+                            </div>
+                            @if($totalUnreadCount > 0)
+                                <form action="{{ route('notifications.markAllAsRead') }}" method="POST" style="display: inline;">
+                                    @csrf
+                                    <button type="submit" class="btn btn-sm btn-link p-0 text-primary fw-semibold">
+                                        Mark all as read
+                                    </button>
+                                </form>
                             @endif
                         </div>
                         
-                        <div style="max-height: 350px; overflow-y: auto;">
-                                @if($notifications->count() > 0)
-                                    <div class="px-3 py-2">
-                                        @foreach($notifications as $notification)
+                        <div class="notification-list">
+                            @if($notifications->count() > 0)
+                                <div class="px-3 py-3">
+                                    @foreach($notifications as $notification)
                                         @if($notification['type'] === 'client')
                                             @php 
                                                 $client = $notification['data'];
@@ -1248,7 +1690,7 @@
                                                 $isSaved = in_array('customer_' . $client->id, $savedNotifications);
                                                 $redirectUrl = url('/customers'); // Dynamic URL for clients
                                             @endphp
-                                            <div class="notification-item border-bottom py-2">
+                                            <div class="notification-item notification-row {{ $isUnread ? 'is-unread' : '' }}">
                                                 <div class="d-flex align-items-center" 
                                                     style="cursor: pointer;" 
                                                     onclick="markAsReadAndRedirect('client_{{ $client->id }}', '{{ $redirectUrl }}')"
@@ -1287,14 +1729,14 @@
                                                     @endif
                                                 </div>
                                             </div>
-                                                                    @elseif($notification['type'] === 'transaction')
+                                            @elseif($notification['type'] === 'transaction')
                                             @php 
                                                 $transaction = $notification['data'];
                                                 $isUnread = !in_array('transaction_' . $transaction->id, $readNotifications);
                                                 $isSaved = in_array('transaction_' . $transaction->id, $savedNotifications);
                                                 $redirectUrl = url('/transactions'); // Dynamic URL for transactions
                                             @endphp
-                                            <div class="notification-item border-bottom py-2">
+                                            <div class="notification-item notification-row {{ $isUnread ? 'is-unread' : '' }}">
                                                 <div class="d-flex align-items-center" 
                                                     style="cursor: pointer;" 
                                                     onclick="markAsReadAndRedirect('transaction_{{ $transaction->id }}', '{{ $redirectUrl }}')"
@@ -1341,21 +1783,76 @@
                                                     @endif
                                                 </div>
                                             </div>
+                                        @elseif($notification['type'] === 'order')
+                                            @php
+                                                $order = $notification['data'];
+                                                $dealerName = ($order->is_guest ?? false) || $order->guest_name
+                                                    ? ($order->guest_name ?: 'Guest Customer')
+                                                    : (optional($order->dealer)->name ?: optional($order->adDealer)->name ?: 'Dealer');
+                                                $isUnread = !in_array('order_' . $order->id, $readNotifications);
+                                                $isSaved = in_array('order_' . $order->id, $savedNotifications);
+                                                $redirectUrl = url('/orders');
+                                                $orderTotal = ($order->price * $order->qty) + ($order->delivery_fee ?? 0);
+                                            @endphp
+                                            <div class="notification-item notification-row {{ $isUnread ? 'is-unread' : '' }}">
+                                                <div class="d-flex align-items-center"
+                                                    style="cursor: pointer;"
+                                                    onclick="markAsReadAndRedirect('order_{{ $order->id }}', '{{ $redirectUrl }}')"
+                                                    onmouseover="this.style.backgroundColor='#f8f9fa'"
+                                                    onmouseout="this.style.backgroundColor=''">
+                                                    <div class="flex-shrink-0">
+                                                        <div class="bg-warning rounded-circle d-flex align-items-center justify-content-center"
+                                                            style="width: 35px; height: 35px;">
+                                                            <iconify-icon icon="solar:cart-large-minimalistic-broken" class="text-white fs-5"></iconify-icon>
+                                                        </div>
+                                                    </div>
+                                                    <div class="flex-grow-1 ms-3">
+                                                        <p class="mb-0 fs-3">
+                                                            <strong>{{ $dealerName }}</strong> placed an order
+                                                            @if($isUnread)
+                                                                <span class="badges bg-primary ms-2" style="font-size: 0.6rem;">NEW</span>
+                                                            @endif
+                                                            <br><small class="text-muted">{{ $order->item }} x {{ $order->qty }} - PHP {{ number_format($orderTotal, 2) }}</small>
+                                                        </p>
+                                                        <small class="text-muted">{{ $order->created_at->diffForHumans() }}</small>
+                                                    </div>
+                                                </div>
+                                                <div class="d-flex justify-content-end mt-2">
+                                                    @if(!$isSaved)
+                                                        <form action="{{ route('notification.save') }}" method="POST" style="display: inline;">
+                                                            @csrf
+                                                            <input type="hidden" name="type" value="order">
+                                                            <input type="hidden" name="record_id" value="{{ $order->id }}">
+                                                            <button type="submit" class="btn btn-sm btn-success" style="font-size: 0.75rem;">
+                                                                View
+                                                            </button>
+                                                        </form>
+                                                    @else
+                                                        <a href="{{ $redirectUrl }}" class="btn btn-sm btn-success" style="font-size: 0.75rem;">
+                                                            View
+                                                        </a>
+                                                    @endif
+                                                </div>
+                                            </div>
                                         @endif
-                                        @endforeach
-                                    </div>
-                                @else
-                                <div class="px-3 py-4 text-center">
+                                    @endforeach
+                                </div>
+                            @else
+                                <div class="notification-empty text-center">
                                     <iconify-icon icon="solar:bell-off-broken" class="fs-1 text-muted"></iconify-icon>
-                                    <p class="text-muted mb-0">No recent notifications</p>
+                                    <p class="text-muted mb-0 mt-2">No recent notifications</p>
                                 </div>
                             @endif
-
                         </div>
                         
-                        <div class="px-3 py-2 border-top text-center">
-                        <a href="{{ url('/transactions') }}" class="btn btn-sm btn-danger">View All Transactions</a>
+                        <div class="px-3 py-3 border-top d-flex gap-2 justify-content-center">
+                            <a href="{{ url('/transactions') }}" class="btn btn-sm btn-outline-secondary">View All Transactions</a>
+                            {{-- <a href="{{ url('/orders') }}" class="btn btn-sm btn-danger">AD Orders</a> --}}
                         </div>
+                    </div>
+                    <div id="notification-live-toast" class="notification-live-toast">
+                        <div class="fw-semibold">New notification received</div>
+                        <small class="opacity-75">Open notifications to see the latest update.</small>
                     </div>
                 </div>
                 @endif
@@ -1389,13 +1886,44 @@
                 </div>
             </div>
         </header>
+        <div class="modal fade loyalty-scan-modal" id="loyaltyScanModal" tabindex="-1" aria-labelledby="loyaltyScanModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="loyalty-scan-head">
+                        <div>
+                            <h5 class="modal-title fw-bold mb-1" id="loyaltyScanModalLabel">Scan Loyalty Card</h5>
+                            <small class="text-muted">Verify if the client is included in the project.</small>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-3">
+                        <div id="loyaltyQrReader" class="loyalty-scan-reader"></div>
+                        <div class="loyalty-scan-status mt-3" id="loyaltyScanStatus">
+                            Open camera access, then scan the client loyalty card QR code.
+                        </div>
+                        <div class="input-group mt-3">
+                            <input type="text" class="form-control" id="loyaltyManualCode" placeholder="Enter loyalty code manually">
+                            <button type="button" class="btn btn-danger" id="loyaltyManualScanBtn">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 pt-0">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                        <a href="#" class="btn btn-success d-none" id="loyaltyViewClientBtn">
+                            <i class="bi bi-bag-plus-fill"></i> <span id="loyaltyOrderLabel">Guest Order</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
         {{-- @endif --}} {{-- Mark Ian 04/23/2026 --}}
 
         <!-- Redeem Area -->
         @yield('contents')
 
         <!-- Content Area -->
-         <div class="content-area @if(Request::is('rewards')) rewards-page @endif">
+        <div class="content-area @if(Request::is('rewards')) rewards-page @endif">
                 @yield('content')
 
                 <footer class="footer">
@@ -1415,7 +1943,7 @@
                         <nav>
                         <ul class="nav-links">
                             <li><a href="{{ url('/') }}">Home</a></li>
-                            <li><a href="{{ route('product.index') }}">Product</a></li>
+                            <li><a href="{{ route('products') }}">Product</a></li>
                             <li><a href="{{ route('storelocation') }}">Store Location</a></li>
                             <li><a href="{{ route('about') }}">About</a></li>
                         </ul>
@@ -1450,8 +1978,6 @@
         {{ csrf_field() }}
     </form>
 
-    @include('sweetalert::alert')
-
     <!-- Bootstrap JS -->
     
     <!-- Original scripts -->
@@ -1463,248 +1989,555 @@
     <script src="{{asset('design/assets/js/theme/app.min.js')}}"></script>
     <script src="{{asset('design/assets/js/theme/sidebarmenu.js')}}"></script>
     <script src="{{asset('design/assets/js/theme/feather.min.js')}}"></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <!-- solar icons -->
     <script src="https://cdn.jsdelivr.net/npm/iconify-icon@1.0.8/dist/iconify-icon.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <script src="{{ asset('vendor/sweetalert/sweetalert.all.js') }}"></script>
+
+    @php
+        config(['sweetalert.neverLoadJS' => true]);
+    @endphp
+    @include('sweetalert::alert')
 
     @yield('javascript')
 
     <script>
-            function logout() {
+        function logout() {
             event.preventDefault();
             document.getElementById('logout-form').submit();
         }
-    
+        
+        function initSelect2(parent = document) {
+            if (!$.fn.select2) return;
+
+            $(parent).find('select.select2').each(function () {
+                const $this = $(this);
+                const $modal = $this.closest('.modal');
+                const isArea = $this.hasClass('select2-area');
+
+                // ✅ Destroy ONLY if already initialized (prevents duplication bug)
+                if ($this.hasClass('select2-hidden-accessible')) {
+                    return;
+                }
+
+                $this.select2({
+                    width: '100%',
+                    dropdownParent: $modal.length ? $modal : $(document.body),
+                    placeholder: $this.data('placeholder') || 'Select Option',
+                    allowClear: true,
+
+                    templateResult: isArea ? formatArea : undefined,
+                    templateSelection: isArea ? formatArea : undefined,
+
+                    escapeMarkup: markup => markup
+                });
+
+                // ✅ Fix selected value rendering
+                if ($this.val()) {
+                    $this.trigger('change.select2');
+                }
+
+                // ✅ Autofocus search field
+                $this.off('select2:open.codexFocus').on('select2:open.codexFocus', function () {
+                    setTimeout(() => {
+                        const search = document.querySelector('.select2-container--open .select2-search__field');
+                        if (search) search.focus();
+                    }, 0);
+                });
+            });
+        }
+        $(document).ready(function () {
+            initSelect2();
+        });
+        // Re-init ONLY inside modal when opened
+        $(document).on('shown.bs.modal', '.modal', function () {
+            initSelect2(this);
+        });
+
+        document.addEventListener('focusin', function (e) {
+            if (e.target.closest(".select2-container")) {
+                e.stopPropagation();
+            }
+        });
+
+        $(document).on('input', 'input[data-uppercase], textarea[data-uppercase]', function () {
+
+            let start = this.selectionStart;
+            let end = this.selectionEnd;
+
+            this.value = this.value.toUpperCase();
+
+            // Keep cursor position
+            this.setSelectionRange(start, end);
+
+        });
     </script>
 
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-      const searchInput = document.getElementById('searchInput');
-      const suggestionsDiv = document.getElementById('searchSuggestions');
-      let debounceTimer;
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('searchInput');
+            const suggestionsDiv = document.getElementById('searchSuggestions');
+            let debounceTimer;
 
-      if (searchInput) {
-          searchInput.addEventListener('input', function() {
-              const query = this.value.trim();
-              
-              clearTimeout(debounceTimer);
-              
-              if (query.length < 2) {
-                  suggestionsDiv.style.display = 'none';
-                  return;
-              }
+            if (searchInput) {
+                searchInput.addEventListener('input', function() {
+                    const query = this.value.trim();
+                    
+                    clearTimeout(debounceTimer);
+                    
+                    if (query.length < 2) {
+                        suggestionsDiv.style.display = 'none';
+                        return;
+                    }
 
-              debounceTimer = setTimeout(() => {
-                  fetch(`{{ url('/search/suggestions') }}?q=${encodeURIComponent(query)}`)
-                      .then(response => response.json())
-                      .then(data => {
-                          suggestionsDiv.innerHTML = '';
-                          
-                          if (data.length > 0) {
-                              data.forEach(item => {
-                                  const div = document.createElement('div');
-                                  div.className = 'p-3 search-suggestion-item border-bottom';
-                                  div.style.cursor = 'pointer';
-                                  div.innerHTML = `
-                                      <div class="d-flex align-items-center">
-                                          <div class="me-3">
-                                              <div class="rounded-circle d-flex align-items-center justify-content-center" 
-                                                  style="width: 35px; height: 35px; background-color: ${item.type === 'client' ? '#e3f2fd' : '#f3e5f5'};">
-                                                  <iconify-icon icon="${item.type === 'client' ? 'solar:user-linear' : 'solar:shop-linear'}" 
-                                                              class="fs-5" style="color: ${item.type === 'client' ? '#1976d2' : '#7b1fa2'};"></iconify-icon>
-                                              </div>
-                                          </div>
-                                          <div class="flex-grow-1">
-                                              <div class="fw-semibold text-dark">${item.name}</div>
-                                              <small class="text-muted">${item.type === 'client' ? 'Customer' : 'Dealer'}</small>
-                                          </div>
-                                          <div>
-                                              <iconify-icon icon="solar:arrow-right-linear" class="text-muted"></iconify-icon>
-                                          </div>
-                                      </div>
-                                  `;
-                                  
-                                  div.addEventListener('click', function() {
-                                      searchInput.value = item.name;
-                                      suggestionsDiv.style.display = 'none';
-                                      window.location.href = `{{ url('/profile') }}/${item.id}/${item.type}`;
-                                  });
+                    debounceTimer = setTimeout(() => {
+                        fetch(`{{ url('/search/suggestions') }}?q=${encodeURIComponent(query)}`)
+                            .then(response => response.json())
+                            .then(data => {
+                                suggestionsDiv.innerHTML = '';
+                                
+                                if (data.length > 0) {
+                                    data.forEach(item => {
+                                        const div = document.createElement('div');
+                                        div.className = 'p-3 search-suggestion-item border-bottom';
+                                        div.style.cursor = 'pointer';
+                                        div.innerHTML = `
+                                            <div class="d-flex align-items-center">
+                                                <div class="me-3">
+                                                    <div class="rounded-circle d-flex align-items-center justify-content-center" 
+                                                        style="width: 35px; height: 35px; background-color: ${item.type === 'client' ? '#e3f2fd' : '#f3e5f5'};">
+                                                        <iconify-icon icon="${item.type === 'client' ? 'solar:user-linear' : 'solar:shop-linear'}" 
+                                                                    class="fs-5" style="color: ${item.type === 'client' ? '#1976d2' : '#7b1fa2'};"></iconify-icon>
+                                                    </div>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <div class="fw-semibold text-dark">${item.name}</div>
+                                                    <small class="text-muted">${item.type === 'client' ? 'Customer' : 'Dealer'}</small>
+                                                </div>
+                                                <div>
+                                                    <iconify-icon icon="solar:arrow-right-linear" class="text-muted"></iconify-icon>
+                                                </div>
+                                            </div>
+                                        `;
+                                        
+                                        div.addEventListener('click', function() {
+                                            searchInput.value = item.name;
+                                            suggestionsDiv.style.display = 'none';
+                                            window.location.href = `{{ url('/profile') }}/${item.id}/${item.type}`;
+                                        });
 
-                                  div.addEventListener('mouseenter', function() {
-                                      this.style.backgroundColor = '#f8f9fa';
-                                  });
+                                        div.addEventListener('mouseenter', function() {
+                                            this.style.backgroundColor = '#f8f9fa';
+                                        });
 
-                                  div.addEventListener('mouseleave', function() {
-                                      this.style.backgroundColor = 'transparent';
-                                  });
-                                  
-                                  suggestionsDiv.appendChild(div);
-                              });
-                              
-                              if (data.length > 0) {
-                                  const viewAllDiv = document.createElement('div');
-                                  viewAllDiv.className = 'p-3 text-center border-top';
-                                  viewAllDiv.innerHTML = `
-                                      <small class="text-primary fw-semibold" style="cursor: pointer;">
-                                          Press Enter to search for "${query}"
-                                      </small>
-                                  `;
-                                  suggestionsDiv.appendChild(viewAllDiv);
-                              }
-                              
-                              suggestionsDiv.style.display = 'block';
-                          } else {
-                              suggestionsDiv.innerHTML = `
-                                  <div class="p-3 text-center text-muted">
-                                      <iconify-icon icon="solar:magnifer-linear" class="fs-3"></iconify-icon>
-                                      <div class="mt-2">No users found for "${query}"</div>
-                                      <small>Try a different search term</small>
-                                  </div>
-                              `;
-                              suggestionsDiv.style.display = 'block';
-                          }
-                      })
-                      .catch(error => {
-                          console.error('Search error:', error);
-                          suggestionsDiv.style.display = 'none';
-                      });
-              }, 300);
-          });
+                                        div.addEventListener('mouseleave', function() {
+                                            this.style.backgroundColor = 'transparent';
+                                        });
+                                        
+                                        suggestionsDiv.appendChild(div);
+                                    });
+                                    
+                                    if (data.length > 0) {
+                                        const viewAllDiv = document.createElement('div');
+                                        viewAllDiv.className = 'p-3 text-center border-top';
+                                        viewAllDiv.innerHTML = `
+                                            <small class="text-primary fw-semibold" style="cursor: pointer;">
+                                                Press Enter to search for "${query}"
+                                            </small>
+                                        `;
+                                        suggestionsDiv.appendChild(viewAllDiv);
+                                    }
+                                    
+                                    suggestionsDiv.style.display = 'block';
+                                } else {
+                                    suggestionsDiv.innerHTML = `
+                                        <div class="p-3 text-center text-muted">
+                                            <iconify-icon icon="solar:magnifer-linear" class="fs-3"></iconify-icon>
+                                            <div class="mt-2">No users found for "${query}"</div>
+                                            <small>Try a different search term</small>
+                                        </div>
+                                    `;
+                                    suggestionsDiv.style.display = 'block';
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Search error:', error);
+                                suggestionsDiv.style.display = 'none';
+                            });
+                    }, 300);
+                });
 
-          document.addEventListener('click', function(event) {
-              if (!searchInput.closest('.position-relative').contains(event.target)) {
-                  suggestionsDiv.style.display = 'none';
-              }
-          });
+                document.addEventListener('click', function(event) {
+                    if (!searchInput.closest('.position-relative').contains(event.target)) {
+                        suggestionsDiv.style.display = 'none';
+                    }
+                });
 
-          searchInput.addEventListener('keydown', function(event) {
-              if (event.key === 'Escape') {
-                  suggestionsDiv.style.display = 'none';
-              }
-          });
+                searchInput.addEventListener('keydown', function(event) {
+                    if (event.key === 'Escape') {
+                        suggestionsDiv.style.display = 'none';
+                    }
+                });
 
-          searchInput.addEventListener('focus', function() {
-              if (this.value.length >= 2) {
-                  this.dispatchEvent(new Event('input'));
-              }
-          });
-      }
-  });
-  </script>
+                searchInput.addEventListener('focus', function() {
+                    if (this.value.length >= 2) {
+                        this.dispatchEvent(new Event('input'));
+                    }
+                });
+            }
+        });
+    </script>
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-    const sidebar = document.getElementById('sidebar');
-    const sidebarToggle = document.getElementById('sidebarToggle');
-    const sidebarOverlay = document.getElementById('sidebarOverlay');
-    const logoFull = document.querySelector('.logo-full');
-    const logoMini = document.querySelector('.logo-mini');
+            const sidebar = document.getElementById('sidebar');
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
 
-    // Logo switching function
-    function updateLogoVisibility() {
-        if (!logoFull || !logoMini || !sidebar) {
-            console.log('Missing logo elements');
-            return;
-        }
-
-        const isCollapsed = sidebar.classList.contains('collapsed');
-        console.log('Logo update - Sidebar collapsed:', isCollapsed);
-        
-        if (isCollapsed) {
-            logoFull.style.display = 'none';
-            logoMini.style.display = 'inline-block';
-        } else {
-            logoFull.style.display = 'inline-block';
-            logoMini.style.display = 'none';
-        }
-    }
-
-    function initializeSidebar() {
-        if (window.innerWidth > 768) {
-            const savedState = localStorage.getItem('sidebarCollapsed');
-            if (savedState === 'true') {
-                sidebar.classList.add('collapsed');
-            } else {
-                sidebar.classList.remove('collapsed');
+            if (!sidebar || !sidebarToggle || !sidebarOverlay) {
+                return;
             }
-            sidebar.classList.remove('mobile-open');
-            sidebarOverlay.classList.remove('active');
-        } else {
-            sidebar.classList.remove('collapsed');
-            sidebar.classList.remove('mobile-open');
-            sidebarOverlay.classList.remove('active');
-        }
-        updateLogoVisibility();
-    }
 
-    initializeSidebar();
+            function syncToggleState() {
+                const isMobile = window.innerWidth <= 768;
+                const isOpen = isMobile
+                    ? sidebar.classList.contains('mobile-open')
+                    : !sidebar.classList.contains('collapsed');
 
-    function toggleSidebar() {
-        console.log('Toggle clicked, window width:', window.innerWidth);
-        
-        if (window.innerWidth <= 768) {
-            sidebar.classList.toggle('mobile-open');
-            sidebarOverlay.classList.toggle('active');
-            console.log('Mobile toggle - sidebar mobile-open:', sidebar.classList.contains('mobile-open'));
-        } else {
-            sidebar.classList.toggle('collapsed');
-            console.log('Desktop toggle - sidebar collapsed:', sidebar.classList.contains('collapsed'));
-            
-            updateLogoVisibility();
-            
-            if (sidebar.classList.contains('collapsed')) {
-                localStorage.setItem('sidebarCollapsed', 'true');
-            } else {
-                localStorage.setItem('sidebarCollapsed', 'false');
+                sidebarToggle.setAttribute('aria-expanded', String(isOpen));
             }
-        }
-    }
 
-    if (sidebarToggle) {
-        sidebarToggle.addEventListener('click', toggleSidebar);
-    }
+            function initializeSidebar() {
+                if (window.innerWidth > 768) {
+                    const savedState = localStorage.getItem('sidebarCollapsed');
+                    sidebar.classList.toggle('collapsed', savedState === 'true');
+                    sidebar.classList.remove('mobile-open');
+                    sidebarOverlay.classList.remove('active');
+                } else {
+                    sidebar.classList.remove('collapsed');
+                    sidebar.classList.remove('mobile-open');
+                    sidebarOverlay.classList.remove('active');
+                }
 
-    if (sidebarOverlay) {
-        sidebarOverlay.addEventListener('click', function() {
-            sidebar.classList.remove('mobile-open');
-            sidebarOverlay.classList.remove('active');
-        });
-    }
+                syncToggleState();
+            }
 
-    window.addEventListener('resize', function() {
-        setTimeout(function() {
             initializeSidebar();
-        }, 100);
-    });
 
-    const searchInput = document.querySelector('.search-input');
-    if (searchInput) {
-        searchInput.addEventListener('focus', function() {
-            this.parentElement.classList.add('focused');
-        });
-        
-        searchInput.addEventListener('blur', function() {
-            this.parentElement.classList.remove('focused');
-        });
-    }
+            function toggleSidebar() {
+                if (window.innerWidth <= 768) {
+                    sidebar.classList.toggle('mobile-open');
+                    sidebarOverlay.classList.toggle('active', sidebar.classList.contains('mobile-open'));
+                } else {
+                    sidebar.classList.toggle('collapsed');
+                    localStorage.setItem('sidebarCollapsed', String(sidebar.classList.contains('collapsed')));
+                }
 
-    if (sidebar) {
-        const observer = new MutationObserver(function(mutations) {
-            mutations.forEach(function(mutation) {
-                if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-                    setTimeout(updateLogoVisibility, 10);
+                syncToggleState();
+            }
+
+            sidebarToggle.addEventListener('click', toggleSidebar);
+
+            sidebarOverlay.addEventListener('click', function() {
+                sidebar.classList.remove('mobile-open');
+                sidebarOverlay.classList.remove('active');
+                syncToggleState();
+            });
+
+            let resizeTimer;
+            window.addEventListener('resize', function() {
+                window.clearTimeout(resizeTimer);
+                resizeTimer = window.setTimeout(initializeSidebar, 120);
+            });
+
+            const searchInput = document.querySelector('.search-input');
+            if (searchInput) {
+                searchInput.addEventListener('focus', function() {
+                    this.parentElement.classList.add('focused');
+                });
+                
+                searchInput.addEventListener('blur', function() {
+                    this.parentElement.classList.remove('focused');
+                });
+            }
+
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape' && sidebar.classList.contains('mobile-open')) {
+                    sidebar.classList.remove('mobile-open');
+                    sidebarOverlay.classList.remove('active');
+                    syncToggleState();
+                    sidebarToggle.focus();
                 }
             });
         });
+    </script>
 
-        observer.observe(sidebar, {
-            attributes: true,
-            attributeFilter: ['class']
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const modalElement = document.getElementById('loyaltyScanModal');
+            const statusBox = document.getElementById('loyaltyScanStatus');
+            const manualCodeInput = document.getElementById('loyaltyManualCode');
+            const manualScanBtn = document.getElementById('loyaltyManualScanBtn');
+            const viewClientBtn = document.getElementById('loyaltyViewClientBtn');
+            const loyaltyOrderLabel = document.getElementById('loyaltyOrderLabel');
+            let qrScanner = null;
+            let isScanning = false;
+
+            if (!modalElement || !statusBox) {
+                return;
+            }
+
+            function setScanStatus(message, type) {
+                statusBox.textContent = message;
+                statusBox.classList.remove('is-success', 'is-error');
+
+                if (type) {
+                    statusBox.classList.add(type === 'success' ? 'is-success' : 'is-error');
+                }
+            }
+
+            function setClientButton(url, label) {
+                if (!viewClientBtn) {
+                    return;
+                }
+
+                if (loyaltyOrderLabel) {
+                    loyaltyOrderLabel.textContent = label || 'Guest Order';
+                }
+
+                if (url) {
+                    viewClientBtn.href = url;
+                    viewClientBtn.classList.remove('d-none');
+                } else {
+                    viewClientBtn.href = '#';
+                    viewClientBtn.classList.add('d-none');
+                }
+            }
+
+            function lookupLoyaltyCode(code) {
+                const value = String(code || '').trim();
+
+                if (!value) {
+                    setScanStatus('No QR code was detected.', 'error');
+                    return;
+                }
+
+                setScanStatus('Checking loyalty card...', null);
+                setClientButton(null);
+
+                fetch('{{ route('loyalty-card.scan') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ code: value })
+                })
+                    .then(function(response) {
+                        return response.json();
+                    })
+                    .then(function(data) {
+                        if (data.included) {
+                            const clientName = data.client && data.client.name ? data.client.name : 'Client';
+                            setScanStatus(clientName + ' is included in the project. Continue to order.', 'success');
+                            setClientButton(data.order_url || data.redirect_url, 'Order');
+                            stopScanner();
+                            return;
+                        }
+
+                        setScanStatus(data.message || 'This loyalty card is not included in the project.', 'error');
+                    })
+                    .catch(function() {
+                        setScanStatus('Unable to verify loyalty card right now.', 'error');
+                    });
+            }
+
+            function startScanner() {
+                if (isScanning || typeof Html5Qrcode === 'undefined') {
+                    if (typeof Html5Qrcode === 'undefined') {
+                        setScanStatus('QR scanner library is not available. You can enter the code manually.', 'error');
+                    }
+                    return;
+                }
+
+                qrScanner = new Html5Qrcode('loyaltyQrReader');
+                qrScanner.start(
+                    { facingMode: 'environment' },
+                    { fps: 10, qrbox: { width: 230, height: 230 } },
+                    function(decodedText) {
+                        lookupLoyaltyCode(decodedText);
+                    },
+                    function() {}
+                )
+                    .then(function() {
+                        isScanning = true;
+                        setScanStatus('Camera ready. Scan the loyalty card QR code.', null);
+                    })
+                    .catch(function() {
+                        setScanStatus('Camera permission denied or unavailable. Enter the code manually.', 'error');
+                    });
+            }
+
+            function stopScanner() {
+                if (!qrScanner || !isScanning) {
+                    return;
+                }
+
+                qrScanner.stop()
+                    .then(function() {
+                        return qrScanner.clear();
+                    })
+                    .finally(function() {
+                        isScanning = false;
+                        qrScanner = null;
+                    });
+            }
+
+            modalElement.addEventListener('shown.bs.modal', function() {
+                setClientButton(null);
+                if (manualCodeInput) {
+                    manualCodeInput.value = '';
+                }
+                setScanStatus('Opening camera...', null);
+                startScanner();
+            });
+
+            modalElement.addEventListener('hidden.bs.modal', function() {
+                stopScanner();
+            });
+
+            if (manualScanBtn) {
+                manualScanBtn.addEventListener('click', function() {
+                    lookupLoyaltyCode(manualCodeInput ? manualCodeInput.value : '');
+                });
+            }
+
+            if (manualCodeInput) {
+                manualCodeInput.addEventListener('keydown', function(event) {
+                    if (event.key === 'Enter') {
+                        event.preventDefault();
+                        lookupLoyaltyCode(manualCodeInput.value);
+                    }
+                });
+            }
         });
-    }
+    </script>
 
-    console.log('Sidebar script initialized');
-});
+    <script>
+        window.markAsReadAndRedirect = function(notificationId, redirectUrl) {
+            fetch('{{ route('notification.markRead') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ notification_id: notificationId })
+            }).finally(function() {
+                window.location.href = redirectUrl;
+            });
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const bell = document.getElementById('notification-bell');
+            const badge = document.getElementById('notification-badge');
+            const liveToast = document.getElementById('notification-live-toast');
+
+            if (!bell || !badge) {
+                return;
+            }
+
+            let currentCount = parseInt(bell.dataset.currentCount || '0', 10);
+            let latestNotificationId = bell.dataset.latestNotificationId || '';
+            let audioContext = null;
+
+            function unlockNotificationSound() {
+                if (!audioContext) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    if (AudioContext) {
+                        audioContext = new AudioContext();
+                    }
+                }
+
+                if (audioContext && audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
+            }
+
+            function playNotificationSound() {
+                unlockNotificationSound();
+
+                if (!audioContext || audioContext.state !== 'running') {
+                    return;
+                }
+
+                const oscillator = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
+                oscillator.frequency.setValueAtTime(660, audioContext.currentTime + 0.12);
+
+                gain.gain.setValueAtTime(0.001, audioContext.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.18, audioContext.currentTime + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.35);
+
+                oscillator.connect(gain);
+                gain.connect(audioContext.destination);
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.38);
+            }
+
+            function updateNotificationBadge(count) {
+                badge.textContent = count > 0 ? count : '';
+                badge.style.display = count > 0 ? '' : 'none';
+                bell.dataset.currentCount = count;
+            }
+
+            function showNotificationToast() {
+                if (!liveToast) {
+                    return;
+                }
+
+                liveToast.classList.add('show');
+                window.clearTimeout(liveToast.dataset.hideTimer);
+                liveToast.dataset.hideTimer = window.setTimeout(function() {
+                    liveToast.classList.remove('show');
+                }, 4200);
+            }
+
+            document.addEventListener('click', unlockNotificationSound, { once: true });
+            document.addEventListener('keydown', unlockNotificationSound, { once: true });
+
+            setInterval(function() {
+                fetch('{{ route('notifications.unreadCount') }}', {
+                    headers: { 'Accept': 'application/json' }
+                })
+                    .then(function(response) {
+                        return response.json();
+                    })
+                    .then(function(data) {
+                        const newCount = parseInt(data.count || '0', 10);
+                        const newLatestNotificationId = data.latest_notification_id || '';
+                        const hasNewNotification = newCount > currentCount && newLatestNotificationId !== latestNotificationId;
+
+                        updateNotificationBadge(newCount);
+
+                        if (hasNewNotification) {
+                            playNotificationSound();
+                            showNotificationToast();
+                        }
+
+                        currentCount = newCount;
+                        latestNotificationId = newLatestNotificationId;
+                    })
+                    .catch(function(error) {
+                        console.error('Notification polling error:', error);
+                    });
+            }, 5000);
+        });
     </script>
     
 </body>

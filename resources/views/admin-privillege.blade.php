@@ -1,4 +1,4 @@
-<div class="modal fade" id="access-admin-{{ $user->id }}" tabindex="-1" aria-labelledby="accessAdminModalLabel-{{ $user->id }}" aria-hidden="true" style="display:none;">
+{{-- <div class="modal fade" id="access-admin-{{ $user->id }}" tabindex="-1" aria-labelledby="accessAdminModalLabel-{{ $user->id }}" aria-hidden="true" style="display:none;">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
@@ -117,6 +117,65 @@
             </form>
         </div>
     </div>
+</div> --}}
+
+<div class="modal fade" id="accessUserModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5>User Access</h5>
+      </div>
+
+      <div class="modal-body">
+        <input type="hidden" id="access_user_id">
+
+        <!-- ADMIN PERMISSIONS -->
+        <label>Permissions</label>
+
+        <div class="form-check">
+          <input type="checkbox" id="can_edit" class="form-check-input">
+          <label>Edit</label>
+        </div>
+
+        <div class="form-check">
+          <input type="checkbox" id="can_add" class="form-check-input">
+          <label>Add</label>
+        </div>
+
+        <div class="form-check">
+          <input type="checkbox" id="can_delete" class="form-check-input">
+          <label>Delete</label>
+        </div>
+
+        <hr>
+
+        <!-- REWARDS -->
+        <label>Rewards</label>
+
+        <div class="form-check">
+          <input type="checkbox" id="can_edit_rewards" class="form-check-input">
+          <label>Edit</label>
+        </div>
+
+        <div class="form-check">
+          <input type="checkbox" id="can_add_rewards" class="form-check-input">
+          <label>Add</label>
+        </div>
+
+        <div class="form-check">
+          <input type="checkbox" id="can_delete_rewards" class="form-check-input">
+          <label>Delete</label>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-success" id="saveAccess">Save</button>
+      </div>
+
+    </div>
+  </div>
 </div>
 
 <style>

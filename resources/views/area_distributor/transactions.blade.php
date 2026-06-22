@@ -224,25 +224,12 @@ table.dataTable {
         <div class="col-12">
             <div class="card w-100">  
                 <div class="card-body">
-                    <h5>Transactions</h5>
-                    {{-- <div class="d-flex justify-content-start align-items-center gap-2 mb-3">
-                        @if(auth()->user()->role == "Admin")
-                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTransactionModalAdmin">
-                                <i class="bi bi-plus-lg"></i> Search Name
-                            </button>
-                            <div id="exportExcelContainer"></div>
-                            <button type="button" class="btn btn-danger btn-sm" id="deleteSelectedBtn" title="Delete Selected" style="display: none; height: 38px;">
-                                <i class="bi bi-trash"></i> Delete All
-                            </button>
-                        @else
-                            <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#qrScannerModal">
-                                Scan QR
-                            </button>
-                            <button type="button" class="btn btn-primary search-name-responsive" data-bs-toggle="modal" data-bs-target="#addTransactionModal">
-                                <i class="bi bi-plus-lg"></i> Search Name
-                            </button>
-                        @endif
-                    </div> --}}
+                    <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
+                        <h5 class="mb-0">Transactions</h5>
+                        {{-- <button type="button" class="btn btn-primary search-name-responsive" data-bs-toggle="modal" data-bs-target="#addTransactionModalAd">
+                            <i class="bi bi-plus-lg"></i> Add Transaction
+                        </button> --}}
+                    </div>
 
                     <div class="table-responsive">
                         <table class="table table-bordered table-striped transaction-table" id="example" style="width:100%">
@@ -284,8 +271,12 @@ table.dataTable {
                                         <td>{{ $transaction->customer->name ?? '' }}</td>
                                         <td><span class='text-success'>{{ $transaction->points_dealer }}</span></td>
                                         <td><span class='text-success'>{{ $transaction->points_client }}</span></td>
-                                        <td>{{ $transaction->item }}</td>
-                                        <td>{{ $transaction->payment_method }}</td>
+                                        <td>{{ strtoupper($transaction->item) }}</td>
+                                         <td class="delivery-type-cell">
+                                            <span class="badge rounded-pill px-3 py-2 text-dark bg-info border fw-semibold">
+                                                {{ strtoupper(ucwords(str_replace('_', ' ', $transaction->payment_method))) }}
+                                            </span>
+                                        </td>
                                         @if(auth()->user()->role == "Admin" && auth()->user()->can_delete === "on")
                                             <td style="text-align: center;">
                                                 <button type="button" class="btn btn-danger btn-sm delete-single" 
@@ -307,11 +298,7 @@ table.dataTable {
     </div>
 </section>
 
-@if(auth()->user()->role == "Admin")
-  @include('new_transaction_admin')
-@else
-  @include('new_transaction')
-@endif
+@include('new_transaction_ad')
 @include('qr_scanner')
 
 @endsection
@@ -329,15 +316,52 @@ table.dataTable {
 
 <script>
   document.addEventListener('DOMContentLoaded', function () {
-    new TomSelect('#customerSelect', {
+    const customerSelect = new TomSelect('#adCustomerSelect', {
       create: false,
       allowEmptyOption: true,
       placeholder: "Search Customer"
     });
-    new TomSelect('#dealer', {
+
+    const dealerSelect = new TomSelect('#adDealerSelect', {
       create: false,
       allowEmptyOption: true,
       placeholder: "Search Dealer"
+    });
+
+    const allCustomerOptions = Array.from(document.querySelectorAll('#adCustomerSelect option'))
+      .filter(option => option.value)
+      .map(option => ({
+        value: option.value,
+        text: option.text,
+        center: option.dataset.center || ''
+      }));
+
+    dealerSelect.on('change', function(value) {
+      const dealerOption = document.querySelector(`#adDealerSelect option[value="${value}"]`);
+      const dealerCenter = dealerOption ? dealerOption.dataset.center : '';
+
+      customerSelect.clear();
+      customerSelect.clearOptions();
+
+      allCustomerOptions
+        .filter(option => option.center === dealerCenter)
+        .forEach(option => customerSelect.addOption({
+          value: option.value,
+          text: option.text
+        }));
+
+      customerSelect.refreshOptions(false);
+      customerSelect.enable();
+    });
+
+    document.getElementById('adQtyMinus').addEventListener('click', function() {
+      const qtyInput = document.getElementById('adQtyInput');
+      qtyInput.value = Math.max(1, parseInt(qtyInput.value || '1', 10) - 1);
+    });
+
+    document.getElementById('adQtyPlus').addEventListener('click', function() {
+      const qtyInput = document.getElementById('adQtyInput');
+      qtyInput.value = parseInt(qtyInput.value || '1', 10) + 1;
     });
   });
 </script>

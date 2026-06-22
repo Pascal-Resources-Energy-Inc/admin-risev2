@@ -551,7 +551,8 @@
 <div class="pricing-container @if(auth()->user()->role === 'Client') dealer-product-page @endif">
     <div class="page-header">
         <h1 class="page-title">Price List</h1>
-        @if(Auth::user()->role === 'Admin' && Auth::user()->can_add === 'on')
+        {{-- @if(Auth::user()->role === 'Admin' && Auth::user()->can_add === 'on') --}}
+        @if(Auth::user()->role === 'Area Distributor')
             <button class="add-product-btn" onclick="openModal()">
                 <span>+</span>
                 Add Product
@@ -601,7 +602,8 @@
             <h3>No Products Available</h3>
             <p>Start by adding your first product to the system.</p>
             {{-- Only show Add First Product button if user is Admin and has can_add permission --}}
-            @if(Auth::user()->role === 'Admin' && Auth::user()->can_add === 'on')
+            {{-- @if(Auth::user()->role === 'Admin' && Auth::user()->can_add === 'on') --}}
+            @if(Auth::user()->role === 'Area Distributor')
                 <button class="add-product-btn" onclick="openModal()">
                     <span>+</span>
                     Add First Product
@@ -612,7 +614,8 @@
 </div>
 
 {{-- Only show modal if user is Admin and has can_add permission --}}
-@if(Auth::user()->role === 'Admin' && Auth::user()->can_add === 'on')
+{{-- @if(Auth::user()->role === 'Admin' && Auth::user()->can_add === 'on') --}}
+@if(Auth::user()->role === 'Area Distributor')
 <div id="addProductModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
@@ -620,7 +623,7 @@
             <button class="close" onclick="closeModal()">&times;</button>
         </div>
         
-        <form action="{{ route('product.store') }}" method="POST" enctype="multipart/form-data">
+        <form action="{{ route('products.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
             <div class="modal-body">
                 @if ($errors->any())
@@ -678,7 +681,7 @@
 
 <script>
 // Only define modal functions if user has permission to add products
-@if(Auth::user()->role === 'Admin' && Auth::user()->can_add === 'on')
+
 function openModal() {
     document.getElementById('addProductModal').style.display = 'block';
     document.body.style.overflow = 'hidden';
@@ -740,6 +743,6 @@ document.getElementById('file-button').addEventListener('click', function(e) {
     });
 @endif
 
-@endif
+
 </script>
 @endsection

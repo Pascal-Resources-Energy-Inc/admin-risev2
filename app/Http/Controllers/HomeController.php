@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 use App\Transaction;
 use App\Dealer;
+use App\OrderDetail;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Client;
@@ -10,7 +11,12 @@ use Illuminate\Support\Collection;
 use App\TransactionDetail;
 use Illuminate\Http\Request;
 use App\Product;
+use App\InventoryTransfer;
+use App\User;
 use App\RedeemedHistory;
+use App\AdPurchaseOrderItem;
+use App\AdPurchaseOrder;
+use App\Voucher;
 
 class HomeController extends Controller
 {
@@ -38,7 +44,13 @@ class HomeController extends Controller
         $selectedYear = $request->get('year', Carbon::now()->year);
         $selectedMonth = $request->get('month', null);
         $viewType = $selectedMonth ? 'monthly' : 'yearly';
-        
+
+        // $adUser = auth()->user()->ad->id;
+        $adUser = optional(auth()->user()->ad)->id;
+        $pendingOrdersCount = OrderDetail::where('ad_id', $adUser)
+            ->where('status', 'Pending')
+            ->count();
+            
         $customers_less = Client::where('status', 'Active')->whereDoesntHave('latestTransaction', function ($q) use ($threeDaysAgo) {
             $q->where('date', '>=', $threeDaysAgo);
         })
@@ -164,8 +176,107 @@ class HomeController extends Controller
                 'customer_available_points' => $customerAvailablePoints ?? 0,
                 'dealers_inactive' => $dealers_inactive,
                 'map_data' => $mapData,
+                'pendingOrdersCount' => $pendingOrdersCount
             )
         );
+    }
+
+    public function liveOverview()
+    {
+        abort_unless(auth()->user()->role === 'Admin', 403);
+
+        $today = Carbon::today();
+        $monthStart = Carbon::now()->startOfMonth();
+        $thirtyDaysAgo = Carbon::today()->subDays(29);
+
+        $todaySalesRow = TransactionDetail::whereDate('created_at', $today)
+            ->selectRaw('COALESCE(SUM(price * qty), 0) as total')
+            ->first();
+        $monthSalesRow = TransactionDetail::where('created_at', '>=', $monthStart)
+            ->selectRaw('COALESCE(SUM(price * qty), 0) as total')
+            ->first();
+        $todaySales = (float) optional($todaySalesRow)->total;
+        $monthSales = (float) optional($monthSalesRow)->total;
+        $todayTransactions = TransactionDetail::whereDate('created_at', $today)->count();
+        $monthUnits = (float) TransactionDetail::where('created_at', '>=', $monthStart)->sum('qty');
+        $activeDealers = TransactionDetail::where('created_at', '>=', Carbon::now()->subDays(30))
+            ->whereNotNull('dealer_id')
+            ->distinct()
+            ->count('dealer_id');
+
+        $pendingDealerOrders = OrderDetail::where('status', 'Pending')->count();
+        $pendingAdOrders = AdPurchaseOrder::whereIn('status', ['Pending', 'For Verification'])->count();
+
+        $dailyRows = TransactionDetail::selectRaw(
+                'DATE(created_at) as sale_date, COALESCE(SUM(price * qty), 0) as sales, COALESCE(SUM(qty), 0) as units'
+            )
+            ->whereDate('created_at', '>=', $thirtyDaysAgo)
+            ->groupBy(DB::raw('DATE(created_at)'))
+            ->orderBy('sale_date')
+            ->get()
+            ->keyBy('sale_date');
+
+        $salesTrend = collect(range(0, 29))->map(function ($offset) use ($thirtyDaysAgo, $dailyRows) {
+            $date = $thirtyDaysAgo->copy()->addDays($offset);
+            $row = $dailyRows->get($date->toDateString());
+
+            return [
+                'date' => $date->format('M d'),
+                'sales' => $row ? round((float) $row->sales, 2) : 0,
+                'units' => $row ? (float) $row->units : 0,
+            ];
+        });
+
+        $dealerOrderStatuses = OrderDetail::selectRaw('status, COUNT(*) as total')
+            ->groupBy('status')
+            ->pluck('total', 'status');
+        $adOrderStatuses = AdPurchaseOrder::selectRaw('status, COUNT(*) as total')
+            ->groupBy('status')
+            ->pluck('total', 'status');
+
+        $statusNames = $dealerOrderStatuses->keys()
+            ->merge($adOrderStatuses->keys())
+            ->filter()
+            ->unique()
+            ->values();
+
+        $orderStatuses = $statusNames->map(function ($status) use ($dealerOrderStatuses, $adOrderStatuses) {
+            return [
+                'status' => $status,
+                'total' => (int) ($dealerOrderStatuses->get($status, 0) + $adOrderStatuses->get($status, 0)),
+            ];
+        })->sortByDesc('total')->values();
+
+        $recentTransactions = TransactionDetail::with(['dealer', 'customer'])
+            ->latest('id')
+            ->limit(6)
+            ->get()
+            ->map(function ($transaction) {
+                return [
+                    'id' => $transaction->id,
+                    'customer' => optional($transaction->customer)->name ?: 'Walk-in customer',
+                    'dealer' => optional($transaction->dealer)->name ?: 'Unassigned',
+                    'item' => $transaction->item ?: 'Product',
+                    'amount' => round((float) $transaction->price * (float) $transaction->qty, 2),
+                    'quantity' => (float) $transaction->qty,
+                    'time' => optional($transaction->created_at)->diffForHumans(),
+                ];
+            });
+
+        return response()->json([
+            'generated_at' => now()->toIso8601String(),
+            'kpis' => [
+                'today_sales' => $todaySales,
+                'month_sales' => $monthSales,
+                'today_transactions' => $todayTransactions,
+                'month_units' => $monthUnits,
+                'active_dealers' => $activeDealers,
+                'pending_orders' => $pendingDealerOrders + $pendingAdOrders,
+            ],
+            'sales_trend' => $salesTrend,
+            'order_statuses' => $orderStatuses,
+            'recent_transactions' => $recentTransactions,
+        ]);
     }
 
     private function getPhilippineMapData()
@@ -786,18 +897,93 @@ class HomeController extends Controller
 
         return $customers;
     }
-
+    
+    // Partner
     public function adDashboard(Request $request)
     {
+
+        $user = auth()->user();
+        $adId = optional($user->ad)->id; 
+
+        $areas = optional($user->ad)
+            ->areas
+            ? $user->ad->areas->pluck('area_name')->toArray()
+            : [];
+
+        $orders = OrderDetail::with('ad')
+            ->where('ad_id', $adId)
+            ->where('status', 'Completed')
+            ->whereDate('date', Carbon::today())
+            ->get();
+        
+        $product_sold = OrderDetail::with('ad')
+            ->where('ad_id', $adId)
+            ->where('status', 'Completed')
+            ->get();
+        $products = Product::where('ad_user_id', $user->id)->where('status', 'Activate')->whereNotNull('price')->get();
+        $adVouchers = Voucher::whereIn('name', array_filter([optional($user->ad)->store_code, $user->name]))->get();
+        $usedVoucherCount = $adVouchers->filter(function ($voucher) {
+            return (int) $voucher->used_count > 0;
+        })->count();
+        $unusedVoucherCount = $adVouchers->filter(function ($voucher) {
+            return (int) $voucher->used_count === 0;
+        })->count();
+        // dd($products);
+        $adUser = optional(auth()->user()->ad)->id;
+        $pendingOrdersCount = OrderDetail::where('ad_id', $adUser)
+            ->where('status', 'Pending')
+            ->count();
         $dealer = "";
         $customer = "";
         $threeDaysAgo = Carbon::now()->subDays(7)->toDateString();
         $user = auth()->user();
-        $centers = $user->ad->areas->pluck('area_name')->toArray();
+        $areas = $user->ad->areas->pluck('area_name')->toArray();
         
         $selectedYear = $request->get('year', Carbon::now()->year);
         $selectedMonth = $request->get('month', null);
         $viewType = $selectedMonth ? 'monthly' : 'yearly';
+        
+        // Monthly Sales Overview
+        $sales = OrderDetail::select(
+                DB::raw("MONTH(created_at) as month"),
+                DB::raw("SUM(price * qty) as total")
+            )
+            ->where('status', 'Completed')
+            ->where('ad_id', $adId)
+            ->whereYear('created_at', $selectedYear)
+            ->groupBy(DB::raw("MONTH(created_at)"))
+            ->pluck('total', 'month');
+
+        $months = [];
+        $totals = [];
+
+        for ($i = 1; $i <= 12; $i++) {
+
+            $months[] = date("F", mktime(0, 0, 0, $i, 1));
+
+            $totals[] = isset($sales[$i]) ? (float) $sales[$i] : 0;
+
+        }
+
+        // Map
+
+        $dealers = Dealer::whereIn('area', $areas)->get();
+
+        $mapDealers = [];
+
+        foreach ($dealers as $d) {
+
+            if (!$d->latitude || !$d->longitude) continue;
+
+            $mapDealers[] = [
+                'name' => $d->name,
+                'email' => $d->email,
+                'status' => $d->status,
+                'region' => $d->location_region,
+                'lat' => (float) $d->latitude,
+                'lng' => (float) $d->longitude,
+            ];
+        }
         
         $customers_less = Client::where('status', 'Active')->whereDoesntHave('latestTransaction', function ($q) use ($threeDaysAgo) {
             $q->where('date', '>=', $threeDaysAgo);
@@ -812,9 +998,122 @@ class HomeController extends Controller
         $customers = Client::whereHas('transactions')->get();
         $transactions = Transaction::orderBy('id','desc')->get();
         
-        $adDealers = Dealer::whereIn('center', $centers)->get();
+        $adDealers = Dealer::whereIn('area', $areas)->get();
         $transactions_details = TransactionDetail::orderBy('id','desc')->get();
+        $adDealerUserIds = $adDealers->pluck('user_id')->filter()->values();
 
+        $adSalesTransactions = TransactionDetail::whereIn('dealer_id', $adDealerUserIds)->get();
+        $totalProductsSoldQty = $adSalesTransactions->sum('qty');
+        $soldItemCount = $adSalesTransactions->pluck('item')->filter()->unique()->count();
+        $avgProductSales = $soldItemCount > 0 ? ($totalProductsSoldQty / $soldItemCount) : 0;
+        $totalRefill = $adSalesTransactions->filter(function ($transaction) {
+            return stripos((string) $transaction->item, 'refill') !== false;
+        })->sum('qty');
+
+        $topDealers = TransactionDetail::select(
+                'dealer_id',
+                DB::raw('SUM(qty) as total_qty'),
+                DB::raw('SUM(price * qty) as total_sales'),
+                DB::raw('MAX(date) as latest_transaction')
+            )
+            ->with('dealer')
+            ->whereIn('dealer_id', $adDealerUserIds)
+            ->groupBy('dealer_id')
+            ->orderByDesc('total_sales')
+            ->limit(10)
+            ->get();
+
+        $orderedByItem = OrderDetail::select('item', DB::raw('SUM(qty) as ordered_qty'))
+            ->where('ad_id', $adId)
+            ->where('status', 'Completed')
+            ->groupBy('item')
+            ->pluck('ordered_qty', 'item');
+      
+        // $inventoryInByItem = InventoryTransfer::select(
+        //         'item_name',
+        //         DB::raw('MAX(sku) as sku'),
+        //         DB::raw('SUM(qty) as stock_qty')
+        //     )
+        //     ->where('movement_type', '!=', 'transfer')
+        //     ->where('ad_id', $adId)
+        //     ->groupBy('item_name')
+        //     ->get()
+        //     ->keyBy('item_name');
+
+        $inventoryInByItem = AdPurchaseOrderItem::select(
+                'product_name as item_name',
+                DB::raw('MAX(sku) as sku'),
+                DB::raw('SUM(qty) as stock_qty')
+            )
+            ->whereHas('purchaseOrder', function ($query) use ($adId) {
+                $query->where('ad_id', $adId)
+                      ->where('status', 'Completed');
+            })
+            ->groupBy('item_name')
+            ->get()
+            ->keyBy('item_name');   
+         
+
+        $outByItem = InventoryTransfer::select('item_name', DB::raw('SUM(qty) as out_qty'))
+            ->where('ad_id', $adId)
+            ->where('movement_type', 'out')
+            ->groupBy('item_name')
+            ->pluck('out_qty', 'item_name');
+
+        $stockLevels = $orderedByItem->keys()
+            ->merge($inventoryInByItem->keys())
+            ->merge($outByItem->keys())
+            ->filter()
+            ->unique()
+            ->map(function ($item) use ($inventoryInByItem, $orderedByItem, $outByItem) {
+                $inventory = $inventoryInByItem->get($item);
+                $stockQty = $inventory ? (float) $inventory->stock_qty : 0;
+                $orderedQty = (float) ($orderedByItem[$item] ?? 0);
+                $outQty = (float) ($outByItem[$item] ?? 0);
+
+                return (object) [
+                    'item' => $item,
+                    'sku' => $inventory ? $inventory->sku : null,
+                    'stock_qty' => $stockQty,
+                    'sold_qty' => $orderedQty,
+                    'out_qty' => $outQty,
+                    'remaining_qty' => $stockQty - $orderedQty - $outQty,
+                ];
+            })
+            ->sortBy('item')
+            ->values();
+        // dd($stockLevels);
+        $thirtyDaysAgo = Carbon::today()->subDays(29);
+        $last30DaysSoldByItem = OrderDetail::select('item', DB::raw('SUM(qty) as sold_qty'))
+            ->whereIn('dealer_id', $adDealerUserIds)
+            ->whereDate('date', '>=', $thirtyDaysAgo)
+            ->groupBy('item')
+            ->pluck('sold_qty', 'item');
+
+        $stockInventoryRows = $stockLevels->map(function ($stock) use ($last30DaysSoldByItem) {
+            $endingInventory = (float) $stock->remaining_qty;
+            $last30DaysSoldQty = (float) ($last30DaysSoldByItem[$stock->item] ?? 0);
+            $averageSalesVolume = $last30DaysSoldQty / 30;
+            $fourteenDayStockLevel = $averageSalesVolume * 14;
+            $endingInventoryPercent = $fourteenDayStockLevel > 0
+                ? ($endingInventory / $fourteenDayStockLevel) * 100
+                : 0;
+            $inventoryDays = $averageSalesVolume > 0
+                ? ($endingInventory / $averageSalesVolume)
+                : 0;
+           
+            return (object) [
+                'item' => $stock->item,
+                'sku' => $stock->sku,
+                'ending_inventory' => $endingInventory,
+                'average_sales_volume' => $averageSalesVolume,
+                'fourteen_day_stock_level' => $fourteenDayStockLevel,
+                'ending_inventory_percent' => $endingInventoryPercent,
+                'inventory_days' => $inventoryDays,
+            ];
+        })->values();
+        
+       
         if(auth()->user()->role == "Dealer")
         {
             $dealer = Dealer::with('sales')->where('user_id',auth()->user()->id)->first();
@@ -926,7 +1225,25 @@ class HomeController extends Controller
                 'dealers_inactive' => $dealers_inactive,
                 'map_data' => $mapData,
                 'adDealers' => $adDealers,
+                'orders' => $orders,
+                'products' => $products,
+                'usedVoucherCount' => $usedVoucherCount,
+                'unusedVoucherCount' => $unusedVoucherCount,
+                'pendingOrdersCount' => $pendingOrdersCount,
+                'months' => $months,
+                'totals' => $totals,
+                'product_sold' => $product_sold,
+                'mapDealers' => $mapDealers,
+                'avgProductSales' => $avgProductSales,
+                'topDealers' => $topDealers,
+                'stockLevels' => $stockLevels,
+                'totalRefill' => $totalRefill,
+                'totalProductsSoldQty' => $totalProductsSoldQty,
+                'managedAreas' => $areas,
+                'stockInventoryRows' => $stockInventoryRows,
             )
         );
     }
+
+    
 }

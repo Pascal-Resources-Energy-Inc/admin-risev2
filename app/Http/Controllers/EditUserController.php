@@ -229,6 +229,10 @@ class EditUserController extends Controller
 
         return DataTables::of($query)
 
+            ->addColumn('name', fn($user) => $user->name ?? '')
+            ->addColumn('email', fn($user) => $user->email ?? '')
+            ->addColumn('role', fn($user) => $user->role ?? '')
+
             ->addColumn('address', function ($user) {
                 return optional($user->dealer)->address
                     ?? optional($user->client)->address
@@ -239,51 +243,22 @@ class EditUserController extends Controller
             ->addColumn('status', function ($user) {
                 return optional($user->dealer)->status
                     ?? optional($user->client)->status
-                    ?? '';
+                    ?? 'N/A';
             })
 
             ->addColumn('actions', function ($user) {
 
-                $currentUser = auth()->user();
-                $canEdit = $currentUser && $currentUser->role === 'Admin' && $currentUser->can_edit === 'on';
-                $canAdd  = $currentUser && $currentUser->role === 'Admin' && $currentUser->can_add === 'on';
+                return '
+                    <button class="btn-custom btn-edit-custom btn-edit-user"
+                        data-id="'.$user->id.'">
+                        <i class="fas fa-edit"></i>
+                    </button>
 
-                $html = '<div class="action-buttons">';
-
-                // VIEW
-                if ($user->role === 'Dealer' && $user->dealer) {
-                    $html .= '<a href="view-dealer/'.$user->dealer->id.'" class="btn-custom btn-view-custom">
-                                <i class="fas fa-eye"></i>
-                            </a>';
-                }
-
-                if ($user->role === 'Client' && $user->client) {
-                    $html .= '<a href="view-client/'.$user->client->id.'" class="btn-custom btn-view-custom">
-                                <i class="fas fa-eye"></i>
-                            </a>';
-                }
-
-                // EDIT (Admin + permission)
-                if ($canEdit) {
-                    $html .= '<button class="btn-custom btn-edit-custom"
-                                data-bs-toggle="modal"
-                                data-bs-target="#edit-users-'.$user->id.'">
-                                <i class="fas fa-edit"></i>
-                            </button>';
-                }
-
-                // ACCESS (Admin only logic)
-                if ($user->role === 'Admin' && ($canEdit || $canAdd)) {
-                    $html .= '<button class="btn-custom btn-access-custom"
-                                data-bs-toggle="modal"
-                                data-bs-target="#access-admin-'.$user->id.'">
-                                <i class="fas fa-key"></i>
-                            </button>';
-                }
-
-                $html .= '</div>';
-
-                return $html;
+                    <button class="btn-custom btn-access-custom btn-access-user"
+                        data-id="'.$user->id.'">
+                        <i class="fas fa-key"></i>
+                    </button>
+                ';
             })
 
             ->rawColumns(['actions'])

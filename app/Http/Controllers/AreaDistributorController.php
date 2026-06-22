@@ -7,27 +7,99 @@ use App\AreaAd;
 use App\Center;
 use App\Dealer;
 use App\User;
+use App\Area;
 use App\Item;
+use App\Product;
+use App\OrderDetail;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
 
 class AreaDistributorController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $activeAds = AreaDistributor::where('status', 'Active')->count();
-        $inactiveAds = AreaDistributor::where('status', 'Inactive')->count();
-        $centers = Center::get();
-        
-        $ads = AreaDistributor::with('areas')->get();
-        return view('area_distributor.index',
-            array(
-                'ads' => $ads,
-                'activeAds' => $activeAds,
-                'inactiveAds' => $inactiveAds,
-                'centers' => $centers
-            )
-        );
+        $centers = Center::orderBy('name')->get();
+        $areas = Area::orderBy('name')->get();
+
+        $baseQuery = AreaDistributor::whereHas('userAds', function ($query) {
+            $query->where('role', 'Area Distributor');
+        });
+
+        $totalAds = (clone $baseQuery)->count();
+        $activeAds = (clone $baseQuery)->where('status', 'Active')->count();
+        $inactiveAds = (clone $baseQuery)->where('status', 'Inactive')->count();
+        $totalAwardedAreas = AreaAd::whereHas('distributor.userAds', function ($query) {
+            $query->where('role', 'Area Distributor');
+        })->count();
+
+        $regions = (clone $baseQuery)
+            ->whereNotNull('location_region')
+            ->where('location_region', '<>', '')
+            ->distinct()
+            ->orderBy('location_region')
+            ->pluck('location_region');
+
+        $projectTypes = AreaAd::whereHas('distributor.userAds', function ($query) {
+                $query->where('role', 'Area Distributor');
+            })
+            ->whereNotNull('project_type')
+            ->where('project_type', '<>', '')
+            ->distinct()
+            ->orderBy('project_type')
+            ->pluck('project_type');
+
+        $ads = AreaDistributor::with(['areas' => function ($query) {
+                $query->orderBy('project_type')->orderBy('area_name');
+            }, 'userAds'])
+            ->whereHas('userAds', function ($q) {
+                $q->where('role', 'Area Distributor');
+            })
+            ->when($request->filled('search'), function ($query) use ($request) {
+                $search = trim($request->search);
+                $query->where(function ($inner) use ($search) {
+                    $inner->where('store_code', 'like', '%' . $search . '%')
+                        ->orWhere('name', 'like', '%' . $search . '%')
+                        ->orWhere('business_name', 'like', '%' . $search . '%')
+                        ->orWhere('contact_number', 'like', '%' . $search . '%')
+                        ->orWhere('location_region', 'like', '%' . $search . '%')
+                        ->orWhereHas('areas', function ($areaQuery) use ($search) {
+                            $areaQuery->where('area_name', 'like', '%' . $search . '%')
+                                ->orWhere('project_type', 'like', '%' . $search . '%');
+                        });
+                });
+            })
+            ->when($request->filled('status'), function ($query) use ($request) {
+                $query->where('status', $request->status);
+            })
+            ->when($request->filled('region'), function ($query) use ($request) {
+                $query->where('location_region', $request->region);
+            })
+            ->when($request->filled('project_type'), function ($query) use ($request) {
+                $query->whereHas('areas', function ($areaQuery) use ($request) {
+                    $areaQuery->where('project_type', $request->project_type);
+                });
+            })
+            ->when($request->filled('area'), function ($query) use ($request) {
+                $area = trim($request->area);
+                $query->whereHas('areas', function ($areaQuery) use ($area) {
+                    $areaQuery->where('area_name', 'like', '%' . $area . '%');
+                });
+            })
+            ->orderBy('name')
+            ->get();
+
+        return view('area_distributor.index', [
+            'ads' => $ads,
+            'activeAds' => $activeAds,
+            'inactiveAds' => $inactiveAds,
+            'totalAds' => $totalAds,
+            'totalAwardedAreas' => $totalAwardedAreas,
+            'regions' => $regions,
+            'projectTypes' => $projectTypes,
+            'centers' => $centers,
+            'areas' => $areas
+        ]);
     }
 
     /**
@@ -48,21 +120,6 @@ class AreaDistributorController extends Controller
      */
     public function store(Request $request)
     {
-        $user = new User;
-        $user->name = $request->name;
-        $user->email = $request->email_address;
-        $user->role = 'Area Distributor';
-        $user->password = bcrypt('12345678');
-        $user->save();
-        
-        $latestAd = AreaDistributor::orderBy('id', 'desc')->first();
-
-        $number = ($latestAd && $latestAd->ad_reference)
-            ? intval(substr($latestAd->ad_reference, 4)) + 1
-            : 1;
-
-        $ad_reference = 'PRAD' . str_pad($number, 5, '0', STR_PAD_LEFT);
-
         $imagePath = null;
 
         if ($request->hasFile('avatar')) {
@@ -73,6 +130,27 @@ class AreaDistributorController extends Controller
         }
 
         $fullAddress = $request->address;
+
+        $user = new User;
+        $user->name = $request->name;
+        $user->email = $request->email_address;
+        $user->role = 'Area Distributor';
+        $user->password = bcrypt('12345678');
+
+        if ($imagePath) {
+            $user->avatar = $imagePath;
+        }
+
+        $user->save();
+        
+        $latestAd = AreaDistributor::orderBy('id', 'desc')->first();
+
+        $number = ($latestAd && $latestAd->ad_reference)
+            ? intval(substr($latestAd->ad_reference, 4)) + 1
+            : 1;
+
+        $ad_reference = 'PRAD' . str_pad($number, 5, '0', STR_PAD_LEFT);
+
 
         $areaDistributor = new AreaDistributor;
         $areaDistributor->user_id = $user->id;
@@ -99,6 +177,7 @@ class AreaDistributorController extends Controller
             AreaAd::create([
                 'ad_id' => $areaDistributor->id,
                 'area_name' => $area
+
             ]);
         }
 
@@ -116,77 +195,208 @@ class AreaDistributorController extends Controller
         //
     }
 
+    public function view($id)
+    {
+        $ad = AreaDistributor::with(['areas', 'userAds'])->findOrFail($id);
+
+        return view('area_distributor.view', compact('ad'));
+    }
+
     public function edit($id)
     {
         $ad = AreaDistributor::with('areas')->findOrFail($id);
-        $centers = Center::all(); // same source as your create
+        $centers = Center::all();
+        $areas = Area::all();
 
-        return view('area_distributor.edit', compact('ad', 'centers'));
+        return view('area_distributor.edit', compact('ad', 'centers', 'areas'));
     }
 
     public function update(Request $request, $id)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email_address' => 'required|email',
-            'contact_number' => 'required',
-            'business_name' => 'required',
-            'business_type' => 'required',
-            'area_name' => 'required|array',
-        ]);
-
-        $areaDistributor = AreaDistributor::findOrFail($id);
-
-        // ✅ Update user
-        if ($areaDistributor->user_id) {
-            User::where('id', $areaDistributor->user_id)->update([
-                'name' => $request->name,
-                'email' => $request->email_address
+        if ($request->has('same_as_delivery_address')) {
+            $request->merge([
+                'delivery_address' => $request->address,
             ]);
         }
 
-        // ✅ Image Upload
-        if ($request->hasFile('avatar')) {
+        $request->validate([
+            'delivery_address' => 'nullable|string|max:1000',
+        ]);
 
-            // delete old
-            if ($areaDistributor->avatar && file_exists(public_path($areaDistributor->avatar))) {
-                unlink(public_path($areaDistributor->avatar));
+        DB::beginTransaction();
+
+        try {
+
+            $ad = AreaDistributor::findOrFail($id);
+            $fullName = trim(collect([
+                $request->first_name,
+                $request->middle_name,
+                $request->last_name,
+            ])->filter()->implode(' '));
+
+            if ($ad->user_id) {
+
+                User::where('id', $ad->user_id)->update([
+                    'name' => $fullName ?: $request->name,
+                    'first_name' => $request->first_name,
+                    'middle_name' => $request->middle_name,
+                    'last_name' => $request->last_name,
+                    'email' => $request->email_address,
+                    'birthdate' => $request->birthdate,
+                ]);
             }
 
-            $file = $request->file('avatar');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            $file->move(public_path('uploads/area_distributor'), $filename);
+            $avatarPath = $ad->avatar;
+            $attachmentPath = $ad->attachment;
 
-            // ✅ IMPORTANT: assign BEFORE update
-            $areaDistributor->avatar = 'uploads/area_distributor/' . $filename;
-        }
+            if ($request->hasFile('avatar')) {
 
-        // ✅ Update main data
-        $areaDistributor->update([
-            'name' => $request->name,
-            'store_code' => $request->store_code,
-            'email_address' => $request->email_address,
-            'contact_number' => $request->contact_number,
-            'facebook' => $request->facebook,
-            'address' => $request->address,
-            'business_name' => $request->business_name,
-            'business_type' => $request->business_type,
-            'latitude' => $request->latitude,
-            'longitude' => $request->longitude,
-        ]);
+                if (
+                    $ad->avatar &&
+                    file_exists(public_path($ad->avatar))
+                ) {
+                    unlink(public_path($ad->avatar));
+                }
 
-        // ✅ Sync Areas (cleaner)
-        AreaAd::where('ad_id', $areaDistributor->id)->delete();
+                $file = $request->file('avatar');
 
-        foreach ($request->area_name as $area) {
-            AreaAd::create([
-                'ad_id' => $areaDistributor->id,
-                'area_name' => $area
+                $filename = time() . '_' . $file->getClientOriginalName();
+
+                $path = 'uploads/area_distributor';
+
+                $file->move(public_path($path), $filename);
+
+                $avatarPath = $path . '/' . $filename;
+            }
+
+            if ($request->hasFile('attachment')) {
+
+                if (
+                    $ad->attachment &&
+                    file_exists(public_path($ad->attachment))
+                ) {
+                    unlink(public_path($ad->attachment));
+                }
+
+                $file = $request->file('attachment');
+
+                $filename = time() . '_' . $file->getClientOriginalName();
+
+                $path = 'uploads/attachments';
+
+                $file->move(public_path($path), $filename);
+
+                $attachmentPath = $path . '/' . $filename;
+            }
+
+            $ad->update([
+                'name' => $fullName ?: $request->name,
+                'store_code' => $request->store_code,
+                'email_address' => $request->email_address,
+                'contact_number' => $request->contact_number,
+                'facebook' => $request->facebook,
+                'address' => $request->address,
+                'delivery_address' => $request->delivery_address,
+                'street_address' => $request->street_address,
+                'location_region' => $request->location_region,
+                'location_province' => $request->location_province,
+                'location_city' => $request->location_city,
+                'location_barangay' => $request->location_barangay,
+                'zipcode' => $request->zipcode,
+                'business_name' => $request->business_name,
+                'business_type' => $request->business_type,
+                'latitude' => $request->latitude,
+                'longitude' => $request->longitude,
+                'status' => $request->status,
+                'avatar' => $avatarPath,
+                'attachment' => $attachmentPath,
+                'withholding_tax' => $request->withholding_tax ? 1 : 0,
             ]);
-        }
 
-        return back()->with('success', 'Updated successfully');
+            DB::commit();
+
+            return back()->with(
+                'success',
+                'Partner updated successfully.'
+            );
+
+        } catch (\Exception $e) {
+
+            DB::rollBack();
+
+            return back()->with(
+                'error',
+                $e->getMessage()
+            );
+        }
     }
+
+    // public function update(Request $request, $id)
+    // {
+    //     $request->validate([
+    //         'name' => 'required|string|max:255',
+    //         'email_address' => 'required|email',
+    //         'contact_number' => 'required',
+    //         'business_name' => 'required',
+    //         'business_type' => 'required',
+    //         'area_name' => 'required|array',
+    //     ]);
+
+    //     $areaDistributor = AreaDistributor::findOrFail($id);
+
+    //     // ✅ Update user
+    //     if ($areaDistributor->user_id) {
+    //         User::where('id', $areaDistributor->user_id)->update([
+    //             'name' => $request->name,
+    //             'email' => $request->email_address,
+    //             'birthdate' => $request->birthdate
+    //         ]);
+    //     }
+
+    //     // ✅ Image Upload
+    //     if ($request->hasFile('avatar')) {
+
+    //         // delete old
+    //         if ($areaDistributor->avatar && file_exists(public_path($areaDistributor->avatar))) {
+    //             unlink(public_path($areaDistributor->avatar));
+    //         }
+
+    //         $file = $request->file('avatar');
+    //         $filename = time() . '_' . $file->getClientOriginalName();
+    //         $file->move(public_path('uploads/area_distributor'), $filename);
+
+    //         // ✅ IMPORTANT: assign BEFORE update
+    //         $areaDistributor->avatar = 'uploads/area_distributor/' . $filename;
+    //     }
+
+    //     // ✅ Update main data
+    //     $areaDistributor->update([
+    //         'name' => $request->name,
+    //         'store_code' => $request->store_code,
+    //         'email_address' => $request->email_address,
+    //         'contact_number' => $request->contact_number,
+    //         'facebook' => $request->facebook,
+    //         'address' => $request->address,
+    //         'business_name' => $request->business_name,
+    //         'business_type' => $request->business_type,
+    //         'joining_date' => $request->joining_date,
+    //         'latitude' => $request->latitude,
+    //         'longitude' => $request->longitude,
+    //         'status' => $request->status,
+    //     ]);
+
+    //     // ✅ Sync Areas (cleaner)
+    //     AreaAd::where('ad_id', $areaDistributor->id)->delete();
+
+    //     foreach ($request->area_name as $area) {
+    //         AreaAd::create([
+    //             'ad_id' => $areaDistributor->id,
+    //             'area_name' => $area
+    //         ]);
+    //     }
+
+    //     return back()->with('success', 'Updated successfully');
+    // }
 
     /**
      * Remove the specified resource from storage.
@@ -264,28 +474,35 @@ class AreaDistributorController extends Controller
         $user = auth()->user();
 
         // $centers = $user->ad->areas->pluck('area_name')->toArray();
-        $centers = optional($user->ad)
+        $areas = optional($user->ad)
             ->areas
             ? $user->ad->areas->pluck('area_name')->toArray()
             : [];
 
+        $adUser = optional(auth()->user()->ad)->id;
+        $pendingOrdersCount = OrderDetail::where('ad_id', $adUser)
+            ->where('status', 'Pending')
+            ->count();
+
         $dealers = Dealer::with([
             'orders' => function ($q) {
-                $q->select('dealer_id', 'item', \DB::raw('SUM(qty) as total_qty'))
+                $q->where('status', 'Completed')->select('dealer_id', 'item', \DB::raw('SUM(qty) as total_qty'))
                 ->groupBy('dealer_id', 'item');
             },
             'sales' => function ($q) {
-                $q->select('dealer_id', 'item_description', \DB::raw('SUM(qty) as total_qty'))
-                ->groupBy('dealer_id', 'item_description');
+                $q->select('dealer_id', 'item', \DB::raw('SUM(qty) as total_qty'))
+                ->groupBy('dealer_id', 'item');
             }
-        ])->whereIn('center', $centers)->get();
+        ])->whereIn('area', $areas)->get();
        
-        $items = Item::select('item')->get(); // master list of items
-        $activeDealers = Dealer::whereIn('center', $centers)
+        // $items = Item::select('item')->get(); // master list of items
+        $items = Product::select('product_name')->where('ad_user_id', $user->id)->where('status', 'Activate')->get();
+        // dd($items);
+        $activeDealers = Dealer::whereIn('area', $areas)
             ->where('status', 'Active')
             ->count();
 
-        $inactiveDealers = Dealer::whereIn('center', $centers)
+        $inactiveDealers = Dealer::whereIn('area', $areas)
             ->where('status', 'Inactive')
             ->count();
 
@@ -293,8 +510,114 @@ class AreaDistributorController extends Controller
             'dealers' => $dealers,
             'items' => $items,
             'activeDealers' => $activeDealers,
-            'inactiveDealers' => $inactiveDealers
+            'inactiveDealers' => $inactiveDealers,
+            'pendingOrdersCount' => $pendingOrdersCount
         ]);
     }
 
+    public function megaDealers()
+    {
+        $centers = Center::get();
+        $areas = Area::get();
+
+        $activeAds = AreaDistributor::whereHas('userAds', function ($q) {
+            $q->where('role', 'Mega Dealer')
+                ->where('status', 'Active');
+        })->count();
+
+        $inactiveAds = AreaDistributor::whereHas('userAds', function ($q) {
+            $q->where('role', 'Mega Dealer')
+                ->where('status', 'Inactive');
+        })->count();
+
+        $ads = AreaDistributor::with(['areas', 'userAds'])
+            ->whereHas('userAds', function ($q) {
+                $q->where('role', 'Mega Dealer');
+            })
+            ->get();
+
+        return view('mds.index', [
+            'ads' => $ads,
+            'activeAds' => $activeAds,
+            'inactiveAds' => $inactiveAds,
+            'centers' => $centers,
+            'areas' => $areas
+        ]);
+    }
+
+    public function updateAreas(Request $request, $id)
+    {
+        $ad = AreaDistributor::findOrFail($id);
+
+        $rows = collect($request->input('rows', []))->map(function ($row) {
+            return [
+                'id' => isset($row['id']) ? trim($row['id']) : null,
+                'project_type' => isset($row['project_type']) ? trim($row['project_type']) : null,
+                'area_name' => isset($row['area_name']) ? trim($row['area_name']) : null,
+                'joining_date' => isset($row['joining_date']) ? trim($row['joining_date']) : null,
+            ];
+        })->filter(function ($row) {
+            return !empty($row['area_name']) && !empty($row['project_type']);
+        });
+        // dd($rows);
+        DB::beginTransaction();
+
+        try {
+            $submittedIds = [];
+
+            foreach ($rows as $row) {
+                if (!empty($row['id'])) {
+                    $area = AreaAd::where('ad_id', $ad->id)
+                        ->where('id', $row['id'])
+                        ->first();
+
+                    if ($area) {
+                        $area->update([
+                            'project_type' => $row['project_type'],
+                            'area_name' => $row['area_name'],
+                            'joining_date' => $row['joining_date'] ?: null,
+                        ]);
+
+                        $submittedIds[] = $area->id;
+                    }
+
+                    continue;
+                }
+
+                $new = AreaAd::create([
+                    'ad_id' => $ad->id,
+                    'ad_user_id' => $ad->user_id,
+                    'project_type' => $row['project_type'],
+                    'area_name' => $row['area_name'],
+                    'joining_date' => $row['joining_date'] ?: null,
+                    'user_role' => 'Area Distributor',
+                ]);
+
+                $submittedIds[] = $new->id;
+            }
+
+            if (count($submittedIds) > 0) {
+                AreaAd::where('ad_id', $ad->id)
+                    ->whereNotIn('id', $submittedIds)
+                    ->delete();
+            } else {
+                AreaAd::where('ad_id', $ad->id)->delete();
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Areas updated successfully!'
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'status' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

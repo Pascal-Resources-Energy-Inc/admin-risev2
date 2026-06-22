@@ -61,6 +61,7 @@
     <script src="{{asset('login_css/js/popper.min.jss')}}"></script>
     <script src="{{asset('login_css/js/bootstrap.min.js')}}"></script>
     <script src="{{asset('login_css/js/main.js')}}"></script> --}}
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="{{asset('inside_css/assets/libs/bootstrap/js/bootstrap.bundle.min.js')}}"></script>
     <script src="{{asset('inside_css/assets/libs/simplebar/simplebar.min.js')}}"></script>
     <script src="{{asset('inside_css/assets/libs/node-waves/waves.min.js')}}"></script>

@@ -3,7 +3,7 @@
         <div class="modal-content">
             <div class="modal-header d-flex align-items-center">
                 <h4 class="modal-title" id="myModalLabel">
-                    New Area Distributor
+                    New Gazlite Partner
                 </h4>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -13,13 +13,22 @@
                 <input type="hidden" name="longitude" id="hidden_longitude">
                 <div class="modal-body">
                     <div class="row">
-                        <div class="col-md-6">
-                            <label class="form-label">Store Code</label>
-                            <input type="text" class="form-control" id="store_code" name="store_code" placeholder="Enter Store Code">
+                        <div class="col-md-4">
+                            <label class="form-label">Role Type&nbsp;<span class="text-danger">*</span></label>
+                            <select id="roleFilter" class="form-control select2" required>
+                                <option value="">Select Role</option>
+                                <option value="Admin">Admin</option>
+                                <option value="Provincial Distributor">Provincial Distributor</option>
+                                <option value="Area Distributor">Area Distributor</option>
+                                <option value="Mega Dealer">Mega Dealer</option>
+                            </select>
                         </div>
-
+                        <div class="col-md-4">
+                            <label class="form-label">Partner Code&nbsp;<span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="store_code" name="store_code" placeholder="Enter Store Code" required>
+                        </div>
                         <!-- Avatar Upload -->
-                        <div class="col-md-6 text-center">
+                        <div class="col-md-4 text-center">
                             <div class="avatar-wrapper mx-auto mb-2">
                                 <img id="avatar"
                                     src="{{ asset('design/assets/images/profile/user-1.png') }}"
@@ -717,17 +726,3 @@
 
 });
 </script>
-@if(session('success'))
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        Swal.fire({
-            icon: 'success',
-            title: 'Success',
-            text: '{{ session('success') }}',
-            confirmButtonText: 'OK'
-        }).then(() => {
-            location.reload(); // ✅ refresh page
-        });
-    });
-</script>
-@endif

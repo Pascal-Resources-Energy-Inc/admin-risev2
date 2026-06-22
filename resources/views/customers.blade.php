@@ -96,7 +96,7 @@
               <div class="card-body">
                   <h5>Customers <button class="btn-sm btn-success btn" data-bs-toggle="modal"  data-bs-target="#new_customer">+ Add</button></h5>
                 <div class="table-responsive">
-                  <table id="example" class="table table-bordered table-striped " style="width:100%">
+                  <table id="example" class="table table-bordered table-striped transaction-table" style="width:100%">
                       <thead>
                         <tr>
                             <th>Customer Reference</th>
@@ -121,7 +121,7 @@
                           <td>{{ $customer->client_reference }}</td>
                           <td><a href='view-client/{{$customer->id}}'>{{ strtoupper($customer->name) }}</a></td>
                           <td>{{ $customer->number }}</td>
-                          <td>{{ $customer->email_address }}</td>
+                          <td>{{ strtoupper($customer->email_address) }}</td>
                           <td style="display:none;">
                               @php
                                   $firstTransaction = $customer->transactions->sortBy('date')->first();
@@ -140,12 +140,14 @@
                             @endif
                           </td>
                           <td>
-                            {{ implode(', ', array_filter([
-                                $customer->street_address,
-                                $customer->location_barangay,
-                                $customer->location_city,
-                                $customer->location_province
-                            ])) }} {{ $customer->postal_code }}
+                            {{ strtoupper(
+                                implode(', ', array_filter([
+                                    $customer->street_address,
+                                    $customer->location_barangay,
+                                    $customer->location_city,
+                                    $customer->location_province
+                                ])) . ' ' . $customer->postal_code
+                            ) }}
                           </td>
                           <td>{{ $customer->transactions->sum('points_client') }}</td>
                           {{-- <td>
@@ -160,8 +162,8 @@
                           </td> --}}
                           
                           <td style="display:none;">@if($customer->serial && !empty($customer->serial->remarks)) SN# @if($customer->serial) {{ $customer->serial->serial_number }} @endif used to be owned by @if($customer->serial && $customer->serial->remarks) @php $previousOwner = \App\Client::find($customer->serial->remarks); @endphp {{ $previousOwner ? $previousOwner->name : 'Unknown Client' }} @endif  @endif</td>
-                          <td>{{ $customer->center }}</td>
-                          <td>{{ $customer->spo }}</td>
+                          <td>{{ strtoupper($customer->center) }}</td>
+                          <td>{{ strtoupper($customer->spo) }}</td>
                           <td>
                             @if($customer->status == 'Active')
                               <span class="badge badge-success">Active</span>
@@ -186,15 +188,10 @@
 @section('javascript')
 <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chosen/1.8.7/chosen.jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.10.25/js/dataTables.bootstrap4.min.js"></script>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-
-<!-- Buttons extension -->
-<script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap4.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
 <script>
 $(document).ready(function() {
   var table = $('#example').DataTable({
@@ -232,6 +229,16 @@ $(document).ready(function() {
       return row;
     }
   });
+
+  $('#new_customer').on('shown.bs.modal', function () {
+    if (typeof map === 'undefined' || !map) {
+      initMap();
+    } else {
+      setTimeout(function() {
+        map.invalidateSize();
+      }, 200);
+    }
+  });
 });
 </script>
 <script>
@@ -239,12 +246,17 @@ $(document).ready(function() {
     $('.chosen-select').chosen({
       width: '100%'
     });
+    
   });
 </script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const searchInput = document.getElementById('customerSearch');
         const customerRows = document.querySelectorAll('#customerBody tr');
+
+        if (!searchInput) {
+            return;
+        }
         
         searchInput.addEventListener('input', function() {
             const searchTerm = searchInput.value.toLowerCase();

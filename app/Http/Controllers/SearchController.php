@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Dealer;
 use App\Client;
+use App\Stove;
 use App\TransactionDetail;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 
 class SearchController extends Controller
 {
@@ -82,6 +84,145 @@ class SearchController extends Controller
         $suggestions = $clients->concat($dealers)->take(10);
 
         return response()->json($suggestions);
+    }
+
+    public function scanLoyaltyCard(Request $request)
+    {
+        $rawCode = trim((string) $request->input('code', ''));
+        $code = $this->normalizeQrCode($rawCode);
+
+        if ($code === '') {
+            return response()->json([
+                'success' => false,
+                'message' => 'No QR code was detected.',
+            ], 422);
+        }
+
+        $client = $this->findClientByLoyaltyCode($code);
+
+        if (!$client) {
+            return response()->json([
+                'success' => true,
+                'included' => false,
+                'message' => 'No client in the project matched this loyalty card.',
+                'code' => $code,
+            ]);
+        }
+
+        if ($client->status !== 'Active' || !$client->serial_number) {
+            return response()->json([
+                'success' => true,
+                'included' => false,
+                'message' => 'Client found, but the loyalty card is not active in the project.',
+                'client' => [
+                    'name' => $client->name,
+                    'status' => $client->status,
+                ],
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'included' => true,
+            'message' => 'Client loyalty card verified.',
+            'redirect_url' => url('view-client/' . $client->id),
+            'order_url' => route('guest-order', ['client_id' => $client->id]),
+            'client' => [
+                'id' => $client->id,
+                'name' => $client->name,
+                'reference' => $client->client_reference,
+                'phone' => $client->number,
+                'status' => $client->status,
+                'serial_id' => $client->serial_number,
+            ],
+        ]);
+    }
+
+    private function normalizeQrCode($rawCode)
+    {
+        $code = trim((string) $rawCode);
+
+        $json = json_decode($code, true);
+        if (is_array($json)) {
+            foreach (['client_reference', 'reference', 'loyalty_card', 'loyalty_code', 'serial_number', 'serial', 'code', 'id'] as $key) {
+                if (!empty($json[$key])) {
+                    return trim((string) $json[$key]);
+                }
+            }
+        }
+
+        if (filter_var($code, FILTER_VALIDATE_URL)) {
+            $parts = parse_url($code);
+            if (!empty($parts['query'])) {
+                parse_str($parts['query'], $query);
+                foreach (['client_reference', 'reference', 'loyalty_card', 'loyalty_code', 'serial_number', 'serial', 'code', 'id'] as $key) {
+                    if (!empty($query[$key])) {
+                        return trim((string) $query[$key]);
+                    }
+                }
+            }
+
+            if (!empty($parts['path'])) {
+                $path = trim($parts['path'], '/');
+                $segments = array_values(array_filter(explode('/', $path)));
+                if (!empty($segments)) {
+                    return trim((string) end($segments));
+                }
+            }
+        }
+
+        return $code;
+    }
+
+    private function findClientByLoyaltyCode($code)
+    {
+        $code = trim((string) $code);
+
+        $clientQuery = Client::with('serial')
+            ->where(function ($query) use ($code) {
+                $query->where('client_reference', $code)
+                    ->orWhere('id', $code)
+                    ->orWhere('number', $code)
+                    ->orWhere('name', $code);
+            });
+
+        $client = $clientQuery->first();
+
+        if ($client) {
+            return $client;
+        }
+
+        if (!Schema::hasTable('stoves')) {
+            return null;
+        }
+
+        $stoveColumns = collect(Schema::getColumnListing('stoves'));
+        $searchColumns = $stoveColumns
+            ->filter(function ($column) {
+                return in_array($column, ['id', 'serial_number', 'serial_no', 'serial', 'stove_serial', 'qr_code', 'loyalty_card', 'loyalty_code']);
+            })
+            ->values();
+
+        if ($searchColumns->isEmpty()) {
+            return null;
+        }
+
+        $stove = Stove::where(function ($query) use ($searchColumns, $code) {
+            foreach ($searchColumns as $index => $column) {
+                $index === 0
+                    ? $query->where($column, $code)
+                    : $query->orWhere($column, $code);
+            }
+        })->first();
+
+        if (!$stove) {
+            return null;
+        }
+
+        return Client::with('serial')
+            ->where('serial_number', $stove->id)
+            ->orWhere('id', $stove->client_id ?? null)
+            ->first();
     }
 
     public function markNotificationRead(Request $request)

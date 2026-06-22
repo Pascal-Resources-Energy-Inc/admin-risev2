@@ -1,0 +1,1479 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use App\OrderDetail;
+use App\Product;
+use App\InventoryTransfer;
+use App\AdPurchaseOrder;
+use App\AdPurchaseOrderItem;
+use App\AdPurchaseOrderPartialReceipt;
+use App\AreaDistributor;
+use App\Exports\DailySalesExport;
+use App\Exports\InventoryStockLevelExport;
+use App\Exports\MonthlySalesExport;
+use App\Exports\VoucherHistoryExport;
+use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Schema;
+
+class ReportController extends Controller
+{
+    public function dpoReport(Request $request)
+    {
+        $from = $request->from ?? Carbon::now()->startOfMonth()->format('Y-m-d');
+        $to = $request->to ?? Carbon::now()->format('Y-m-d');
+
+        $orders = AdPurchaseOrder::with(['items.partialReceipts', 'partialReceipts.item', 'ad'])
+            ->whereBetween(DB::raw('DATE(COALESCE(submitted_at, created_at))'), [$from, $to])
+            ->when($request->filled('status'), function ($query) use ($request) {
+                $query->where('status', $request->status);
+            })
+            ->when($request->filled('search'), function ($query) use ($request) {
+                $search = $request->search;
+                $query->where(function ($inner) use ($search) {
+                    $inner->where('po_number', 'like', '%' . $search . '%')
+                        ->orWhere('so_number', 'like', '%' . $search . '%')
+                        ->orWhere('dr_number', 'like', '%' . $search . '%')
+                        ->orWhere('si_number', 'like', '%' . $search . '%')
+                        ->orWhere('business_name', 'like', '%' . $search . '%')
+                        ->orWhereHas('partialReceipts', function ($receiptQuery) use ($search) {
+                            $receiptQuery->where('dr_number', 'like', '%' . $search . '%');
+                        });
+                });
+            })
+            ->when(auth()->user()->role !== 'Admin', function ($query) {
+                $query->where('ad_user_id', auth()->id());
+            })
+            ->orderBy('id', 'desc')
+            ->get();
+
+        $rows = collect();
+
+        foreach ($orders as $order) {
+            if ($order->partialReceipts->isNotEmpty()) {
+                foreach ($order->partialReceipts as $receipt) {
+                    $rows->push((object) [
+                        'order' => $order,
+                        'date' => $receipt->delivery_date ?: $order->delivery_date ?: $order->submitted_at ?: $order->created_at,
+                        'adpo_ref' => $order->po_number,
+                        'so_number' => $order->so_number,
+                        'dr_number' => $receipt->dr_number,
+                        'si_number' => $order->si_number,
+                        'status' => $receipt->status,
+                        'order_status' => $order->status,
+                        'business_name' => $order->business_name,
+                        'product_name' => optional($receipt->item)->product_name,
+                        'qty' => (int) $receipt->received_qty,
+                        'confirmed_qty' => (int) $receipt->confirmed_qty,
+                        'total_amount' => (float) $order->total_amount,
+                        'is_partial_receipt' => true,
+                        'order_id' => $order->id,
+                    ]);
+                }
+            } else {
+                $rows->push((object) [
+                    'order' => $order,
+                    'date' => $order->delivery_date ?: $order->submitted_at ?: $order->created_at,
+                    'adpo_ref' => $order->po_number,
+                    'so_number' => $order->so_number,
+                    'dr_number' => $order->dr_number,
+                    'si_number' => $order->si_number,
+                    'status' => $order->status,
+                    'order_status' => $order->status,
+                    'business_name' => $order->business_name,
+                    'product_name' => null,
+                    'qty' => (int) $order->total_qty,
+                    'confirmed_qty' => in_array($order->status, ['Completed', 'Partial Received']) ? (int) $order->total_qty : 0,
+                    'total_amount' => (float) $order->total_amount,
+                    'is_partial_receipt' => false,
+                    'order_id' => $order->id,
+                ]);
+            }
+        }
+
+        if ($request->filled('dr_number')) {
+            $rows = $rows->filter(function ($row) use ($request) {
+                return stripos((string) $row->dr_number, (string) $request->dr_number) !== false;
+            })->values();
+        }
+
+        $rows = $rows->sortByDesc(function ($row) {
+            return optional($row->date)->timestamp ?: 0;
+        })->values();
+
+        $statusOptions = ['Pending', 'For Delivery', 'SO Created', 'Partial Received', 'Completed', 'Cancelled'];
+        $summary = [
+            'adpo_count' => $orders->count(),
+            'document_count' => $rows->count(),
+            'total_qty' => $rows->sum('qty'),
+            'total_amount' => $orders->sum('total_amount'),
+        ];
+        $itemHistories = $orders->mapWithKeys(function ($order) {
+            return [
+                $order->id => [
+                    'po_number' => $order->po_number,
+                    'business_name' => $order->business_name,
+                    'status' => $order->status,
+                    'items' => $order->items->map(function ($item) {
+                        $receivedQty = min(max((int) ($item->partial_received_qty ?? 0), 0), (int) $item->qty);
+                        $confirmedQty = (int) $item->partialReceipts->sum('confirmed_qty');
+
+                        return [
+                            'name' => $item->product_name,
+                            'sku' => $item->sku,
+                            'ordered_qty' => (int) $item->qty,
+                            'received_qty' => $receivedQty,
+                            'confirmed_qty' => $confirmedQty,
+                            'pending_qty' => max((int) $item->qty - max($receivedQty, $confirmedQty), 0),
+                            'unit_price' => (float) $item->unit_price,
+                            'line_total' => (float) $item->line_total,
+                            'receipts' => $item->partialReceipts->map(function ($receipt) {
+                                return [
+                                    'delivery_date' => optional($receipt->delivery_date)->format('M d, Y'),
+                                    'dr_number' => $receipt->dr_number,
+                                    'received_qty' => (int) $receipt->received_qty,
+                                    'confirmed_qty' => (int) $receipt->confirmed_qty,
+                                    'pending_qty' => max((int) $receipt->received_qty - (int) $receipt->confirmed_qty, 0),
+                                    'status' => $receipt->status,
+                                ];
+                            })->values(),
+                        ];
+                    })->values(),
+                ],
+            ];
+        });
+
+        return view('reports.dpo_report', compact('orders', 'rows', 'from', 'to', 'statusOptions', 'summary', 'itemHistories'));
+    }
+
+    public function dailySalesReport(Request $request)
+    {
+        $user = auth()->user();
+
+        $from = $request->from ?? Carbon::now()->startOfMonth()->format('Y-m-d');
+        $to = $request->to?? Carbon::now()->format('Y-m-d');
+
+        $reports = OrderDetail::with('dealer')
+            ->where('ad_id', $user->ad->id)
+            ->where('status', 'Completed')
+            ->whereBetween(
+                DB::raw('DATE(date)'),
+                [$from, $to]
+            )
+            ->orderBy('date', 'DESC')
+            ->get()
+            ->groupBy(function ($item) {
+
+                return Carbon::parse($item->date)->format('Y-m-d');
+
+            });
+       
+        $items = Product::where('ad_user_id', $user->id)
+            ->where('status', 'Activate')
+            ->orderBy('product_name')
+            ->get();
+
+        $grandTotal = OrderDetail::whereBetween(
+                DB::raw('DATE(date)'),
+                [$from, $to]
+            )
+            ->where('ad_id', $user->ad->id)
+            ->where('status', 'Completed')
+            ->get()
+            ->sum(function ($r) {
+
+                return $r->qty * $r->price;
+
+            });
+
+        return view(
+            'reports.daily_sales',
+            compact(
+                'reports',
+                'items',
+                'from',
+                'to',
+                'grandTotal'
+            )
+        );
+    }
+
+    public function exportDailySales(Request $request)
+    {
+        $user = auth()->user();
+
+        $from = $request->from ?? Carbon::now()->startOfMonth()->format('Y-m-d');
+        $to = $request->to ?? Carbon::now()->format('Y-m-d');
+
+        return Excel::download(
+            new DailySalesExport($from, $to, $user),
+            'daily-sales-report.xlsx'
+        );
+    }
+
+    public function inventoryStockLevelReport(Request $request)
+    {
+        abort_unless(auth()->user()->role === 'Admin', 403);
+
+        $report = $this->buildInventoryStockLevelReport($request);
+
+        return view('reports.inventory_stock_level', $report);
+    }
+
+    public function exportInventoryStockLevel(Request $request)
+    {
+        abort_unless(auth()->user()->role === 'Admin', 403);
+
+        $report = $this->buildInventoryStockLevelReport($request);
+        $fileName = 'inventory-stock-level-' . $report['asOf']->format('Y-m-d') . '.xlsx';
+
+        return Excel::download(
+            new InventoryStockLevelExport($report['rows'], $report['products'], $report['asOf']),
+            $fileName
+        );
+    }
+
+    public function monthlySalesReport(Request $request)
+    {
+        abort_unless(auth()->user()->role === 'Admin', 403);
+
+        return view('reports.monthly_sales', $this->buildMonthlySalesReport($request));
+    }
+
+    public function exportMonthlySales(Request $request)
+    {
+        abort_unless(auth()->user()->role === 'Admin', 403);
+
+        $report = $this->buildMonthlySalesReport($request);
+
+        return Excel::download(
+            new MonthlySalesExport(
+                $report['rows'],
+                $report['products'],
+                $report['paymentColumns'],
+                $report['period']
+            ),
+            'monthly-sales-' . $report['period']->format('Y-m') . '.xlsx'
+        );
+    }
+
+    public function voucherHistoryReport(Request $request)
+    {
+        abort_unless(auth()->user()->role === 'Admin', 403);
+
+        return view('reports.voucher_history', $this->buildVoucherHistoryReport($request));
+    }
+
+    public function exportVoucherHistory(Request $request)
+    {
+        abort_unless(auth()->user()->role === 'Admin', 403);
+
+        $report = $this->buildVoucherHistoryReport($request);
+
+        return Excel::download(
+            new VoucherHistoryExport($report['historyRows']),
+            'voucher-history-' . $report['from']->format('Ymd') . '-' . $report['to']->format('Ymd') . '.xlsx'
+        );
+    }
+
+    public function agingReport(Request $request)
+    {
+        $user = auth()->user();
+        $ad = $user ? $user->ad : null;
+        $adId = $ad ? $ad->id : null;
+        $asOf = $request->filled('as_of')
+            ? Carbon::parse($request->as_of)->endOfDay()
+            : Carbon::today()->endOfDay();
+
+        $ledger = collect();
+
+        $purchaseRows = AdPurchaseOrderItem::join('ad_purchase_orders', 'ad_purchase_order_items.ad_purchase_order_id', '=', 'ad_purchase_orders.id')
+            ->leftJoin(DB::raw('(select ad_id, min(area_name) as area_name from ad_areas where deleted_at is null group by ad_id) as adpo_areas'), 'ad_purchase_orders.ad_id', '=', 'adpo_areas.ad_id')
+            ->select(
+                'ad_purchase_order_items.product_id',
+                'ad_purchase_order_items.product_name',
+                'ad_purchase_order_items.sku',
+                'ad_purchase_order_items.qty',
+                'ad_purchase_orders.authorized_territory',
+                'adpo_areas.area_name as ad_area',
+                DB::raw('COALESCE(ad_purchase_orders.submitted_at, ad_purchase_orders.created_at) as stock_date')
+            )
+            ->where('ad_purchase_orders.ad_user_id', $user->id)
+            ->where('ad_purchase_orders.status', 'Completed')
+            ->where(function ($query) use ($asOf) {
+                $query->whereDate('ad_purchase_orders.submitted_at', '<=', $asOf->toDateString())
+                    ->orWhere(function ($query) use ($asOf) {
+                        $query->whereNull('ad_purchase_orders.submitted_at')
+                            ->whereDate('ad_purchase_orders.created_at', '<=', $asOf->toDateString());
+                    });
+            })
+            ->get();
+
+        foreach ($purchaseRows as $row) {
+            $ledger->push((object) [
+                'date' => $row->stock_date ? Carbon::parse($row->stock_date) : $asOf->copy(),
+                'area' => $row->authorized_territory ?: $row->ad_area,
+                'product_id' => $row->product_id,
+                'sku' => $row->sku,
+                'product_name' => $row->product_name,
+                'qty' => (float) $row->qty,
+                'source' => 'Completed AD',
+            ]);
+        }
+
+        $movements = InventoryTransfer::where('ad_user_id', $user->id)
+            ->whereDate('transfer_date', '<=', $asOf->toDateString())
+            ->orderBy('transfer_date')
+            ->orderBy('id')
+            ->get();
+
+        foreach ($movements as $movement) {
+            $date = $movement->transfer_date ? $movement->transfer_date->copy() : Carbon::parse($movement->created_at);
+
+            if ($movement->movement_type === 'in') {
+                $ledger->push($this->agingLedgerRow($date, $movement->to_area, $movement, (float) $movement->qty, 'Inventory IN'));
+            }
+
+            if ($movement->movement_type === 'out') {
+                $ledger->push($this->agingLedgerRow($date, $movement->from_area, $movement, -1 * (float) $movement->qty, 'Inventory OUT'));
+            }
+
+            if ($movement->movement_type === 'transfer') {
+                $ledger->push($this->agingLedgerRow($date, $movement->from_area, $movement, -1 * (float) $movement->qty, 'Transfer OUT'));
+                $ledger->push($this->agingLedgerRow($date, $movement->to_area, $movement, (float) $movement->qty, 'Transfer IN'));
+            }
+        }
+
+        if ($adId) {
+            $orderRows = OrderDetail::leftJoin('dealers', 'order_details.dealer_id', '=', 'dealers.user_id')
+                ->leftJoin('area_distributors as ordering_ads', 'order_details.dealer_id', '=', 'ordering_ads.user_id')
+                ->leftJoin(DB::raw('(select ad_id, min(area_name) as area_name from ad_areas where deleted_at is null group by ad_id) as ordering_ad_areas'), 'ordering_ads.id', '=', 'ordering_ad_areas.ad_id')
+                ->select(
+                    'dealers.area as dealer_area',
+                    'ordering_ad_areas.area_name as ad_area',
+                    'order_details.item',
+                    DB::raw('SUM(order_details.qty) as qty'),
+                    DB::raw('MAX(order_details.date) as order_date')
+                )
+                ->where('order_details.ad_id', $adId)
+                ->where('order_details.status', 'Completed')
+                ->whereDate('order_details.date', '<=', $asOf->toDateString())
+                ->groupBy('dealers.area', 'ordering_ad_areas.area_name', 'order_details.item')
+                ->get();
+
+            foreach ($orderRows as $row) {
+                $ledger->push((object) [
+                    'date' => $row->order_date ? Carbon::parse($row->order_date) : $asOf->copy(),
+                    'area' => $row->dealer_area ?: $row->ad_area,
+                    'product_id' => null,
+                    'sku' => null,
+                    'product_name' => $row->item,
+                    'qty' => -1 * (float) $row->qty,
+                    'source' => 'Dealer Order',
+                ]);
+            }
+        }
+
+        $batches = $this->buildAgingBatches($ledger, $asOf);
+        $areas = $batches->pluck('area')->filter()->unique()->sort()->values();
+        $products = $batches->pluck('product_name')->filter()->unique()->sort()->values();
+
+        if ($request->filled('area')) {
+            $batches = $batches->where('area', $request->area)->values();
+        }
+
+        if ($request->filled('product')) {
+            $batches = $batches->where('product_name', $request->product)->values();
+        }
+
+        if ($request->filled('bucket')) {
+            $batches = $batches->where('bucket', $request->bucket)->values();
+        }
+
+        $summary = (object) [
+            'total_qty' => $batches->sum('qty'),
+            'sku_count' => $batches->pluck('product_name')->unique()->count(),
+            'area_count' => $batches->pluck('area')->filter()->unique()->count(),
+            'oldest_days' => $batches->max('age_days') ?: 0,
+        ];
+
+        $bucketTotals = collect(['0-30', '31-60', '61-90', '90+'])->mapWithKeys(function ($bucket) use ($batches) {
+            return [$bucket => $batches->where('bucket', $bucket)->sum('qty')];
+        });
+
+        return view('reports.aging', compact(
+            'batches',
+            'areas',
+            'products',
+            'summary',
+            'bucketTotals',
+            'asOf'
+        ));
+    }
+
+    private function agingLedgerRow($date, $area, $movement, $qty, $source)
+    {
+        return (object) [
+            'date' => $date,
+            'area' => $area,
+            'product_id' => $movement->product_id,
+            'sku' => $movement->sku,
+            'product_name' => $movement->item_name,
+            'qty' => $qty,
+            'source' => $source,
+        ];
+    }
+
+    private function buildAgingBatches($ledger, Carbon $asOf)
+    {
+        $openBatches = [];
+
+        foreach ($ledger->sortBy('date') as $entry) {
+            if (!$entry->area || !$entry->product_name || (float) $entry->qty == 0) {
+                continue;
+            }
+
+            $key = $entry->area . '|' . $this->normalizeProductName($entry->product_name);
+
+            if (!isset($openBatches[$key])) {
+                $openBatches[$key] = [];
+            }
+
+            if ($entry->qty > 0) {
+                $openBatches[$key][] = [
+                    'date' => $entry->date,
+                    'area' => $entry->area,
+                    'product_id' => $entry->product_id,
+                    'sku' => $entry->sku,
+                    'product_name' => $entry->product_name,
+                    'qty' => (float) $entry->qty,
+                    'source' => $entry->source,
+                ];
+
+                continue;
+            }
+
+            $remainingDeduction = abs((float) $entry->qty);
+            foreach ($openBatches[$key] as &$batch) {
+                if ($remainingDeduction <= 0) {
+                    break;
+                }
+
+                $deduct = min($batch['qty'], $remainingDeduction);
+                $batch['qty'] -= $deduct;
+                $remainingDeduction -= $deduct;
+            }
+            unset($batch);
+
+            $openBatches[$key] = array_values(array_filter($openBatches[$key], function ($batch) {
+                return $batch['qty'] > 0;
+            }));
+        }
+
+        return collect($openBatches)
+            ->flatten(1)
+            ->map(function ($batch) use ($asOf) {
+                $ageDays = max(0, $batch['date']->diffInDays($asOf));
+
+                return (object) [
+                    'date' => $batch['date'],
+                    'area' => $batch['area'],
+                    'product_id' => $batch['product_id'],
+                    'sku' => $batch['sku'],
+                    'product_name' => $batch['product_name'],
+                    'qty' => $batch['qty'],
+                    'source' => $batch['source'],
+                    'age_days' => $ageDays,
+                    'bucket' => $this->agingBucket($ageDays),
+                ];
+            })
+            ->sortByDesc('age_days')
+            ->values();
+    }
+
+    private function agingBucket($days)
+    {
+        if ($days <= 30) {
+            return '0-30';
+        }
+
+        if ($days <= 60) {
+            return '31-60';
+        }
+
+        if ($days <= 90) {
+            return '61-90';
+        }
+
+        return '90+';
+    }
+
+    private function normalizeProductName($name)
+    {
+        return strtolower(trim((string) $name));
+    }
+
+    private function buildInventoryStockLevelReport(Request $request)
+    {
+        $asOf = $request->filled('as_of')
+            ? Carbon::parse($request->as_of)->endOfDay()
+            : Carbon::today()->endOfDay();
+        $lowStockThreshold = max(1, min(9999, (int) $request->input('low_stock', 10)));
+
+        $distributorQuery = AreaDistributor::with([
+            'userAds:id,name,role',
+            'areas:id,ad_id,area_name',
+        ])->whereHas('userAds', function ($query) {
+            $query->where('role', 'Area Distributor');
+        });
+
+        if ($request->filled('region')) {
+            $distributorQuery->where('location_region', $request->region);
+        }
+
+        if ($request->filled('status')) {
+            $distributorQuery->where('status', $request->status);
+        }
+
+        if ($request->filled('distributor')) {
+            $search = trim((string) $request->distributor);
+            $distributorQuery->where(function ($query) use ($search) {
+                $query->where('store_code', 'like', '%' . $search . '%')
+                    ->orWhere('ad_reference', 'like', '%' . $search . '%')
+                    ->orWhere('business_name', 'like', '%' . $search . '%')
+                    ->orWhere('name', 'like', '%' . $search . '%')
+                    ->orWhereHas('userAds', function ($userQuery) use ($search) {
+                        $userQuery->where('name', 'like', '%' . $search . '%');
+                    });
+            });
+        }
+
+        $distributors = $distributorQuery
+            ->orderBy('location_region')
+            ->orderBy('business_name')
+            ->get();
+
+        $adUserIds = $distributors->pluck('user_id')->filter()->map(function ($id) {
+            return (int) $id;
+        })->values();
+        $adIds = $distributors->pluck('id')->map(function ($id) {
+            return (int) $id;
+        })->values();
+        $adUserByAdId = $distributors->mapWithKeys(function ($distributor) {
+            return [(int) $distributor->id => (int) $distributor->user_id];
+        });
+
+        $purchaseRows = collect();
+        $movementRows = collect();
+        $orderRows = collect();
+
+        if ($adUserIds->isNotEmpty()) {
+            $purchaseRows = AdPurchaseOrderItem::join(
+                    'ad_purchase_orders',
+                    'ad_purchase_order_items.ad_purchase_order_id',
+                    '=',
+                    'ad_purchase_orders.id'
+                )
+                ->select(
+                    'ad_purchase_orders.ad_user_id',
+                    'ad_purchase_order_items.product_id',
+                    'ad_purchase_order_items.sku',
+                    'ad_purchase_order_items.product_name',
+                    DB::raw('SUM(ad_purchase_order_items.qty) as qty')
+                )
+                ->whereIn('ad_purchase_orders.ad_user_id', $adUserIds)
+                ->where('ad_purchase_orders.status', 'Completed')
+                ->where(function ($query) use ($asOf) {
+                    $query->whereDate('ad_purchase_orders.submitted_at', '<=', $asOf->toDateString())
+                        ->orWhere(function ($inner) use ($asOf) {
+                            $inner->whereNull('ad_purchase_orders.submitted_at')
+                                ->whereDate('ad_purchase_orders.created_at', '<=', $asOf->toDateString());
+                        });
+                })
+                ->groupBy(
+                    'ad_purchase_orders.ad_user_id',
+                    'ad_purchase_order_items.product_id',
+                    'ad_purchase_order_items.sku',
+                    'ad_purchase_order_items.product_name'
+                )
+                ->get();
+
+            $movementRows = InventoryTransfer::select(
+                    'ad_user_id',
+                    'product_id',
+                    'sku',
+                    'item_name',
+                    'movement_type',
+                    DB::raw('SUM(qty) as qty')
+                )
+                ->whereIn('ad_user_id', $adUserIds)
+                ->whereIn('movement_type', ['in', 'out'])
+                ->where(function ($query) use ($asOf) {
+                    $query->whereDate('transfer_date', '<=', $asOf->toDateString())
+                        ->orWhere(function ($inner) use ($asOf) {
+                            $inner->whereNull('transfer_date')
+                                ->whereDate('created_at', '<=', $asOf->toDateString());
+                        });
+                })
+                ->groupBy('ad_user_id', 'product_id', 'sku', 'item_name', 'movement_type')
+                ->get();
+        }
+
+        if ($adIds->isNotEmpty()) {
+            $hasOrderProductId = Schema::hasColumn('order_details', 'product_id');
+            $orderSelects = [
+                'order_details.ad_id',
+                'order_details.item',
+                DB::raw('SUM(order_details.qty) as qty'),
+            ];
+
+            if ($hasOrderProductId) {
+                $orderSelects[] = 'order_details.product_id';
+            }
+
+            $orderQuery = OrderDetail::select($orderSelects)
+                ->whereIn('order_details.ad_id', $adIds)
+                ->where('order_details.status', 'Completed')
+                ->whereDate('order_details.date', '<=', $asOf->toDateString())
+                ->groupBy('order_details.ad_id', 'order_details.item');
+
+            if ($hasOrderProductId) {
+                $orderQuery->groupBy('order_details.product_id');
+            }
+
+            $orderRows = $orderQuery->get();
+        }
+
+        $sourceProductIds = $purchaseRows->pluck('product_id')
+            ->merge($movementRows->pluck('product_id'))
+            ->merge($orderRows->pluck('product_id'))
+            ->filter()
+            ->map(function ($id) {
+                return (int) $id;
+            })
+            ->unique()
+            ->values();
+
+        $catalogProducts = collect();
+
+        if ($adUserIds->isNotEmpty() || $sourceProductIds->isNotEmpty()) {
+            $catalogProducts = Product::query()
+                ->where(function ($query) use ($adUserIds, $sourceProductIds) {
+                    if ($adUserIds->isNotEmpty()) {
+                        $query->whereIn('ad_user_id', $adUserIds);
+                    }
+
+                    if ($sourceProductIds->isNotEmpty()) {
+                        $adUserIds->isNotEmpty()
+                            ? $query->orWhereIn('id', $sourceProductIds)
+                            : $query->whereIn('id', $sourceProductIds);
+                    }
+                })
+                ->where('status', 'Activate')
+                ->orderBy('product_name')
+                ->get(['id', 'sku', 'product_name']);
+        }
+
+        $productsByKey = collect();
+        $productKeyById = collect();
+        $productKeyByName = collect();
+
+        $registerProduct = function ($productId, $sku, $name) use (&$productsByKey, &$productKeyById, &$productKeyByName) {
+            $name = trim((string) $name);
+            $sku = trim((string) $sku);
+
+            if ($name === '') {
+                return null;
+            }
+
+            $normalizedName = $this->normalizeProductName($name);
+            $key = strtolower($sku !== '' ? 'sku:' . $sku : 'name:' . $normalizedName);
+
+            if (!$productsByKey->has($key)) {
+                $productsByKey->put($key, (object) [
+                    'key' => $key,
+                    'sku' => $sku,
+                    'product_name' => $name,
+                ]);
+            }
+
+            if ($productId) {
+                $productKeyById->put((int) $productId, $key);
+            }
+
+            if (!$productKeyByName->has($normalizedName)) {
+                $productKeyByName->put($normalizedName, $key);
+            }
+
+            return $key;
+        };
+
+        foreach ($catalogProducts as $product) {
+            $registerProduct($product->id, $product->sku, $product->product_name);
+        }
+
+        foreach ($purchaseRows as $row) {
+            $registerProduct($row->product_id, $row->sku, $row->product_name);
+        }
+
+        foreach ($movementRows as $row) {
+            $registerProduct($row->product_id, $row->sku, $row->item_name);
+        }
+
+        $hasOrderProductId = Schema::hasColumn('order_details', 'product_id');
+
+        foreach ($orderRows as $row) {
+            $registerProduct(
+                $hasOrderProductId ? $row->product_id : null,
+                null,
+                $row->item
+            );
+        }
+
+        $resolveProductKey = function ($productId, $name) use ($productKeyById, $productKeyByName, $registerProduct) {
+            if ($productId && $productKeyById->has((int) $productId)) {
+                return $productKeyById->get((int) $productId);
+            }
+
+            $normalizedName = $this->normalizeProductName($name);
+
+            return $productKeyByName->get($normalizedName)
+                ?: $registerProduct($productId, null, $name);
+        };
+
+        $stockByDistributor = $adUserIds->mapWithKeys(function ($userId) {
+            return [(int) $userId => collect()];
+        });
+
+        $applyStock = function ($adUserId, $productKey, $qty) use (&$stockByDistributor) {
+            $adUserId = (int) $adUserId;
+
+            if (!$productKey || !$stockByDistributor->has($adUserId)) {
+                return;
+            }
+
+            $stock = $stockByDistributor->get($adUserId);
+            $stock->put($productKey, (float) $stock->get($productKey, 0) + (float) $qty);
+        };
+
+        foreach ($purchaseRows as $row) {
+            $applyStock(
+                $row->ad_user_id,
+                $resolveProductKey($row->product_id, $row->product_name),
+                $row->qty
+            );
+        }
+
+        foreach ($movementRows as $row) {
+            $applyStock(
+                $row->ad_user_id,
+                $resolveProductKey($row->product_id, $row->item_name),
+                $row->movement_type === 'out' ? -1 * (float) $row->qty : (float) $row->qty
+            );
+        }
+
+        foreach ($orderRows as $row) {
+            $adUserId = $adUserByAdId->get((int) $row->ad_id);
+            $applyStock(
+                $adUserId,
+                $resolveProductKey(
+                    $hasOrderProductId ? $row->product_id : null,
+                    $row->item
+                ),
+                -1 * (float) $row->qty
+            );
+        }
+
+        $products = $productsByKey
+            ->when($request->filled('product'), function ($items) use ($request) {
+                $search = $this->normalizeProductName($request->product);
+
+                return $items->filter(function ($product) use ($search) {
+                    return strpos($this->normalizeProductName($product->product_name), $search) !== false
+                        || strpos($this->normalizeProductName($product->sku), $search) !== false;
+                });
+            })
+            ->sortBy(function ($product) {
+                return $this->normalizeProductName(($product->sku ?: 'zzzz') . ' ' . $product->product_name);
+            })
+            ->values();
+
+        $visibleProductKeys = $products->pluck('key');
+        $rows = $distributors->map(function ($distributor) use ($stockByDistributor, $visibleProductKeys) {
+            $stock = $stockByDistributor->get((int) $distributor->user_id, collect())
+                ->only($visibleProductKeys->all())
+                ->map(function ($qty) {
+                    return max(0, (float) $qty);
+                });
+            $areas = $distributor->areas->pluck('area_name')->filter()->unique()->sort()->values();
+
+            return (object) [
+                'region' => $this->formatRegionCode($distributor->location_region),
+                'region_name' => $distributor->location_region ?: 'Unassigned',
+                'distributor_id' => $distributor->store_code ?: $distributor->ad_reference ?: 'AD-' . $distributor->id,
+                'territories' => $areas,
+                'business_name' => $distributor->business_name ?: $distributor->name ?: optional($distributor->userAds)->name,
+                'customer_type' => optional($distributor->userAds)->role ?: 'Area Distributor',
+                'status' => $distributor->status ?: 'Unknown',
+                'stock' => $stock,
+                'total_stock' => $stock->sum(),
+            ];
+        });
+
+        if ($request->filled('availability')) {
+            $availability = $request->availability;
+            $rows = $rows->filter(function ($row) use ($availability, $lowStockThreshold) {
+                if ($availability === 'in_stock') {
+                    return $row->total_stock > $lowStockThreshold;
+                }
+
+                if ($availability === 'low_stock') {
+                    return $row->total_stock > 0 && $row->total_stock <= $lowStockThreshold;
+                }
+
+                if ($availability === 'out_of_stock') {
+                    return $row->total_stock <= 0;
+                }
+
+                return true;
+            })->values();
+        }
+
+        $regions = AreaDistributor::whereNotNull('location_region')
+            ->where('location_region', '<>', '')
+            ->distinct()
+            ->orderBy('location_region')
+            ->pluck('location_region');
+        $statuses = AreaDistributor::whereNotNull('status')
+            ->where('status', '<>', '')
+            ->distinct()
+            ->orderBy('status')
+            ->pluck('status');
+
+        $summary = (object) [
+            'distributors' => $rows->count(),
+            'products' => $products->count(),
+            'total_stock' => $rows->sum('total_stock'),
+            'low_stock_cells' => $rows->sum(function ($row) use ($products, $lowStockThreshold) {
+                return $products->filter(function ($product) use ($row, $lowStockThreshold) {
+                    $qty = (float) $row->stock->get($product->key, 0);
+                    return $qty > 0 && $qty <= $lowStockThreshold;
+                })->count();
+            }),
+            'out_of_stock_cells' => $rows->sum(function ($row) use ($products) {
+                return $products->filter(function ($product) use ($row) {
+                    return (float) $row->stock->get($product->key, 0) <= 0;
+                })->count();
+            }),
+        ];
+
+        return compact(
+            'rows',
+            'products',
+            'regions',
+            'statuses',
+            'summary',
+            'asOf',
+            'lowStockThreshold'
+        );
+    }
+
+    private function formatRegionCode($region)
+    {
+        $region = trim((string) $region);
+
+        if ($region === '') {
+            return '—';
+        }
+
+        if (preg_match('/region\s*([0-9]+)/i', $region, $matches)) {
+            return 'R' . $matches[1];
+        }
+
+        $romanNumbers = [
+            'XVII' => 17, 'XVI' => 16, 'XV' => 15, 'XIV' => 14, 'XIII' => 13,
+            'XII' => 12, 'XI' => 11, 'X' => 10, 'IX' => 9, 'VIII' => 8,
+            'VII' => 7, 'VI' => 6, 'V' => 5, 'IV' => 4, 'III' => 3, 'II' => 2, 'I' => 1,
+        ];
+
+        foreach ($romanNumbers as $roman => $number) {
+            if (preg_match('/region[\s-]*' . $roman . '\b/i', $region)) {
+                return 'R' . $number;
+            }
+        }
+
+        return strtoupper($region);
+    }
+
+    private function buildMonthlySalesReport(Request $request)
+    {
+        try {
+            $period = $request->filled('month')
+                ? Carbon::createFromFormat('Y-m', $request->month)->startOfMonth()
+                : Carbon::now()->startOfMonth();
+        } catch (\Exception $exception) {
+            $period = Carbon::now()->startOfMonth();
+        }
+        $from = $period->copy()->startOfMonth();
+        $to = $period->copy()->endOfMonth();
+
+        $distributorQuery = AreaDistributor::with([
+            'userAds:id,name,role',
+            'areas:id,ad_id,project_type,area_name',
+        ])->whereHas('userAds', function ($query) {
+            $query->where('role', 'Area Distributor');
+        });
+
+        if ($request->filled('region')) {
+            $distributorQuery->where('location_region', $request->region);
+        }
+
+        if ($request->filled('project')) {
+            $distributorQuery->whereHas('areas', function ($query) use ($request) {
+                $query->where('project_type', $request->project);
+            });
+        }
+
+        if ($request->filled('distributor')) {
+            $search = trim((string) $request->distributor);
+            $distributorQuery->where(function ($query) use ($search) {
+                $query->where('store_code', 'like', '%' . $search . '%')
+                    ->orWhere('ad_reference', 'like', '%' . $search . '%')
+                    ->orWhere('business_name', 'like', '%' . $search . '%')
+                    ->orWhere('name', 'like', '%' . $search . '%')
+                    ->orWhereHas('userAds', function ($userQuery) use ($search) {
+                        $userQuery->where('name', 'like', '%' . $search . '%');
+                    });
+            });
+        }
+
+        $distributors = $distributorQuery
+            ->orderBy('location_region')
+            ->orderBy('business_name')
+            ->get();
+        $distributorIds = $distributors->pluck('id')->map(function ($id) {
+            return (int) $id;
+        })->values();
+
+        $sales = collect();
+        if ($distributorIds->isNotEmpty()) {
+            $sales = OrderDetail::whereIn('ad_id', $distributorIds)
+                ->where('status', 'Completed')
+                ->whereBetween(DB::raw('DATE(COALESCE(completed_at, date, created_at))'), [
+                    $from->toDateString(),
+                    $to->toDateString(),
+                ])
+                ->get([
+                    'id',
+                    'transaction_id',
+                    'ad_id',
+                    'item',
+                    'sku',
+                    'qty',
+                    'price',
+                    'payment_method',
+                    'delivery_fee',
+                    'completed_at',
+                    'date',
+                    'created_at',
+                ]);
+        }
+
+        $catalogProducts = Product::where('status', 'Activate')
+            ->whereIn('ad_user_id', $distributors->pluck('user_id')->filter())
+            ->orderBy('sku')
+            ->orderBy('product_name')
+            ->get(['sku', 'product_name']);
+        $productsByKey = collect();
+        $productKeyByName = collect();
+
+        $registerProduct = function ($sku, $name) use (&$productsByKey, &$productKeyByName) {
+            $sku = trim((string) $sku);
+            $name = trim((string) $name);
+
+            if ($name === '') {
+                return null;
+            }
+
+            $normalizedName = $this->normalizeProductName($name);
+            $key = $productKeyByName->get($normalizedName)
+                ?: ($sku !== '' ? 'sku:' . strtolower($sku) : 'name:' . $normalizedName);
+
+            if (!$productsByKey->has($key)) {
+                $productsByKey->put($key, (object) [
+                    'key' => $key,
+                    'sku' => $sku,
+                    'product_name' => $name,
+                ]);
+            }
+
+            $productKeyByName->put($normalizedName, $key);
+
+            return $key;
+        };
+
+        foreach ($catalogProducts as $product) {
+            $registerProduct($product->sku, $product->product_name);
+        }
+
+        foreach ($sales as $sale) {
+            $registerProduct($sale->sku, $sale->item);
+        }
+
+        $products = $productsByKey
+            ->when($request->filled('product'), function ($items) use ($request) {
+                $search = $this->normalizeProductName($request->product);
+
+                return $items->filter(function ($product) use ($search) {
+                    return strpos($this->normalizeProductName($product->sku), $search) !== false
+                        || strpos($this->normalizeProductName($product->product_name), $search) !== false;
+                });
+            })
+            ->sortBy(function ($product) {
+                return $this->normalizeProductName(($product->sku ?: 'zzzz') . ' ' . $product->product_name);
+            })
+            ->values();
+        $visibleProductKeys = $products->pluck('key');
+
+        $paymentColumns = collect([
+            'cash' => 'Cash',
+            'bdo' => 'BDO',
+            'pnb' => 'PNB',
+            'gcash' => 'GCash',
+            'palawan_pay' => 'Palawan Pay',
+            'cebuana_pay' => 'Cebuana Pay',
+            'online_transfer' => 'Online Transfer',
+            'online_transfer_bank' => 'Online Transfer - Bank',
+            'check' => 'Check',
+            'issuing_bank' => 'Issuing Bank',
+            'ar_peddler' => 'AR-Peddler',
+            'on_credit' => 'On Credit',
+            'voucher' => 'Voucher',
+            'other' => 'Other',
+        ]);
+
+        $salesByDistributor = $sales->groupBy('ad_id');
+        $rows = $distributors->map(function ($distributor) use (
+            $salesByDistributor,
+            $registerProduct,
+            $visibleProductKeys,
+            $paymentColumns
+        ) {
+            $productTotals = $visibleProductKeys->mapWithKeys(function ($key) {
+                return [$key => (object) ['qty' => 0.0, 'amount' => 0.0]];
+            });
+            $paymentTotals = $paymentColumns->mapWithKeys(function ($label, $key) {
+                return [$key => 0.0];
+            });
+            $transactions = collect();
+
+            foreach ($salesByDistributor->get($distributor->id, collect()) as $sale) {
+                $productKey = $registerProduct($sale->sku, $sale->item);
+                $amount = (float) $sale->qty * (float) $sale->price;
+
+                if (!$productKey || !$productTotals->has($productKey)) {
+                    continue;
+                }
+
+                $total = $productTotals->get($productKey);
+                $total->qty += (float) $sale->qty;
+                $total->amount += $amount;
+
+                $paymentKey = $this->monthlySalesPaymentKey($sale->payment_method);
+                $paymentTotals->put(
+                    $paymentKey,
+                    (float) $paymentTotals->get($paymentKey, 0) + $amount
+                );
+                $transactions->push($sale->transaction_id ?: 'ROW-' . $sale->id);
+            }
+
+            $projects = $distributor->areas->pluck('project_type')
+                ->filter()
+                ->map(function ($project) {
+                    return $this->shortProjectName($project);
+                })
+                ->unique()
+                ->sort()
+                ->values();
+            $totalAmount = $productTotals->sum(function ($total) {
+                return $total->amount;
+            });
+
+            return (object) [
+                'region' => $this->formatRegionCode($distributor->location_region),
+                'region_name' => $distributor->location_region ?: 'Unassigned',
+                'distributor_id' => $distributor->store_code ?: $distributor->ad_reference ?: 'AD-' . $distributor->id,
+                'business_name' => $distributor->business_name ?: $distributor->name ?: optional($distributor->userAds)->name,
+                'customer_type' => optional($distributor->userAds)->role ?: 'Area Distributor',
+                'projects' => $projects,
+                'product_totals' => $productTotals,
+                'payment_totals' => $paymentTotals,
+                'total_amount' => $totalAmount,
+                'total_qty' => $productTotals->sum(function ($total) {
+                    return $total->qty;
+                }),
+                'transaction_count' => $transactions->filter()->unique()->count(),
+            ];
+        });
+
+        if ($request->input('sales_status') === 'with_sales') {
+            $rows = $rows->where('total_amount', '>', 0)->values();
+        } elseif ($request->input('sales_status') === 'no_sales') {
+            $rows = $rows->where('total_amount', '<=', 0)->values();
+        }
+
+        $regions = AreaDistributor::whereNotNull('location_region')
+            ->where('location_region', '<>', '')
+            ->distinct()
+            ->orderBy('location_region')
+            ->pluck('location_region');
+        $projects = DB::table('ad_areas')
+            ->whereNull('deleted_at')
+            ->whereNotNull('project_type')
+            ->where('project_type', '<>', '')
+            ->distinct()
+            ->orderBy('project_type')
+            ->pluck('project_type');
+        $summary = (object) [
+            'total_sales' => $rows->sum('total_amount'),
+            'total_qty' => $rows->sum('total_qty'),
+            'transactions' => $rows->sum('transaction_count'),
+            'active_distributors' => $rows->where('total_amount', '>', 0)->count(),
+        ];
+        $productGrandTotals = $products->mapWithKeys(function ($product) use ($rows) {
+            return [$product->key => (object) [
+                'qty' => $rows->sum(function ($row) use ($product) {
+                    return $row->product_totals->get($product->key)->qty;
+                }),
+                'amount' => $rows->sum(function ($row) use ($product) {
+                    return $row->product_totals->get($product->key)->amount;
+                }),
+            ]];
+        });
+        $paymentGrandTotals = $paymentColumns->mapWithKeys(function ($label, $key) use ($rows) {
+            return [$key => $rows->sum(function ($row) use ($key) {
+                return $row->payment_totals->get($key, 0);
+            })];
+        });
+
+        return compact(
+            'rows',
+            'products',
+            'paymentColumns',
+            'regions',
+            'projects',
+            'summary',
+            'productGrandTotals',
+            'paymentGrandTotals',
+            'period',
+            'from',
+            'to'
+        );
+    }
+
+    private function monthlySalesPaymentKey($paymentMethod)
+    {
+        $payment = strtolower(trim(str_replace([' ', '-'], '_', (string) $paymentMethod)));
+
+        $aliases = [
+            'cash' => 'cash',
+            'bdo' => 'bdo',
+            'bdo_unibank' => 'bdo',
+            'pnb' => 'pnb',
+            'philippine_national_bank' => 'pnb',
+            'gcash' => 'gcash',
+            'palawan' => 'palawan_pay',
+            'palawan_pay' => 'palawan_pay',
+            'cebuana' => 'cebuana_pay',
+            'cebuana_pay' => 'cebuana_pay',
+            'bank_transfer' => 'online_transfer',
+            'online_transfer' => 'online_transfer',
+            'online_transfer_bank' => 'online_transfer_bank',
+            'check' => 'check',
+            'cheque' => 'check',
+            'issuing_bank' => 'issuing_bank',
+            'ar_peddler' => 'ar_peddler',
+            'credit' => 'on_credit',
+            'on_credit' => 'on_credit',
+            'voucher' => 'voucher',
+        ];
+
+        return $aliases[$payment] ?? 'other';
+    }
+
+    private function shortProjectName($project)
+    {
+        $project = trim((string) $project);
+        $normalized = strtolower($project);
+
+        if (strpos($normalized, 'rise') !== false) {
+            return 'PR';
+        }
+
+        if (strpos($normalized, 'genesis') !== false) {
+            return 'PG';
+        }
+
+        return strtoupper($project);
+    }
+
+    private function buildVoucherHistoryReport(Request $request)
+    {
+        $from = $request->filled('from')
+            ? Carbon::parse($request->from)->startOfDay()
+            : Carbon::now()->startOfYear();
+        $to = $request->filled('to')
+            ? Carbon::parse($request->to)->endOfDay()
+            : Carbon::now()->endOfDay();
+
+        if ($from->gt($to)) {
+            [$from, $to] = [$to->copy()->startOfDay(), $from->copy()->endOfDay()];
+        }
+
+        $voucherQuery = \App\Voucher::withTrashed();
+
+        if ($request->filled('search')) {
+            $search = trim((string) $request->search);
+            $voucherQuery->where(function ($query) use ($search) {
+                $query->where('code', 'like', '%' . $search . '%')
+                    ->orWhere('name', 'like', '%' . $search . '%')
+                    ->orWhere('description', 'like', '%' . $search . '%');
+            });
+        }
+
+        if ($request->filled('distributor')) {
+            $voucherQuery->where('name', $request->distributor);
+        }
+
+        $vouchers = $voucherQuery->orderBy('created_at', 'desc')->get();
+        $voucherIds = $vouchers->pluck('id');
+        $voucherCodes = $vouchers->pluck('code')->filter()->unique()->values();
+
+        $orders = collect();
+        if ($voucherIds->isNotEmpty() || $voucherCodes->isNotEmpty()) {
+            $orders = AdPurchaseOrder::with(['ad', 'creator'])
+                ->where(function ($query) use ($voucherIds, $voucherCodes) {
+                    if ($voucherIds->isNotEmpty()) {
+                        $query->whereIn('voucher_id', $voucherIds);
+                    }
+
+                    if ($voucherCodes->isNotEmpty()) {
+                        $voucherIds->isNotEmpty()
+                            ? $query->orWhereIn('voucher_code', $voucherCodes)
+                            : $query->whereIn('voucher_code', $voucherCodes);
+                    }
+                })
+                ->whereBetween(DB::raw('COALESCE(submitted_at, created_at)'), [$from, $to])
+                ->when($request->filled('order_status'), function ($query) use ($request) {
+                    $query->where('status', $request->order_status);
+                })
+                ->orderByDesc('id')
+                ->get();
+        }
+
+        $auditRows = $voucherIds->isEmpty()
+            ? collect()
+            : DB::table('audits')
+                ->where('auditable_type', 'App\\Voucher')
+                ->whereIn('auditable_id', $voucherIds)
+                ->whereBetween('created_at', [$from, $to])
+                ->when($request->filled('event'), function ($query) use ($request) {
+                    $query->where('event', $request->event);
+                })
+                ->orderByDesc('created_at')
+                ->get();
+        $auditUsers = \App\User::whereIn('id', $auditRows->pluck('user_id')->filter()->unique())
+            ->pluck('name', 'id');
+        $ordersByVoucherId = $orders->filter(function ($order) {
+            return $order->voucher_id !== null;
+        })->groupBy('voucher_id');
+        $ordersByVoucherCode = $orders->filter(function ($order) {
+            return $order->voucher_id === null;
+        })->groupBy(function ($order) {
+            return strtoupper(trim((string) $order->voucher_code));
+        });
+        $auditsByVoucher = $auditRows->groupBy('auditable_id');
+
+        $rows = $vouchers->map(function ($voucher) use (
+            $ordersByVoucherId,
+            $ordersByVoucherCode,
+            $auditsByVoucher,
+            $auditUsers
+        ) {
+            $voucherOrders = $ordersByVoucherId->get($voucher->id, collect())
+                ->merge($ordersByVoucherCode->get(strtoupper($voucher->code), collect()))
+                ->unique('id')
+                ->values();
+            $voucherAudits = $auditsByVoucher->get($voucher->id, collect());
+            $timeline = collect();
+
+            foreach ($voucherOrders as $order) {
+                $timeline->push([
+                    'type' => 'usage',
+                    'date' => optional($order->submitted_at ?: $order->created_at)->format('M d, Y h:i A'),
+                    'timestamp' => optional($order->submitted_at ?: $order->created_at)->timestamp ?: 0,
+                    'title' => 'Used on ' . ($order->po_number ?: 'purchase order'),
+                    'description' => ($order->business_name ?: optional($order->ad)->business_name ?: 'Area Distributor')
+                        . ' · ' . ($order->authorized_territory ?: 'No territory')
+                        . ' · Rebate PHP ' . number_format((float) $order->rebate_amount, 2),
+                    'status' => $order->status,
+                    'url' => route('ad-purchase-orders.show', $order->id),
+                    'actor' => optional($order->creator)->name,
+                    'rebate_amount' => (float) $order->rebate_amount,
+                ]);
+            }
+
+            foreach ($voucherAudits as $audit) {
+                $oldValues = json_decode((string) $audit->old_values, true) ?: [];
+                $newValues = json_decode((string) $audit->new_values, true) ?: [];
+                $changes = collect(array_unique(array_merge(array_keys($oldValues), array_keys($newValues))))
+                    ->reject(function ($field) {
+                        return in_array($field, ['updated_at', 'created_at', 'deleted_at'], true);
+                    })
+                    ->map(function ($field) use ($oldValues, $newValues) {
+                        return [
+                            'field' => $this->voucherHistoryFieldLabel($field),
+                            'old' => $this->voucherHistoryValue($field, $oldValues[$field] ?? null),
+                            'new' => $this->voucherHistoryValue($field, $newValues[$field] ?? null),
+                        ];
+                    })
+                    ->values();
+
+                $timeline->push([
+                    'type' => 'audit',
+                    'date' => Carbon::parse($audit->created_at)->format('M d, Y h:i A'),
+                    'timestamp' => Carbon::parse($audit->created_at)->timestamp,
+                    'title' => ucfirst($audit->event) . ' voucher',
+                    'description' => $changes->isNotEmpty()
+                        ? $changes->pluck('field')->implode(', ') . ' changed'
+                        : 'Voucher record ' . $audit->event,
+                    'status' => ucfirst($audit->event),
+                    'url' => null,
+                    'actor' => $auditUsers->get($audit->user_id) ?: 'System',
+                    'changes' => $changes,
+                    'rebate_amount' => 0,
+                ]);
+            }
+
+            $usageLimit = (int) ($voucher->usage_limit ?: 0);
+            $lifetimeUsed = (int) ($voucher->used_count ?: 0);
+            $status = $voucher->trashed() ? 'Deleted' : $voucher->statusLabel();
+
+            return (object) [
+                'id' => $voucher->id,
+                'code' => $voucher->code,
+                'distributor' => $voucher->name,
+                'areas' => collect($voucher->area_names ?? [])->filter()->values(),
+                'description' => $voucher->description,
+                'discount_label' => $voucher->discount_type === 'percent'
+                    ? number_format((float) $voucher->discount_value, 2) . '%'
+                    : 'PHP ' . number_format((float) $voucher->discount_value, 2),
+                'minimum_order_amount' => (float) $voucher->minimum_order_amount,
+                'period_used' => $voucherOrders->count(),
+                'lifetime_used' => $lifetimeUsed,
+                'usage_limit' => $usageLimit ?: null,
+                'remaining_uses' => $usageLimit > 0 ? max(0, $usageLimit - $lifetimeUsed) : null,
+                'rebate_total' => (float) $voucherOrders->sum('rebate_amount'),
+                'order_total' => (float) $voucherOrders->sum('total_amount'),
+                'status' => $status,
+                'starts_at' => optional($voucher->starts_at)->format('M d, Y'),
+                'expires_at' => optional($voucher->expires_at)->format('M d, Y'),
+                'created_at' => optional($voucher->created_at)->format('M d, Y'),
+                'timeline' => $timeline->sortByDesc('timestamp')->values(),
+                'event_count' => $timeline->count(),
+            ];
+        });
+
+        if ($request->filled('status')) {
+            $rows = $rows->filter(function ($row) use ($request) {
+                return strtolower($row->status) === strtolower($request->status);
+            })->values();
+        }
+
+        if ($request->input('usage') === 'used') {
+            $rows = $rows->where('period_used', '>', 0)->values();
+        } elseif ($request->input('usage') === 'unused') {
+            $rows = $rows->where('period_used', '<=', 0)->values();
+        }
+
+        $historyRows = collect();
+        foreach ($rows as $row) {
+            foreach ($row->timeline as $event) {
+                $historyRows->push((object) [
+                    'date' => $event['date'],
+                    'voucher_code' => $row->code,
+                    'distributor' => $row->distributor,
+                    'event_type' => $event['type'] === 'usage' ? 'Usage' : 'Audit',
+                    'event' => $event['title'],
+                    'details' => $event['description'],
+                    'actor' => $event['actor'] ?: 'System',
+                    'status' => $event['status'],
+                    'rebate_total' => (float) ($event['rebate_amount'] ?? 0),
+                ]);
+            }
+        }
+
+        $distributors = \App\Voucher::withTrashed()
+            ->whereNotNull('name')
+            ->where('name', '<>', '')
+            ->distinct()
+            ->orderBy('name')
+            ->pluck('name');
+        $statuses = collect(['Active', 'Inactive', 'Scheduled', 'Expired', 'Used Up', 'Deleted']);
+        $orderStatuses = AdPurchaseOrder::whereNotNull('status')
+            ->where('status', '<>', '')
+            ->distinct()
+            ->orderBy('status')
+            ->pluck('status');
+        $summary = (object) [
+            'vouchers' => $rows->count(),
+            'used_vouchers' => $rows->where('period_used', '>', 0)->count(),
+            'usage_events' => $rows->sum('period_used'),
+            'rebate_total' => $rows->sum('rebate_total'),
+            'audit_events' => $rows->sum(function ($row) {
+                return $row->timeline->where('type', 'audit')->count();
+            }),
+        ];
+
+        return compact(
+            'rows',
+            'historyRows',
+            'distributors',
+            'statuses',
+            'orderStatuses',
+            'summary',
+            'from',
+            'to'
+        );
+    }
+
+    private function voucherHistoryFieldLabel($field)
+    {
+        return ucwords(str_replace('_', ' ', (string) $field));
+    }
+
+    private function voucherHistoryValue($field, $value)
+    {
+        if ($field === 'is_active') {
+            return $value ? 'Active' : 'Inactive';
+        }
+
+        if ($field === 'area_names') {
+            $decoded = is_string($value) ? json_decode($value, true) : $value;
+            return collect(is_array($decoded) ? $decoded : [$value])->filter()->implode(', ') ?: '—';
+        }
+
+        if (in_array($field, ['discount_value', 'minimum_order_amount'], true) && $value !== null) {
+            return number_format((float) $value, 2);
+        }
+
+        if (is_array($value)) {
+            return collect($value)->implode(', ');
+        }
+
+        return $value === null || $value === '' ? '—' : (string) $value;
+    }
+}

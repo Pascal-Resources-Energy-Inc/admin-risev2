@@ -1,5 +1,5 @@
 <div class="modal fade customer-alert-modal" id="homeModal" tabindex="-1" aria-labelledby="homeModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
     <div class="modal-content border-0 shadow-lg">
       <div class="modal-header customer-alert-header">
         <div class="d-flex align-items-center gap-3">

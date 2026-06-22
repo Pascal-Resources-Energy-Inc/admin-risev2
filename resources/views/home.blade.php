@@ -1,12 +1,58 @@
 @extends('layouts.header')
-@section('header')
-<link rel="stylesheet" href="{{asset('design/assets/libs/jvectormap/jquery-jvectormap.css')}}">
-<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.40.0/tabler-icons.min.css" rel="stylesheet">
-
-
-@endsection
+@section('css')
+<link rel="stylesheet" href="{{ asset('design/assets/libs/jvectormap/jquery-jvectormap.css') }}">
 <style>
+  :root {
+    --dashboard-ink: #172033;
+    --dashboard-muted: #667085;
+    --dashboard-line: #e7ebf0;
+    --dashboard-soft: #f8fafc;
+    --dashboard-primary: #1596b8;
+    --dashboard-primary-soft: #e4f7fb;
+    --dashboard-radius: 16px;
+    --dashboard-shadow: 0 9px 28px rgba(15, 23, 42, .055);
+  }
+
+  .dashboard-section { margin-bottom: 18px; }
+  .dashboard-section > .row { --bs-gutter-x: 16px; --bs-gutter-y: 16px; }
+  .dashboard-card {
+    overflow: hidden;
+    width: 100%;
+    background: #fff;
+    border: 1px solid var(--dashboard-line);
+    border-radius: var(--dashboard-radius);
+    box-shadow: var(--dashboard-shadow);
+  }
+  .dashboard-card .card-body { padding: 20px; }
+  .dashboard-panel-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 16px; }
+  .dashboard-panel-title { margin: 0; color: var(--dashboard-ink); font-size: 16px; font-weight: 900; }
+  .dashboard-panel-copy { margin: 4px 0 0; color: #98a2b3; font-size: 11px; }
+  .dashboard-table-wrap { overflow: auto; border: 1px solid var(--dashboard-line); border-radius: 10px; }
+  .dashboard-table { margin: 0; }
+  .dashboard-table th { padding: 10px 12px; color: var(--dashboard-muted); font-size: 9px; font-weight: 900; letter-spacing: .05em; text-transform: uppercase; background: var(--dashboard-soft); border-color: var(--dashboard-line); }
+  .dashboard-table td { padding: 10px 12px; color: #344054; font-size: 11px; border-color: #eef1f5; vertical-align: middle; }
+  .dashboard-list { display: grid; gap: 8px; max-height: 500px; overflow-y: auto; padding-right: 3px; }
+  .dashboard-list-item { padding: 12px 14px; background: #fff; border: 1px solid #edf0f4; border-radius: 11px; transition: .18s ease; }
+  .dashboard-list-item:hover { background: #fbfdff; border-color: #cfeaf1; transform: translateY(-1px); }
+  .dashboard-avatar { width: 42px; height: 42px; flex: 0 0 auto; overflow: hidden; background: #eef2f6; border-radius: 50%; }
+  .dashboard-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .dashboard-pagination { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 15px; padding-top: 14px; border-top: 1px solid #eef1f5; }
+  .dashboard-pagination .page-link { min-height: 32px; display: inline-flex; align-items: center; gap: 5px; color: #475467; font-size: 10px; font-weight: 800; border-color: #e4e7ec; }
+  .dashboard-empty { display: grid; min-height: 180px; place-items: center; padding: 30px; color: #98a2b3; text-align: center; }
+  .dashboard-empty i { margin-bottom: 8px; color: #22a06b; font-size: 40px; }
+  .dashboard-scroll { max-height: 240px; overflow-y: auto; }
+  .dashboard-rank-dot { width: 8px; height: 8px; display: inline-block; margin-right: 6px; border-radius: 50%; }
+  .dashboard-donut { position: relative; display: grid; place-items: center; min-height: 235px; }
+  .dashboard-donut-center { position: absolute; inset: 50% auto auto 50%; text-align: center; transform: translate(-50%, -50%); pointer-events: none; }
+  .dashboard-donut-center small { display: block; color: #98a2b3; font-size: 10px; }
+  .dashboard-donut-center strong { display: block; margin-top: 2px; color: var(--dashboard-ink); font-size: 22px; }
+  .dashboard-alert-icon { width: 38px; height: 38px; display: inline-flex; flex: 0 0 auto; align-items: center; justify-content: center; color: #dc2626; background: #fef2f2; border-radius: 50%; }
+  .dashboard-alert-icon i { font-size: 20px; }
+  @media (max-width: 700px) {
+    .dashboard-card .card-body { padding: 16px; }
+    .dashboard-panel-head, .dashboard-pagination { align-items: stretch; flex-direction: column; }
+  }
+
   .content-area:has(.welcome-dealer) {
       margin-top: 90px !important;
   }
@@ -53,93 +99,10 @@
       margin-bottom: 8px;
   }
   
-  .trend-indicator {
-      position: absolute;
-      top: 16px;
-      right: 16px;
-      color: #28a745;
-      font-size: 0.75rem;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 2px;
-  }
-  
-  .trend-indicator i {
-      font-size: 20px;
-  }
-
-  .trend-indicator.text-success {
-      color: #28a745 !important;
-  }
-  .trend-indicator.text-danger {
-      color: #dc3545 !important;
-  }
-  .trend-indicator.text-muted {
-      color: #6c757d !important;
-  }
-  
   .icon-circle svg {
     width: 24px;
     height: 24px;
     stroke: #17a2b8;
-  }
-
-  .legends {
-    background: #FFFFFF;
-    height: 20%;
-    width: 50%;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-    border-radius: 8px;
-    position: relative;
-    padding: 10px;
-    padding-bottom: 100px !important;
-  }
-
-  .legends::before {
-    content: "";
-    position: absolute;
-    inset: 0; 
-    padding: 1px;
-    border-radius: inherit;
-    background: linear-gradient(
-      90deg,
-      #5BC2E7 20%,
-      #32C600 50%,
-      #DA291C 90%
-    );
-    -webkit-mask:
-        linear-gradient(#fff 0 0) content-box,
-        linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    pointer-events: none;
-  }
-
-  .legend-label {
-    font-weight: 700;
-    font-size: 15px;
-  }
-
-  .badge-legend-high {
-    background-color: #5BC2E7;
-    height: 20px;
-    width: 20px;
-    border-radius: 4px;
-  }
-
-  .badge-legend-average {
-    background-color: #02437B;
-    height: 20px;
-    width: 20px;
-    border-radius: 4px;
-  }
-
-  .badge-legend-low {
-    background-color: #DA291C;
-    height: 20px;
-    width: 20px;
-    border-radius: 4px;
   }
 
   
@@ -188,17 +151,6 @@
       transform: translateX(2px);
   }
 
-  .location-badge {
-      display: inline-block;
-      padding: 4px 12px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      border-radius: 20px;
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-  }
-
   .stat-badge {
       display: inline-block;
       padding: 4px 10px;
@@ -222,16 +174,192 @@
   .customer-link{
     font-size: 14px !important;
   }
+
+  .refill-chart-card { border: 1px solid #e7ebf0; border-radius: 16px; box-shadow: 0 8px 24px rgba(15, 23, 42, .05); }
+  .refill-chart-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
+  .refill-chart-title { margin: 0; color: #172033; font-size: 16px; font-weight: 900; }
+  .refill-chart-subtitle { margin: 4px 0 0; color: #98a2b3; font-size: 11px; }
+  .refill-chart-filters { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: flex-end; gap: 9px; }
+  .refill-filter { display: grid; gap: 4px; }
+  .refill-filter label { margin: 0; color: #667085; font-size: 9px; font-weight: 900; letter-spacing: .05em; text-transform: uppercase; }
+  .refill-filter .form-select { min-width: 115px; min-height: 36px; border-color: #dfe4ea; border-radius: 8px; font-size: 11px; }
+  .refill-filter.month .form-select { min-width: 145px; }
+  .refill-view-badge { min-height: 36px; display: inline-flex; align-items: center; padding: 0 11px; border-radius: 8px; font-size: 10px; }
+  .refill-chart-loading { display: none; min-height: 330px; place-items: center; }
+  .refill-chart-loading.is-visible { display: grid; }
+  #chart-bar-stacked { min-height: 350px; }
+  @media (max-width: 700px) {
+    .refill-chart-header { flex-direction: column; }
+    .refill-chart-filters { justify-content: flex-start; width: 100%; }
+    .refill-filter { flex: 1; }
+    .refill-filter .form-select, .refill-filter.month .form-select { min-width: 0; width: 100%; }
+  }
+
+  .sa-command { display: grid; gap: 18px; margin-bottom: 22px; color: #172033; }
+  .sa-hero { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 24px; overflow: hidden; padding: 26px 28px; color: #fff; background: linear-gradient(120deg, #101828 0%, #173f58 55%, #0c708a 100%); border-radius: 20px; box-shadow: 0 18px 45px rgba(15, 23, 42, .18); }
+  .sa-hero::after { content: ""; position: absolute; width: 330px; height: 330px; right: -110px; top: -170px; border: 58px solid rgba(255,255,255,.07); border-radius: 50%; }
+  .sa-hero-copy, .sa-hero-actions { position: relative; z-index: 1; }
+  .sa-eyebrow { display: inline-flex; align-items: center; gap: 7px; margin-bottom: 8px; color: #9ce8f6; font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+  .sa-title { margin: 0; color: #fff; font-size: clamp(24px, 3vw, 34px); font-weight: 900; letter-spacing: -.03em; }
+  .sa-subtitle { max-width: 650px; margin: 7px 0 0; color: rgba(255,255,255,.72); font-size: 13px; }
+  .sa-hero-actions { display: flex; align-items: center; gap: 10px; }
+  .sa-live-pill { display: inline-flex; align-items: center; gap: 8px; padding: 9px 13px; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.16); border-radius: 999px; font-size: 11px; font-weight: 800; white-space: nowrap; }
+  .sa-live-dot { width: 8px; height: 8px; background: #4ade80; border-radius: 50%; box-shadow: 0 0 0 5px rgba(74,222,128,.14); animation: saPulse 1.8s infinite; }
+  .sa-refresh { width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; color: #fff; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.16); border-radius: 11px; }
+  .sa-refresh:hover { color: #fff; background: rgba(255,255,255,.18); }
+  .sa-refresh.is-loading i { animation: saSpin .8s linear infinite; }
+  .sa-kpis { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
+  .sa-kpi { position: relative; min-height: 132px; overflow: hidden; padding: 17px; background: #fff; border: 1px solid #e8ecf2; border-radius: 15px; box-shadow: 0 8px 25px rgba(15,23,42,.055); transition: transform .2s ease, box-shadow .2s ease; }
+  .sa-kpi:hover { transform: translateY(-3px); box-shadow: 0 14px 30px rgba(15,23,42,.09); }
+  .sa-kpi::after { content: ""; position: absolute; width: 70px; height: 70px; right: -28px; bottom: -30px; background: var(--sa-soft); border-radius: 50%; }
+  .sa-kpi-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .sa-kpi-icon { width: 38px; height: 38px; display: inline-flex; align-items: center; justify-content: center; color: var(--sa-color); background: var(--sa-soft); border-radius: 10px; font-size: 18px; }
+  .sa-kpi-label { display: block; margin-top: 14px; color: #667085; font-size: 10px; font-weight: 900; letter-spacing: .045em; text-transform: uppercase; }
+  .sa-kpi-value { display: block; margin-top: 5px; color: #101828; font-size: clamp(19px, 2vw, 25px); font-weight: 900; line-height: 1; white-space: nowrap; }
+  .sa-kpi-note { display: block; margin-top: 8px; color: #98a2b3; font-size: 10px; font-weight: 700; }
+  .sa-kpi.sales { --sa-color:#0f766e; --sa-soft:#ccfbf1; }
+  .sa-kpi.month { --sa-color:#0369a1; --sa-soft:#e0f2fe; }
+  .sa-kpi.transactions { --sa-color:#7c3aed; --sa-soft:#ede9fe; }
+  .sa-kpi.units { --sa-color:#b45309; --sa-soft:#fef3c7; }
+  .sa-kpi.dealers { --sa-color:#15803d; --sa-soft:#dcfce7; }
+  .sa-kpi.orders { --sa-color:#b91c1c; --sa-soft:#fee2e2; }
+  .sa-grid { display: grid; grid-template-columns: minmax(0, 1.75fr) minmax(300px, .75fr); gap: 14px; }
+  .sa-panel { overflow: hidden; background: #fff; border: 1px solid #e5e9f0; border-radius: 16px; box-shadow: 0 9px 26px rgba(15,23,42,.055); }
+  .sa-panel-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 17px 19px; border-bottom: 1px solid #eef1f5; }
+  .sa-panel-head h5 { margin: 0; color: #172033; font-size: 15px; font-weight: 900; }
+  .sa-panel-head p { margin: 3px 0 0; color: #98a2b3; font-size: 10px; }
+  .sa-chart-legend { display: flex; align-items: center; gap: 13px; color: #667085; font-size: 10px; font-weight: 800; }
+  .sa-chart-legend span { display: inline-flex; align-items: center; gap: 5px; }
+  .sa-chart-legend i { width: 8px; height: 8px; display: inline-block; border-radius: 50%; }
+  .sa-chart { min-height: 310px; padding: 6px 12px 0; }
+  .sa-side-stack { display: grid; gap: 14px; }
+  .sa-status-chart { min-height: 205px; padding: 4px 10px 0; }
+  .sa-pulse-list { display: grid; gap: 0; }
+  .sa-pulse-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 17px; border-top: 1px solid #f0f2f5; }
+  .sa-pulse-item:first-child { border-top: 0; }
+  .sa-pulse-copy { min-width: 0; }
+  .sa-pulse-copy strong { display: block; overflow: hidden; color: #344054; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+  .sa-pulse-copy small { color: #98a2b3; font-size: 9px; }
+  .sa-pulse-amount { color: #101828; font-size: 11px; font-weight: 900; white-space: nowrap; }
+  .sa-empty { padding: 28px 16px; color: #98a2b3; font-size: 11px; text-align: center; }
+  .sa-updated { color: #98a2b3; font-size: 10px; font-weight: 700; }
+  @keyframes saPulse { 50% { opacity: .45; transform: scale(.82); } }
+  @keyframes saSpin { to { transform: rotate(360deg); } }
+  @media (max-width: 1250px) { .sa-kpis { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 900px) { .sa-grid { grid-template-columns: 1fr; } }
+  @media (max-width: 700px) {
+    .sa-hero { align-items: flex-start; flex-direction: column; padding: 22px; }
+    .sa-kpis { grid-template-columns: repeat(2, 1fr); }
+    .sa-panel-head { align-items: flex-start; flex-direction: column; }
+  }
+  @media (max-width: 430px) { .sa-kpis { grid-template-columns: 1fr; } }
 </style>
+@endsection
 @section('content')
 
 <!--  Header End -->
   <!-- Welcome Section Start -->
+  @php
+    $isSuperAdminDashboard = auth()->user()->role === 'Admin' && blank(auth()->user()->warehouse);
+  @endphp
+
   @if(auth()->user()->role == "Admin")
     @include('alert')
   @elseif( auth()->user()->role == "Area Distributor")
   @endif
+
+  @if($isSuperAdminDashboard)
+  <section class="sa-command" id="superAdminCommand">
+    <div class="sa-hero">
+      <div class="sa-hero-copy">
+        <span class="sa-eyebrow"><i class="ti ti-shield-check"></i> Super Admin Command Center</span>
+        <h1 class="sa-title">Good {{ now()->hour < 12 ? 'morning' : (now()->hour < 18 ? 'afternoon' : 'evening') }}, {{ auth()->user()->name }}</h1>
+        <p class="sa-subtitle">A live view of sales, fulfillment, partner activity, and the transactions moving through Gaz Lite.</p>
+      </div>
+      <div class="sa-hero-actions">
+        <span class="sa-live-pill"><span class="sa-live-dot"></span> Live data <span id="saUpdatedAt">connecting...</span></span>
+        <button class="sa-refresh" id="saRefreshButton" type="button" title="Refresh dashboard">
+          <i class="ti ti-refresh"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="sa-kpis">
+      <article class="sa-kpi sales">
+        <div class="sa-kpi-top"><span class="sa-kpi-icon"><i class="ti ti-currency-peso"></i></span></div>
+        <span class="sa-kpi-label">Sales Today</span>
+        <strong class="sa-kpi-value" id="saTodaySales">PHP 0</strong>
+        <span class="sa-kpi-note">Live transaction revenue</span>
+      </article>
+      <article class="sa-kpi month">
+        <div class="sa-kpi-top"><span class="sa-kpi-icon"><i class="ti ti-chart-line"></i></span></div>
+        <span class="sa-kpi-label">Month-to-date</span>
+        <strong class="sa-kpi-value" id="saMonthSales">PHP 0</strong>
+        <span class="sa-kpi-note">Current calendar month</span>
+      </article>
+      <article class="sa-kpi transactions">
+        <div class="sa-kpi-top"><span class="sa-kpi-icon"><i class="ti ti-receipt"></i></span></div>
+        <span class="sa-kpi-label">Transactions Today</span>
+        <strong class="sa-kpi-value" id="saTodayTransactions">0</strong>
+        <span class="sa-kpi-note">Recorded sales activity</span>
+      </article>
+      <article class="sa-kpi units">
+        <div class="sa-kpi-top"><span class="sa-kpi-icon"><i class="ti ti-flame"></i></span></div>
+        <span class="sa-kpi-label">Units This Month</span>
+        <strong class="sa-kpi-value" id="saMonthUnits">0</strong>
+        <span class="sa-kpi-note">Products moved</span>
+      </article>
+      <article class="sa-kpi dealers">
+        <div class="sa-kpi-top"><span class="sa-kpi-icon"><i class="ti ti-building-store"></i></span></div>
+        <span class="sa-kpi-label">Active Dealers</span>
+        <strong class="sa-kpi-value" id="saActiveDealers">0</strong>
+        <span class="sa-kpi-note">With sales in 30 days</span>
+      </article>
+      <article class="sa-kpi orders">
+        <div class="sa-kpi-top"><span class="sa-kpi-icon"><i class="ti ti-alert-circle"></i></span></div>
+        <span class="sa-kpi-label">Pending Orders</span>
+        <strong class="sa-kpi-value" id="saPendingOrders">0</strong>
+        <span class="sa-kpi-note">Needs operational action</span>
+      </article>
+    </div>
+
+    <div class="sa-grid">
+      <article class="sa-panel">
+        <div class="sa-panel-head">
+          <div>
+            <h5>Revenue &amp; Volume</h5>
+            <p>Rolling 30-day operating performance</p>
+          </div>
+          <div class="sa-chart-legend">
+            <span><i style="background:#0f8ca8"></i> Sales</span>
+            <span><i style="background:#f59e0b"></i> Units</span>
+          </div>
+        </div>
+        <div class="sa-chart" id="saSalesChart"></div>
+      </article>
+
+      <div class="sa-side-stack">
+        {{-- <article class="sa-panel">
+          <div class="sa-panel-head">
+            <div><h5>Order Pipeline</h5><p>Dealer and distributor orders</p></div>
+          </div>
+          <div class="sa-status-chart" id="saOrderChart"></div>
+        </article> --}}
+        <article class="sa-panel">
+          <div class="sa-panel-head">
+            <div><h5>Live Transaction Pulse</h5><p>Most recent recorded sales</p></div>
+            <span class="sa-updated">Auto-refresh: 30s</span>
+          </div>
+          <div class="sa-pulse-list" id="saRecentTransactions">
+            <div class="sa-empty">Loading recent activity...</div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+  @endif
   
+  @if(!$isSuperAdminDashboard)
   <section class="welcome">
     <div class="row">
     <div class="col-lg-12 col-xl-12">
@@ -250,10 +378,6 @@
                         ₱{{ number_format($total_sales, 2) }}
                     </div>
                     <div class="stats-label">Total Sales</div>
-                    {{-- <div class="trend-indicator {{ $sales_trend['trend'] == 'up' ? 'text-success' : ($sales_trend['trend'] == 'down' ? 'text-danger' : 'text-muted') }}">
-                        {{ $sales_trend['percentage'] }}% 
-                        <i class="ti {{ $sales_trend['icon'] }}"></i>
-                    </div> --}}
                 </div>
             </div>
 
@@ -266,10 +390,6 @@
                         {{number_format($transactions_details->sum('qty'),0)}} 
                     </div>
                     <div class="stats-label">Products Sold</div>
-                    {{-- <div class="trend-indicator {{ $qty_trend['trend'] == 'up' ? 'text-success' : ($qty_trend['trend'] == 'down' ? 'text-danger' : 'text-muted') }}">
-                        {{ $qty_trend['percentage'] }}% 
-                        <i class="ti {{ $qty_trend['icon'] }}"></i>
-                    </div> --}}
                 </div>
             </div>
 
@@ -300,19 +420,23 @@
     </div>
   </div>
   </section>
-  <section>
+  @endif
+  <section class="dashboard-section">
     <div class="row">
       
       <div class="col-lg-8 col-xl-8 d-flex align-items-stretch">
-        <div class="card w-100">
+        <div class="card refill-chart-card w-100">
             <div class="card-body">
-              <div class="d-sm-flex justify-content-between align-items-start mb-3">
-                <h5 class="mb-3 mb-sm-0">Refill Sold Quantity</h5>
-                
-                <div class="d-flex flex-column flex-sm-row align-items-center justify-content-center gap-2 gap-sm-3">
-                  <div class="d-flex align-items-center">
-                    <label for="yearSelect" class="me-2 mb-0 text-nowrap">Year:</label>
-                    <select id="yearSelect" class="form-select form-select-sm" style="min-width: 110px;">
+              <div class="refill-chart-header">
+                <div>
+                  <h5 class="refill-chart-title">Refill Sold Quantity</h5>
+                  <p class="refill-chart-subtitle">Compare LPG refill volume by month or day.</p>
+                </div>
+
+                <div class="refill-chart-filters">
+                  <div class="refill-filter">
+                    <label for="yearSelect">Year</label>
+                    <select id="yearSelect" class="form-select form-select-sm">
                       @foreach($available_years as $year)
                         <option value="{{ $year }}" {{ $year == $selected_year ? 'selected' : '' }}>
                           {{ $year }}
@@ -321,9 +445,9 @@
                     </select>
                   </div>
                   
-                  <div class="d-flex align-items-center">
-                    <label for="monthSelect" class="me-2 mb-0 text-nowrap">Month:</label>
-                    <select id="monthSelect" class="form-select form-select-sm" style="min-width: 150px;">
+                  <div class="refill-filter month">
+                    <label for="monthSelect">Month</label>
+                    <select id="monthSelect" class="form-select form-select-sm">
                       <option value="">All Months</option>
                       @foreach($available_months as $month)
                         <option value="{{ $month['number'] }}" {{ $month['number'] == $selected_month ? 'selected' : '' }}>
@@ -333,13 +457,13 @@
                     </select>
                   </div>
                   
-                  <span id="viewModeIndicator" class="badge bg-info">
+                  <span id="viewModeIndicator" class="badge bg-info refill-view-badge">
                     {{ $view_type === 'monthly' ? 'Daily View' : 'Monthly View' }}
                   </span>
                 </div>
               </div>
               
-              <div id="chartLoading" class="text-center" style="display: none; padding: 50px;">
+              <div id="chartLoading" class="refill-chart-loading">
                 <div class="spinner-border text-primary" role="status">
                   <span class="visually-hidden">Loading...</span>
                 </div>
@@ -891,47 +1015,43 @@
       </div>
     </div>
   </section>
-  <section>
+  <section class="dashboard-section">
     <div class="row">
       
         <div class="col-lg-8 col-xl-8 d-flex align-items-stretch">
-          <div class="card w-100">
+          <div class="card dashboard-card">
             <div class="card-body">
-              <div class="d-flex mb-4 justify-content-between align-items-center">
-                <h5 class="mb-0 fw-bold">Latest Transaction</h5>
+              <div class="dashboard-panel-head">
+                <div>
+                  <h5 class="dashboard-panel-title">Latest Transactions</h5>
+                  <p class="dashboard-panel-copy">Most recent customer purchases and earned points.</p>
+                </div>
               </div>
 
-              <div class="row mb-3 px-3" style="border-bottom: 2px solid #e2e8f0; padding-bottom: 12px;">
+              <div class="row mb-2 px-3 text-uppercase text-muted fw-bold" style="font-size: 9px; letter-spacing: .05em;">
                 <div class="col-4">
-                  <small class="text-muted fw-bold text-uppercase" style="font-size: 11px; letter-spacing: 0.5px;">
-                    CUSTOMER
-                  </small>
+                  Customer
                 </div>
                 <div class="col-4 text-center">
-                  <small class="text-muted fw-bold text-uppercase" style="font-size: 11px; letter-spacing: 0.5px;">
-                    DATE
-                  </small>
+                  Date
                 </div>
                 <div class="col-4 text-end">
-                  <small class="text-muted fw-bold text-uppercase" style="font-size: 11px; letter-spacing: 0.5px;">
-                    CUSTOMER POINTS
-                  </small>
+                  Customer points
                 </div>
               </div>
 
-              <div class="transaction-list" style="max-height: 500px;">
+              <div class="transaction-list dashboard-list">
                 @foreach($transactions_details as $index => $transaction)
                   <div class="transaction-item {{ $index >= 5 ? 'd-none' : '' }}" data-customer-id="{{$transaction->customer->id ?? 0}}">
-                    <div class="row align-items-center p-3 mb-2 rounded-3 {{ $index % 2 == 0 ? '' : 'bg-light' }}" 
-                        style="border: 1px solid rgba(229, 231, 235, 0.6);">
+                    <div class="row align-items-center dashboard-list-item">
                       
                       <div class="col-4">
                         <div class="d-flex align-items-center">
                           <div class="flex-shrink-0 me-3">
-                            <div class="avatar-circle position-relative" style="width: 45px; height: 45px;">
+                            <div class="dashboard-avatar">
                               <img src="{{ optional($transaction->customer)->avatar ? asset($transaction->customer->avatar) : asset('/design/assets/images/profile/user-1.png') }}" 
                                   alt="{{ optional($transaction->customer)->name ?? 'Customer' }}"
-                                  class="rounded-circle w-100 h-100 object-fit-cover">
+                                  loading="lazy">
                             </div>
                           </div>
                           
@@ -939,7 +1059,6 @@
                             <h6 class="mb-0 fw-bold text-dark text-truncate">
                                 <a href="#" 
                                     class="text-decoration-none text-dark customer-link text-truncate d-inline-block" 
-                                    style="max-width: 100%;"
                                     data-bs-toggle="modal" 
                                     data-bs-target="#transactionModal" 
                                     onclick="showTransactionDetails('{{date('M d, Y',strtotime($transaction->created_at))}}', '{{number_format($transaction->qty,2)}}', '{{number_format($transaction->qty*$transaction->price,2)}}', '{{strtoupper($transaction->dealer->name ?? '')}}', '{{strtoupper($transaction->customer->name ?? '')}}', '{{$transaction->points_dealer}}', '{{$transaction->points_client}}', '{{$transaction->item}}')">
@@ -966,20 +1085,20 @@
                 @endforeach
               </div>
 
-              <div class="d-flex justify-content-between align-items-center mt-3">
-                <small class="text-muted" id="entriesInfo" style="font-size: 12px;">
+              <div class="dashboard-pagination">
+                <small class="text-muted" id="entriesInfo">
                   Showing <span id="currentStart">1</span> to <span id="currentEnd">5</span> of <span id="totalEntries">{{ $transactions_details->count() }}</span> entries
                 </small>
                 
                 <nav aria-label="Transaction pagination">
                   <ul class="pagination pagination-sm mb-0">
                     <li class="page-item" id="prevPage">
-                      <a class="page-link" href="javascript:void(0)" onclick="changePage('prev')" style="font-size: 12px;">
+                      <a class="page-link" href="javascript:void(0)" onclick="changePage('prev')">
                         <i class="fas fa-chevron-left"></i> Previous
                       </a>
                     </li>
                     <li class="page-item" id="nextPage">
-                      <a class="page-link" href="javascript:void(0)" onclick="changePage('next')" style="font-size: 12px;">
+                      <a class="page-link" href="javascript:void(0)" onclick="changePage('next')">
                         Next <i class="fas fa-chevron-right"></i>
                       </a>
                     </li>
@@ -1026,36 +1145,42 @@
         </div>
 
         <div class="col-lg-4 col-xl-4 d-flex align-items-stretch">
-          <div class="card w-100">
+          <div class="card dashboard-card">
             <div class="card-body">
-              <div class="d-flex mb-3 justify-content-center align-items-center position-relative">
+              <div class="dashboard-panel-head">
+                <div>
+                  <h5 class="dashboard-panel-title">Top Dealers</h5>
+                  <p class="dashboard-panel-copy">Leaderboard based on earned points.</p>
+                </div>
+              </div>
+              <div class="dashboard-donut">
                 <div id="dealers-donut-chart"></div>
-                <div class="position-absolute" style="top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
-                  <small class="text-muted d-block" style="font-size: 11px;">Top 10 Dealers</small>
-                  <h4 class="mb-0 fw-bold" style="font-size: 24px;">
+                <div class="dashboard-donut-center">
+                  <small>Highest points</small>
+                  <strong>
                       {{ $dealers->isNotEmpty() ? number_format($dealers->first()->total_points) : '0' }}
-                  </h4>
+                  </strong>
                 </div>
               </div>
               
-              <div style="max-height: 240px; overflow-y: auto; border: 1px solid #e5e7eb; border-radius: 6px;">
-                <table class="table table-bordered align-middle text-nowrap mb-0">
-                  <thead class="bg-white">
-                    <tr style="font-size: 11px; border-bottom: 1px solid #e5e7eb;">
-                      <th scope="col" style="padding: 6px 8px; border-right: 1px solid #e5e7eb;">Dealer</th>
-                      <th scope="col" style="padding: 6px 8px; border-right: 1px solid #e5e7eb;">Total Points</th>
-                      <th scope="col" style="padding: 6px 8px;">Last Transaction</th>
+              <div class="dashboard-table-wrap dashboard-scroll">
+                <table class="table dashboard-table align-middle text-nowrap">
+                  <thead>
+                    <tr>
+                      <th scope="col">Dealer</th>
+                      <th scope="col">Points</th>
+                      <th scope="col">Last transaction</th>
                     </tr>
                   </thead>
                   <tbody>
                     @foreach($dealers as $index => $dealer)
-                      <tr style="font-size: 10px; border-bottom: 1px solid #e5e7eb;">
-                        <td style="padding: 4px 8px; border-right: 1px solid #e5e7eb;">
-                          <span class="d-inline-block me-1" style="width: 8px; height: 8px; border-radius: 50%; background-color: {{ ['#02437B', '#0E5A8A', '#1A7199', '#2688A8', '#329FB7', '#3EB6C6', '#4ACDD5', '#56E4E4', '#62FBF3', '#6EFFFF'][$index % 10] }};"></span>
+                      <tr>
+                        <td>
+                          <span class="dashboard-rank-dot" style="background-color: {{ ['#02437B', '#0E5A8A', '#1A7199', '#2688A8', '#329FB7', '#3EB6C6', '#4ACDD5', '#56E4E4', '#62FBF3', '#6EFFFF'][$index % 10] }};"></span>
                           {{strtoupper(substr($dealer->dealer->name ?? 'Unknown', 0, 12))}}
                         </td>
-                        <td style="padding: 4px 8px; border-right: 1px solid #e5e7eb;">{{number_format($dealer->total_points,0)}}</td>
-                        <td style="padding: 4px 8px;">{{date('M j, Y',strtotime($dealer->latest_transaction))}}</td>
+                        <td>{{number_format($dealer->total_points,0)}}</td>
+                        <td>{{date('M j, Y',strtotime($dealer->latest_transaction))}}</td>
                       </tr>
                     @endforeach
                   </tbody>
@@ -1066,73 +1191,55 @@
         </div>
     </div>
   </section>
-    {{-- <div class="col-lg-12 col-xl-6 d-flex align-items-stretch">
-          <div class="card w-100">
-            
-            <div class="card-body">
-              <h5>Stove Distributed(2025)</h5>
-              <div id="chart-bar-stacked-stove"></div>
-              <div class="d-flex align-items-center justify-content-between mb-3">
-                <h5 class="fs-4 mb-0 fw-bold">Stove Goals</h5>
-                <p class="text-primary fw-normal fs-3 mb-0">100</p>
-              </div>
-              <div class="progress bg-light-subtle" style="height: 10px">
-                <div class="progress-bar bg-primary  rounded" style="width: 35%;height: 10px;" role="progressbar" aria-valuenow="35" aria-valuemin="0" aria-valuemax="100">35%</div>
-              </div>
-              
-            </div>
-          </div>
-        </div> --}}
-  <section>
+  <section class="dashboard-section">
     <div class="row">
       <div class="col-lg-7 col-xl-8 d-flex align-items-stretch">
-        <div class="card w-100">
+        <div class="card dashboard-card">
           <div class="card-body">
-            <div class="d-flex mb-3 justify-content-between align-items-center">
-              <h5 class="mb-0 fw-bold">Inactive Dealers</h5>
-              <span class="badge bg-warning text-white">No Activity (3+ Days)</span>
+            <div class="dashboard-panel-head">
+              <div>
+                <h5 class="dashboard-panel-title">Inactive Dealers</h5>
+                <p class="dashboard-panel-copy">Partners without recorded sales activity for at least three days.</p>
+              </div>
+              <span class="badge bg-warning text-dark">3+ days inactive</span>
             </div>
             
-            <div class="row mb-3 px-3" style="border-bottom: 2px solid #e2e8f0; padding-bottom: 12px;">
+            <div class="row mb-2 px-3 text-uppercase text-muted fw-bold" style="font-size: 9px; letter-spacing: .05em;">
               <div class="col-6">
-                <small class="text-muted fw-bold text-uppercase" style="font-size: 11px; letter-spacing: 0.5px;">
-                  DEALER
-                </small>
+                Dealer
               </div>
               <div class="col-6 text-end">
-                <small class="text-muted fw-bold text-uppercase" style="font-size: 11px; letter-spacing: 0.5px;">
-                  LAST ACTIVITY
-                </small>
+                Last activity
               </div>
             </div>
 
-            <div class="inactive-dealers-list">
+            <div class="inactive-dealers-list dashboard-list">
               @if($dealers_inactive->isEmpty())
-                <div class="text-center py-5">
-                  <i class="ti ti-circle-check" style="font-size: 48px; color: #28a745;"></i>
-                  <p class="text-muted mt-3 mb-0">All dealers are active!</p>
+                <div class="dashboard-empty">
+                  <div>
+                    <i class="ti ti-circle-check"></i>
+                    <p class="mb-0">All dealers are active.</p>
+                  </div>
                 </div>
               @else
                 @foreach($dealers_inactive as $index => $dealer)
                   <div class="inactive-dealer-item {{ $index >= 5 ? 'd-none' : '' }}" data-dealer-id="{{ $dealer->id }}">
-                    <div class="row align-items-center p-3 mb-2 rounded-3 {{ $index % 2 == 0 ? '' : 'bg-light' }}" 
-                        style="border: 1px solid rgba(229, 231, 235, 0.6);">
+                    <div class="row align-items-center dashboard-list-item">
                       
                       <div class="col-6">
                         <div class="d-flex align-items-center">
                           <div class="flex-shrink-0 me-3">
-                            <div class="d-flex align-items-center justify-content-center" 
-                                style="width: 37px; height: 37px; border-radius: 50%; border: 2px solid #ff0000">
-                              <i class="ti ti-alert-triangle" style="font-size: 24px; color: #ff0000;"></i>
+                            <div class="dashboard-alert-icon">
+                              <i class="ti ti-alert-triangle"></i>
                             </div>
                           </div>
                           
                           <div class="flex-grow-1">
-                            <h6 class="mb-0 fw-bold text-dark text-truncate" style="font-size: 13px;">
+                            <h6 class="mb-0 fw-bold text-dark text-truncate">
                               {{ strtoupper($dealer->name ?? 'Unknown') }}
                             </h6>
                             @if($dealer->store_name)
-                              <small class="text-muted" style="font-size: 10px;">
+                              <small class="text-muted">
                                 {{ strtoupper($dealer->store_name) }}
                               </small>
                             @endif
@@ -1143,10 +1250,10 @@
                       <div class="col-6 text-end">
                         <div>
                           @if($dealer->last_transaction_date)
-                            <span class="text-dark fw-medium d-block" style="font-size: 12px;">
+                            <span class="text-dark fw-medium d-block">
                               {{ \Carbon\Carbon::parse($dealer->last_transaction_date)->format('M d, Y') }}
                             </span>
-                            <span class="badge bg-danger" style="font-size: 10px;">
+                            <span class="badge bg-danger">
                               {{ $dealer->days_since_transaction }} {{ $dealer->days_since_transaction == 1 ? 'day' : 'days' }} ago
                             </span>
                           @else
@@ -1161,20 +1268,20 @@
             </div>
 
             @if($dealers_inactive->isNotEmpty())
-              <div class="d-flex justify-content-between align-items-center mt-3">
-                <small class="text-muted" id="dealersEntriesInfo" style="font-size: 12px;">
+              <div class="dashboard-pagination">
+                <small class="text-muted" id="dealersEntriesInfo">
                   Showing <span id="dealersCurrentStart">1</span> to <span id="dealersCurrentEnd">5</span> of <span id="dealersTotalEntries">{{ $dealers_inactive->count() }}</span> entries
                 </small>
                 
                 <nav aria-label="Inactive dealers pagination">
                   <ul class="pagination pagination-sm mb-0">
                     <li class="page-item" id="dealersPrevPage">
-                      <a class="page-link" href="javascript:void(0)" onclick="changeDealersPage('prev')" style="font-size: 12px;">
+                      <a class="page-link" href="javascript:void(0)" onclick="changeDealersPage('prev')">
                         <i class="fas fa-chevron-left"></i> Previous
                       </a>
                     </li>
                     <li class="page-item" id="dealersNextPage">
-                      <a class="page-link" href="javascript:void(0)" onclick="changeDealersPage('next')" style="font-size: 12px;">
+                      <a class="page-link" href="javascript:void(0)" onclick="changeDealersPage('next')">
                         Next <i class="fas fa-chevron-right"></i>
                       </a>
                     </li>
@@ -1187,36 +1294,42 @@
       </div>
 
       <div class="col-lg-4 col-xl-4 d-flex align-items-stretch">
-        <div class="card w-100">
+        <div class="card dashboard-card">
           <div class="card-body">
-            <div class="d-flex mb-3 justify-content-center align-items-center position-relative">
+            <div class="dashboard-panel-head">
+              <div>
+                <h5 class="dashboard-panel-title">Top Customers</h5>
+                <p class="dashboard-panel-copy">Highest loyalty-point earners.</p>
+              </div>
+            </div>
+            <div class="dashboard-donut">
               <div id="customers-donut-chart"></div>
-              <div class="position-absolute" style="top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
-                <small class="text-muted d-block" style="font-size: 11px;">Top 10 Customers</small>
-                <h4 class="mb-0 fw-bold" style="font-size: 24px;">
+              <div class="dashboard-donut-center">
+                <small>Highest points</small>
+                <strong>
                     {{ $top_customers->isNotEmpty() ? number_format($top_customers->first()->total_points) : '0' }}
-                </h4>
+                </strong>
               </div>
             </div>
             
-            <div style="max-height: 240px; overflow-y: auto; border: 1px solid #e5e7eb; border-radius: 6px;">
-              <table class="table table-bordered align-middle text-nowrap mb-0">
-                <thead class="bg-white">
-                  <tr style="font-size: 11px; border-bottom: 1px solid #e5e7eb;">
-                    <th scope="col" style="padding: 6px 8px; border-right: 1px solid #e5e7eb;">Customer</th>
-                    <th scope="col" style="padding: 6px 8px; border-right: 1px solid #e5e7eb;">Total Points</th>
-                    <th scope="col" style="padding: 6px 8px;">Last Transaction</th>
+            <div class="dashboard-table-wrap dashboard-scroll">
+              <table class="table dashboard-table align-middle text-nowrap">
+                <thead>
+                  <tr>
+                    <th scope="col">Customer</th>
+                    <th scope="col">Points</th>
+                    <th scope="col">Last transaction</th>
                   </tr>
                 </thead>
                 <tbody>
                   @foreach($top_customers as $index => $customer)
-                    <tr style="font-size: 10px; border-bottom: 1px solid #e5e7eb;">
-                      <td style="padding: 4px 8px; border-right: 1px solid #e5e7eb;">
-                        <span class="d-inline-block me-1" style="width: 8px; height: 8px; border-radius: 50%; background-color: {{ ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9', '#F8C471', '#82E0AA'][$index % 10] }};"></span>
+                    <tr>
+                      <td>
+                        <span class="dashboard-rank-dot" style="background-color: {{ ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9', '#F8C471', '#82E0AA'][$index % 10] }};"></span>
                         {{strtoupper(substr($customer->customer->name ?? 'Unknown', 0, 12))}}
                       </td>
-                      <td style="padding: 4px 8px; border-right: 1px solid #e5e7eb;">{{number_format($customer->total_points,0)}}</td>
-                      <td style="padding: 4px 8px;">{{date('M j, Y',strtotime($customer->latest_transaction))}}</td>
+                      <td>{{number_format($customer->total_points,0)}}</td>
+                      <td>{{date('M j, Y',strtotime($customer->latest_transaction))}}</td>
                     </tr>
                   @endforeach
                 </tbody>
@@ -1245,17 +1358,223 @@
   @endif
 
 
-<script src="https://cdn.jsdelivr.net/npm/iconify-icon@1.0.8/dist/iconify-icon.min.js"></script>
-
-  {{-- <script src="../assets/js/dashboards/dashboard.js"></script> --}}
-
-
-<script src="{{asset('design/assets/l ibs/jvectormap/jquery-jvectormap.min.js')}}"></script>
+<script src="{{asset('design/assets/libs/jvectormap/jquery-jvectormap.min.js')}}"></script>
 <script src="{{asset('design/assets/libs/apexcharts/dist/apexcharts.min.js')}}"></script>
 <script src="{{asset('design/assets/js/extra-libs/jvectormap/jquery-jvectormap-us-aea-en.js')}}"></script>
 <script src="{{asset('design/assets/js/dashboards/dashboard.js')}}"></script>
-<script src="https://cdn.jsdelivr.net/npm/iconify-icon@1.0.8/dist/iconify-icon.min.js"></script>
-{{-- <script src="{{asset('design/assets/js/dashboards/dashboard2.js')}}"></script> --}}
+
+@if($isSuperAdminDashboard)
+<script>
+(function () {
+    var endpoint = @json(route('home.live-overview'));
+    var salesChart = null;
+    var orderChart = null;
+    var refreshButton = document.getElementById('saRefreshButton');
+    var peso = new Intl.NumberFormat('en-PH', {
+        style: 'currency',
+        currency: 'PHP',
+        maximumFractionDigits: 0
+    });
+    var wholeNumber = new Intl.NumberFormat('en-PH', { maximumFractionDigits: 0 });
+
+    function escapeHtml(value) {
+        var node = document.createElement('div');
+        node.textContent = value == null ? '' : String(value);
+        return node.innerHTML;
+    }
+
+    function setText(id, value) {
+        var element = document.getElementById(id);
+        if (element) element.textContent = value;
+    }
+
+    function renderKpis(kpis) {
+        setText('saTodaySales', peso.format(kpis.today_sales || 0));
+        setText('saMonthSales', peso.format(kpis.month_sales || 0));
+        setText('saTodayTransactions', wholeNumber.format(kpis.today_transactions || 0));
+        setText('saMonthUnits', wholeNumber.format(kpis.month_units || 0));
+        setText('saActiveDealers', wholeNumber.format(kpis.active_dealers || 0));
+        setText('saPendingOrders', wholeNumber.format(kpis.pending_orders || 0));
+    }
+
+    function renderSalesChart(rows) {
+        var categories = rows.map(function (row) { return row.date; });
+        var sales = rows.map(function (row) { return row.sales; });
+        var units = rows.map(function (row) { return row.units; });
+        var options = {
+            series: [
+                { name: 'Sales', type: 'area', data: sales },
+                { name: 'Units', type: 'line', data: units }
+            ],
+            chart: {
+                height: 300,
+                type: 'line',
+                toolbar: { show: false },
+                fontFamily: 'inherit',
+                animations: { enabled: true, dynamicAnimation: { speed: 450 } }
+            },
+            colors: ['#0f8ca8', '#f59e0b'],
+            stroke: { curve: 'smooth', width: [3, 3] },
+            fill: {
+                type: ['gradient', 'solid'],
+                gradient: { opacityFrom: .32, opacityTo: .03, stops: [0, 95, 100] }
+            },
+            dataLabels: { enabled: false },
+            markers: { size: 0, hover: { size: 5 } },
+            grid: { borderColor: '#edf0f5', strokeDashArray: 4 },
+            xaxis: {
+                categories: categories,
+                axisBorder: { show: false },
+                axisTicks: { show: false },
+                labels: { style: { colors: '#98a2b3', fontSize: '10px' }, rotate: 0 }
+            },
+            yaxis: [
+                {
+                    labels: {
+                        style: { colors: '#98a2b3', fontSize: '10px' },
+                        formatter: function (value) {
+                            if (value >= 1000000) return 'PHP ' + (value / 1000000).toFixed(1) + 'M';
+                            if (value >= 1000) return 'PHP ' + (value / 1000).toFixed(0) + 'K';
+                            return 'PHP ' + Math.round(value);
+                        }
+                    }
+                },
+                {
+                    opposite: true,
+                    labels: {
+                        style: { colors: '#98a2b3', fontSize: '10px' },
+                        formatter: function (value) { return Math.round(value); }
+                    }
+                }
+            ],
+            legend: { show: false },
+            tooltip: {
+                shared: true,
+                y: [
+                    { formatter: function (value) { return peso.format(value); } },
+                    { formatter: function (value) { return wholeNumber.format(value) + ' units'; } }
+                ]
+            },
+            responsive: [{
+                breakpoint: 600,
+                options: {
+                    chart: { height: 270 },
+                    xaxis: { labels: { rotate: -45, hideOverlappingLabels: true } }
+                }
+            }]
+        };
+
+        if (salesChart) {
+            salesChart.updateOptions(options);
+        } else {
+            salesChart = new ApexCharts(document.querySelector('#saSalesChart'), options);
+            salesChart.render();
+        }
+    }
+
+    function renderOrderChart(rows) {
+        var usableRows = rows.filter(function (row) { return Number(row.total) > 0; });
+        var options = {
+            series: usableRows.length ? usableRows.map(function (row) { return Number(row.total); }) : [1],
+            labels: usableRows.length ? usableRows.map(function (row) { return row.status; }) : ['No orders'],
+            chart: { type: 'donut', height: 205, fontFamily: 'inherit' },
+            colors: usableRows.length ? ['#0f8ca8', '#f59e0b', '#16a34a', '#7c3aed', '#dc2626', '#64748b'] : ['#e5e7eb'],
+            dataLabels: { enabled: false },
+            stroke: { width: 3, colors: ['#fff'] },
+            legend: {
+                position: 'bottom',
+                fontSize: '10px',
+                markers: { width: 7, height: 7, radius: 7 },
+                itemMargin: { horizontal: 6, vertical: 3 }
+            },
+            plotOptions: {
+                pie: {
+                    donut: {
+                        size: '70%',
+                        labels: {
+                            show: true,
+                            total: {
+                                show: true,
+                                label: 'Orders',
+                                fontSize: '10px',
+                                formatter: function (chart) {
+                                    return usableRows.length
+                                        ? wholeNumber.format(chart.globals.seriesTotals.reduce(function (sum, value) { return sum + value; }, 0))
+                                        : '0';
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            tooltip: { enabled: usableRows.length > 0 }
+        };
+
+        if (orderChart) {
+            orderChart.updateOptions(options);
+        } else {
+            orderChart = new ApexCharts(document.querySelector('#saOrderChart'), options);
+            orderChart.render();
+        }
+    }
+
+    function renderRecentTransactions(rows) {
+        var container = document.getElementById('saRecentTransactions');
+        if (!container) return;
+
+        if (!rows.length) {
+            container.innerHTML = '<div class="sa-empty">No transactions recorded yet.</div>';
+            return;
+        }
+
+        container.innerHTML = rows.map(function (row) {
+            return '<div class="sa-pulse-item">' +
+                '<div class="sa-pulse-copy">' +
+                    '<strong>' + escapeHtml(row.customer) + ' · ' + escapeHtml(row.item) + '</strong>' +
+                    '<small>' + escapeHtml(row.dealer) + ' · ' + escapeHtml(row.time || 'just now') + '</small>' +
+                '</div>' +
+                '<span class="sa-pulse-amount">' + escapeHtml(peso.format(row.amount || 0)) + '</span>' +
+            '</div>';
+        }).join('');
+    }
+
+    function loadLiveOverview() {
+        if (refreshButton) refreshButton.classList.add('is-loading');
+
+        fetch(endpoint, {
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin',
+            cache: 'no-store'
+        })
+        .then(function (response) {
+            if (!response.ok) throw new Error('Unable to load live dashboard data.');
+            return response.json();
+        })
+        .then(function (data) {
+            renderKpis(data.kpis || {});
+            renderSalesChart(data.sales_trend || []);
+            renderOrderChart(data.order_statuses || []);
+            renderRecentTransactions(data.recent_transactions || []);
+            setText('saUpdatedAt', 'updated ' + new Date(data.generated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+        })
+        .catch(function (error) {
+            console.error('Super Admin dashboard:', error);
+            setText('saUpdatedAt', 'refresh failed');
+        })
+        .finally(function () {
+            if (refreshButton) refreshButton.classList.remove('is-loading');
+        });
+    }
+
+    if (refreshButton) refreshButton.addEventListener('click', loadLiveOverview);
+    loadLiveOverview();
+    window.setInterval(loadLiveOverview, 30000);
+})();
+</script>
+@endif
 
 
 <script>
@@ -2009,7 +2328,7 @@ function loadChartData(year, month = null) {
   $('#yearSelect, #monthSelect').prop('disabled', true);
   
   // Show loading indicator
-  $('#chartLoading').show();
+  $('#chartLoading').addClass('is-visible');
   $('#chart-bar-stacked').hide();
   
   // Add a small delay to ensure UI updates are visible
@@ -2032,7 +2351,7 @@ function loadChartData(year, month = null) {
         updateViewModeIndicator(response.view_type);
         
         // Hide loading and show chart
-        $('#chartLoading').hide();
+        $('#chartLoading').removeClass('is-visible');
         $('#chart-bar-stacked').show();
         
         // Re-enable dropdowns
@@ -2042,7 +2361,7 @@ function loadChartData(year, month = null) {
         renderChart(response.categories, response.qty, response.year, response.month, response.view_type);
       },
       error: function(xhr, status, error) {
-        $('#chartLoading').hide();
+        $('#chartLoading').removeClass('is-visible');
         $('#chart-bar-stacked').show();
         $('#yearSelect, #monthSelect').prop('disabled', false);
         console.error('Error loading chart data:', error);
@@ -2075,258 +2394,121 @@ function updateViewModeIndicator(viewType) {
 }
 
 function renderChart(categories, qty, year, month = null, viewType = 'yearly') {
-  // Destroy existing chart if it exists
   if (chartInstance) {
     chartInstance.destroy();
     chartInstance = null;
   }
-  
-  // Clear the chart container
-  document.querySelector("#chart-bar-stacked").innerHTML = '';
-  
-  // Determine chart title and axis labels based on view type
-  const chartTitle = viewType === 'monthly' 
-    ? `Daily LPG Refills - ${getMonthName(month)} ${year}`
-    : `Monthly LPG Refills - ${year}`;
-    
-  const xAxisTitle = viewType === 'monthly' ? 'Days' : 'Months';
-  
-  var options_area = {
-    series: [
-      {
-        name: "LPG Cylinder Refills",
-        data: qty,
-      }
-    ],
+
+  const chartElement = document.querySelector('#chart-bar-stacked');
+  chartElement.innerHTML = '';
+
+  const options = {
+    series: [{
+      name: 'Refills Sold',
+      data: qty
+    }],
     chart: {
-      fontFamily: "inherit",
-      type: "area",
-      height: 500,
-      toolbar: {
-        show: false,
-      },
-      background: 'transparent',
+      type: 'bar',
+      height: 350,
+      fontFamily: 'inherit',
+      toolbar: { show: false },
       animations: {
         enabled: true,
-        easing: 'easeinout',
-        speed: 800,
-        animateGradually: {
-          enabled: true,
-          delay: 150
-        },
-        dynamicAnimation: {
-          enabled: true,
-          speed: 350
-        }
+        easing: 'easeout',
+        speed: 550
       }
-    },
-    title: {
-      text: chartTitle,
-      align: 'center',
-      style: {
-        fontSize: '0px',
-        fontWeight: 0,
-        color: '#ffffffff'
-      }
-    },
-    grid: {
-      show: true,
-      borderColor: "#E5E7EB",
-      strokeDashArray: 0,
-      position: 'back',
-      xaxis: {
-        lines: {
-          show: false
-        }
-      },
-      yaxis: {
-        lines: {
-          show: true
-        }
-      },
-      padding: {
-        top: 20,
-        right: 20,
-        bottom: 10,
-        left: 10
-      },
-    },
-    colors: ["#5BC2E7"],
-    fill: {
-      type: "gradient",
-      gradient: {
-        shade: "light",
-        type: "vertical",
-        shadeIntensity: 0.3,
-        gradientToColors: ["#5BC2E7"],
-        inverseColors: false,
-        opacityFrom: 1,
-        opacityTo: 0.8,
-        stops: [0, 100],
-      },
-    },
-    stroke: {
-      curve: "straight",
-      width: 0,
     },
     plotOptions: {
-      area: {
-        fillTo: "origin",
-      },
+      bar: {
+        horizontal: false,
+        columnWidth: viewType === 'monthly' ? '62%' : '48%',
+        borderRadius: 5,
+        borderRadiusApplication: 'end',
+        dataLabels: { position: 'top' }
+      }
     },
-    dataLabels: {
-      enabled: false,
+    colors: ['#5BC2E7'],
+    fill: {
+      type: 'gradient',
+      gradient: {
+        type: 'vertical',
+        shadeIntensity: .15,
+        gradientToColors: ['#1687b2'],
+        opacityFrom: 1,
+        opacityTo: .88,
+        stops: [0, 100]
+      }
+    },
+    dataLabels: { enabled: false },
+    stroke: { show: false },
+    grid: {
+      borderColor: '#edf0f5',
+      strokeDashArray: 4,
+      padding: { top: 8, right: 8, bottom: 0, left: 4 }
     },
     xaxis: {
       categories: categories,
-      title: {
-        text: xAxisTitle,
-        offsetY: 15,
-        style: {
-          fontSize: '12px',
-          fontWeight: 600,
-          color: '#666'
-        }
-      },
+      axisBorder: { show: false },
+      axisTicks: { show: false },
       labels: {
         style: {
-          colors: "#9CA3AF",
-          fontSize: "11px",
-          fontWeight: 400,
+          colors: '#98a2b3',
+          fontSize: '10px'
         },
-        offsetY: 0,
         rotate: viewType === 'monthly' && categories.length > 15 ? -45 : 0,
         hideOverlappingLabels: true,
-        maxHeight: 30,
+        trim: true,
         formatter: function (val) {
-          if (viewType === 'monthly') {
-            return val; // Show day numbers as is
-          } else {
-            // For yearly view, show abbreviated month names
-            if (val && typeof val === 'string') {
-              const date = new Date(val);
-              if (!isNaN(date.getTime())) {
-                return date.toLocaleDateString('en-US', { month: 'short' });
-              }
-              return val.length > 3 ? val.substring(0, 3) : val;
-            }
-            return val;
-          }
-        },
-      },
-      axisBorder: {
-        show: false,
-      },
-      axisTicks: {
-        show: false,
-      },
-      tickPlacement: 'on',
-    },
-    yaxis: {
-      show: true,
-      title: {
-        text: 'Quantity',
-        style: {
-          fontSize: '12px',
-          fontWeight: 600,
-          color: '#666'
+          return viewType === 'monthly' ? val : String(val).substring(0, 3);
         }
       },
+      tickPlacement: 'on'
+    },
+    yaxis: {
       labels: {
-        show: true,
         style: {
-          colors: "#9CA3AF",
-          fontSize: "11px",
-          fontWeight: 400,
+          colors: '#98a2b3',
+          fontSize: '10px'
         },
         formatter: function (val) {
           return Math.round(val);
-        },
-      },
-      axisBorder: {
-        show: false,
-      },
-      axisTicks: {
-        show: false,
-      },
+        }
+      }
     },
     tooltip: {
-      theme: "light",
+      theme: 'light',
       x: {
-        formatter: function(val, opts) {
-          if (viewType === 'monthly') {
-            return `Day ${val}`;
-          } else {
-            return val;
-          }
+        formatter: function (val) {
+          return viewType === 'monthly' ? 'Day ' + val : val + ' ' + year;
         }
       },
       y: {
         formatter: function (val) {
-          return val + " units";
-        },
-      },
+          return Math.round(val).toLocaleString('en-PH') + ' units';
+        }
+      }
     },
-    legend: {
-      show: false,
+    legend: { show: false },
+    noData: {
+      text: 'No refill sales found for this period.',
+      align: 'center',
+      verticalAlign: 'middle',
+      style: { color: '#98a2b3', fontSize: '12px' }
     },
-    markers: {
-      size: 0,
-    },
-    responsive: [
-      {
-        breakpoint: 768,
-        options: {
-          chart: {
-            height: 300,
-          },
-          title: {
-            style: {
-              fontSize: '14px'
-            }
-          },
-          xaxis: {
-            labels: {
-              fontSize: "10px",
-              rotate: -45,
-            },
-            title: {
-              style: {
-                fontSize: '10px'
-              }
-            }
-          },
-          yaxis: {
-            labels: {
-              fontSize: "10px",
-            },
-            title: {
-              style: {
-                fontSize: '10px'
-              }
-            }
-          },
-        },
-      },
-    ],
+    responsive: [{
+      breakpoint: 768,
+      options: {
+        chart: { height: 310 },
+        plotOptions: { bar: { columnWidth: '72%', borderRadius: 3 } },
+        xaxis: { labels: { rotate: -45 } }
+      }
+    }]
   };
 
-  setTimeout(() => {
-    chartInstance = new ApexCharts(
-      document.querySelector("#chart-bar-stacked"),
-      options_area
-    );
+  setTimeout(function () {
+    chartInstance = new ApexCharts(chartElement, options);
     chartInstance.render();
   }, 50);
-}
-
-function getMonthName(monthNumber) {
-  if (!monthNumber) return '';
-  const months = [
-    '', 'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
-  ];
-  return months[monthNumber] || '';
 }
 </script>
 <script>

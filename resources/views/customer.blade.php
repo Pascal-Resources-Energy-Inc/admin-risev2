@@ -35,7 +35,30 @@
     .filter-container {
         margin-bottom: 20px;
     }
-    
+    .profile-name {
+        font-size: 18px;
+        font-weight: 600;
+        margin-top: 10px;
+        color: #5BC2E7;
+    }
+
+    .profile-info p {
+        font-size: 15px;
+        margin-bottom: 10px;
+        color: #555;
+    }
+
+    .profile-info .bi {
+        margin-right: 10px;
+        color: #5BC2E7;
+    }
+    .profile-avatar {
+        width: 120px;
+        height: 120px;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 4px solid #f1f3f5;
+    }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.6/dist/signature_pad.umd.min.js"></script>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
@@ -51,17 +74,32 @@
                 </div>
                 <div class="card-body">
                     <div class='text-center'>
-                    <img src="{{$customer->avatar ? asset($customer->avatar) : asset('design/assets/images/profile/user-1.png')}}" alt="Avatar Image" class="img-fluid rounded-circle" style="width: 100px; height: 100px;">
+                        {{-- <img src="{{$customer->avatar ? asset($customer->avatar) : asset('design/assets/images/profile/user-1.png')}}" alt="Avatar Image" class="img-fluid rounded-circle" style="width: 100px; height: 100px;"> --}}
+                        <img src="{{$customer->avatar ? asset($customer->avatar) : asset('design/assets/images/profile/user-1.png')}}" class="profile-avatar mx-auto">
+                        <div class="profile-name">{{ trim(strtoupper($customer->user->first_name ?? '')) . ' ' . strtoupper(($customer->user->last_name ?? '')) ?: ( strtoupper($customer->name ?? '')) }}</div>
+                        <div class="text-muted small">{{ strtoupper($customer->client_reference) }}</div>
                     </div>  
                     <br>
                    <div class='text-center'>
-                        <button type="button" class="btn btn-primary" data-bs-toggle="modal"  data-bs-target="#uploadAvatarModal" title="Upload Avatar">
+                        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal"  data-bs-target="#uploadAvatarModal" title="Upload Avatar">
                         <i class="fas fa-camera"></i>
                         <span class="sr-only">Upload Avatar</span>
                         </button>
+                        <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editCustomerModal" title="Edit Customer">
+                        <i class="fas fa-edit"></i>
+                        <span class="sr-only">Edit Customer</span>
+                        </button>
+                    </div>
+                    <hr>
+                    <div class="profile-info text-start">
+                        <p><i class="bi bi-telephone"></i> {{ strtoupper($customer->number) }}</p>
+                        <p><i class="bi bi-geo-alt"></i> {{ strtoupper($customer->address) }}</p>
+                        <p><i class="bi bi-facebook"></i> {{ strtoupper($customer->facebook) }}</p>
+                        <p><i class="bi bi-envelope"></i> {{ strtoupper($customer->email_address) }}</p>
+                        <p><i class="bi bi-upc"></i> {{ strtoupper($customer->serial_number) }}</p>
                     </div>
                     <!-- Customer Personal Details -->
-                    <p><strong>Name:</strong> {{$customer->name}}</p>
+                    {{-- <p><strong>Name:</strong> {{$customer->name}}</p>
                     <p><strong>Contact:</strong> {{$customer->number}}</p>
                     <p><strong>Address:</strong> 
                         {{ implode(', ', array_filter([
@@ -71,7 +109,7 @@
                             $customer->location_province
                         ])) }} {{ $customer->postal_code }}</p>
                     <p><strong>Serial Number:</strong> {{$customer->serial->serial_number}}</p>
-                    <p><strong>Facebook:</strong> {{$customer->facebook}}</p>
+                    <p><strong>Facebook:</strong> {{$customer->facebook}}</p> --}}
 
                     <!-- QR Code Generation -->
                     <div id="qrcode" class="mt-4 text-center">
@@ -140,8 +178,8 @@
                 </div>
             </div>
             
-            <div class="col-md-12">
-                <div class="card">
+            <div class="card">
+                <div class="col-md-12">
                     <div class="card-header">
                         <h5>Transactions</h5>
                     </div>
@@ -194,6 +232,7 @@
 @include('sign_contract')
 @include('viewValidId')
 @include('view_contract_signed')
+@include('edit_customer')
 @endsection
 
 @section('javascript')

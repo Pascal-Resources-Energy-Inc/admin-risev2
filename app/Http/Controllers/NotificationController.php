@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Client;
 use App\TransactionDetail;
+use App\OrderDetail;
 
 class NotificationController extends Controller
 {
@@ -21,23 +22,42 @@ class NotificationController extends Controller
         
         $userId = Auth::id();
         
+        $storedNotificationId = str_starts_with($notificationId, 'client_')
+            ? 'customer_' . substr($notificationId, strlen('client_'))
+            : $notificationId;
+
         $exists = DB::table('notifications')
             ->where('user_id', $userId)
-            ->where('notif_id', $notificationId)
+            ->where('notif_id', $storedNotificationId)
             ->exists();
             
         if (!$exists) {
-            $type = str_starts_with($notificationId, 'client_') ? 'client' : 'transaction';
+            if (str_starts_with($notificationId, 'client_')) {
+                $type = 'client';
+            } elseif (str_starts_with($notificationId, 'order_')) {
+                $type = 'order';
+            } else {
+                $type = 'transaction';
+            }
             
             DB::table('notifications')->insert([
                 'user_id' => $userId,
-                'notif_id' => $notificationId,
+                'notif_id' => $storedNotificationId,
                 'type' => $type,
                 'created_at' => now(),
                 'updated_at' => now()
             ]);
         }
         
+        $user = Auth::user();
+        $readNotifications = $user->read_notifications ?? [];
+
+        if (!in_array($notificationId, $readNotifications)) {
+            $readNotifications[] = $notificationId;
+            $user->read_notifications = $readNotifications;
+            $user->save();
+        }
+
         return response()->json(['success' => true]);
     }
     
@@ -57,6 +77,8 @@ class NotificationController extends Controller
                 $notifId = 'customer_' . $recordId;
             } elseif ($type === 'transaction') {
                 $notifId = 'transaction_' . $recordId;
+            } elseif ($type === 'order') {
+                $notifId = 'order_' . $recordId;
             }
             
             $exists = DB::table('notifications')
@@ -80,6 +102,8 @@ class NotificationController extends Controller
                 return redirect('transactions')->with('success', 'Notification saved successfully');
             } elseif ($type === 'client') {
                 return redirect('customers')->with('success', 'Notification saved successfully');
+            } elseif ($type === 'order') {
+                return redirect('orders')->with('success', 'Notification saved successfully');
             } else {
                 return back()->with('success', 'Notification saved successfully');
             }
@@ -100,6 +124,20 @@ class NotificationController extends Controller
             ->whereDate('created_at', '>=', now()->subDays(3))
             ->orderBy('created_at', 'desc')
             ->get();
+        $recentOrdersQuery = OrderDetail::with(['dealer', 'adDealer'])
+            ->whereDate('created_at', '>=', now()->subDays(3))
+            ->orderBy('created_at', 'desc');
+
+        $user = Auth::user();
+        $adId = optional($user->ad)->id;
+
+        if ($adId) {
+            $recentOrdersQuery->where('ad_id', $adId);
+        } elseif ($user->role !== 'Admin') {
+            $recentOrdersQuery->whereRaw('1 = 0');
+        }
+
+        $recentOrders = $recentOrdersQuery->get();
         
         $userId = Auth::id();
         
@@ -117,11 +155,16 @@ class NotificationController extends Controller
         $unreadTransactions = $recentTransactions->filter(function($transaction) use ($savedNotifications) {
             return !in_array('transaction_' . $transaction->id, $savedNotifications);
         });
+
+        $unreadOrders = $recentOrders->filter(function($order) use ($savedNotifications) {
+            return !in_array('order_' . $order->id, $savedNotifications);
+        });
         
-        $totalUnreadCount = $unreadClients->count() + $unreadTransactions->count();
+        $totalUnreadCount = $unreadClients->count() + $unreadTransactions->count() + $unreadOrders->count();
         
         $displayClients = $recentClients->take(5);
         $displayTransactions = $recentTransactions->take(5);
+        $displayOrders = $recentOrders->take(5);
 
         $notifications = collect();
 
@@ -141,9 +184,22 @@ class NotificationController extends Controller
             ]);
         }
 
+        foreach ($displayOrders as $order) {
+            $notifications->push([
+                'type' => 'order',
+                'data' => $order,
+                'created_at' => $order->created_at,
+            ]);
+        }
+
         $notifications = $notifications->sortByDesc('created_at')->values();
 
-        return compact('recentClients', 'recentTransactions', 'readNotifications', 'unreadClients', 'unreadTransactions', 'totalUnreadCount', 'displayClients', 'displayTransactions', 'notifications', 'savedNotifications');
+        $latestNotification = $notifications->first();
+        $latestNotificationId = $latestNotification
+            ? $latestNotification['type'] . '_' . $latestNotification['data']->id
+            : null;
+
+        return compact('recentClients', 'recentTransactions', 'recentOrders', 'readNotifications', 'unreadClients', 'unreadTransactions', 'unreadOrders', 'totalUnreadCount', 'displayClients', 'displayTransactions', 'displayOrders', 'notifications', 'savedNotifications', 'latestNotificationId');
     }
 
     public function markAllAsRead()
@@ -157,6 +213,19 @@ class NotificationController extends Controller
             $recentTransactions = TransactionDetail::whereDate('created_at', '>=', now()->subDays(3))
                 ->orderBy('created_at', 'desc')
                 ->get();
+            $recentOrdersQuery = OrderDetail::whereDate('created_at', '>=', now()->subDays(3))
+                ->orderBy('created_at', 'desc');
+
+            $user = Auth::user();
+            $adId = optional($user->ad)->id;
+
+            if ($adId) {
+                $recentOrdersQuery->where('ad_id', $adId);
+            } elseif ($user->role !== 'Admin') {
+                $recentOrdersQuery->whereRaw('1 = 0');
+            }
+
+            $recentOrders = $recentOrdersQuery->get();
             
             $savedNotifications = DB::table('notifications')
                 ->where('user_id', $userId)
@@ -190,6 +259,19 @@ class NotificationController extends Controller
                     ];
                 }
             }
+
+            foreach ($recentOrders as $order) {
+                $notifId = 'order_' . $order->id;
+                if (!in_array($notifId, $savedNotifications)) {
+                    $notificationsToInsert[] = [
+                        'user_id' => $userId,
+                        'notif_id' => $notifId,
+                        'type' => 'order',
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ];
+                }
+            }
             
             if (!empty($notificationsToInsert)) {
                 DB::table('notifications')->insert($notificationsToInsert);
@@ -207,7 +289,8 @@ class NotificationController extends Controller
         $notificationData = $this->getNotificationData();
         
         return response()->json([
-            'count' => $notificationData['totalUnreadCount']
+            'count' => $notificationData['totalUnreadCount'],
+            'latest_notification_id' => $notificationData['latestNotificationId'],
         ]);
     }
 }

@@ -284,7 +284,7 @@ table.dataTable {
                                       <td>{{ $transaction->customer->name ?? '' }}</td>
                                       <td><span class='text-success'>{{ $transaction->points_dealer }}</span></td>
                                       <td><span class='text-success'>{{ $transaction->points_client }}</span></td>
-                                      <td>{{ $transaction->item }}</td>
+                                      <td>{{ strtoupper($transaction->item) }}</td>
                                       @if(auth()->user()->role == "Admin" && auth()->user()->can_delete === "on")
                                           <td style="text-align: center;">
                                               <button type="button" class="btn btn-danger btn-sm delete-single" 

@@ -6,8 +6,11 @@ use App\User;
 use App\TransactionDetail;
 use Illuminate\Http\Request;
 use App\Client;
+use App\Center;
 use RealRashid\SweetAlert\Facades\Alert;
 use GuzzleHttp\Client as GuzzleClient;
+use Illuminate\Support\Facades\Schema;
+
 class CustomerController extends Controller
 {
     //
@@ -16,12 +19,14 @@ class CustomerController extends Controller
         $activeCustomers = Client::where('status', 'Active')->count();
         $inactiveCustomers = Client::where('status', 'Inactive')->count();
 
+        $centers = Center::get();
         $stoves = Stove::where('client_id',null)->get();
         $customers = Client::with(['transactions', 'serial'])->get();
         return view('customers',
             array(
                 'stoves' => $stoves,
                 'customers' => $customers,
+                'centers' => $centers,
                 'activeCustomers' => $activeCustomers,
                 'inactiveCustomers' => $inactiveCustomers
             )
@@ -30,12 +35,18 @@ class CustomerController extends Controller
     public function view(Request $request,$id)
     {
         $transactions = TransactionDetail::where('client_id',$id)->orderBy('id','desc')->get();
-        $customer = Client::findOrfail($id);
+        $customer = Client::with(['user', 'serial'])->findOrfail($id);
+        $centers = Center::get();
+        $stoves = Stove::whereNull('client_id')
+            ->orWhere('client_id', $customer->id)
+            ->get();
 
         return view('customer',
             array(
                 'customer' => $customer,
                 'transactions' => $transactions,
+                'centers' => $centers,
+                'stoves' => $stoves,
                 
             )
         );
@@ -56,10 +67,21 @@ class CustomerController extends Controller
 
     public function saveCustomer(Request $request)
     {
+        $fullName = trim(collect([
+            $request->first_name,
+            $request->middle_name,
+            $request->last_name,
+        ])->filter()->implode(' '));
+
         $user = new User;
-        $user->name = $request->name;
+        // $user->name = $fullName;
+        $user->first_name = $request->first_name;
+        $user->middle_name = $request->middle_name;
+        $user->last_name = $request->last_name;
         $user->email = $request->email_address;
         $user->role = 'Client';
+        $user->birthdate = $request->birthdate;
+        $user->age = $request->age;
         $user->password = bcrypt('12345678');
         $user->save();
 
@@ -77,7 +99,7 @@ class CustomerController extends Controller
         $customer = new Client;
         $customer->client_reference = $client_reference;
         $customer->user_id = $user->id;
-        $customer->name = $request->name;
+        $customer->name = $fullName;
         $customer->email_address = $request->email_address;
         $customer->number = $request->phone_number;
         $customer->facebook = $request->facebook;
@@ -92,6 +114,12 @@ class CustomerController extends Controller
         $customer->spo = $request->spo;
         $customer->center = $request->center;
         $customer->status = $request->status;
+        if (Schema::hasColumn('clients', 'latitude')) {
+            $customer->latitude = $request->latitude;
+        }
+        if (Schema::hasColumn('clients', 'longitude')) {
+            $customer->longitude = $request->longitude;
+        }
         $customer->save();
 
         $serial_number = Stove::findOrfail($request->serial_number);
@@ -101,6 +129,70 @@ class CustomerController extends Controller
 
         Alert::success('Successfully encoded')->persistent('Dismiss');
         return redirect('view-client/' . $customer->id);
+    }
+
+    public function update(Request $request, $id)
+    {
+        $customer = Client::findOrFail($id);
+
+        $fullName = trim(collect([
+            $request->first_name,
+            $request->middle_name,
+            $request->last_name,
+        ])->filter()->implode(' '));
+
+        if ($customer->user_id) {
+            User::where('id', $customer->user_id)->update([
+                'name' => $fullName ?: $customer->name,
+                'first_name' => $request->first_name,
+                'middle_name' => $request->middle_name,
+                'last_name' => $request->last_name,
+                'email' => $request->email_address,
+                'birthdate' => $request->birthdate,
+                'age' => $request->age,
+            ]);
+        }
+
+        $newSerialId = $request->serial_number;
+        if ($newSerialId && (int) $newSerialId !== (int) $customer->serial_number) {
+            if ($customer->serial_number) {
+                $oldSerial = Stove::find($customer->serial_number);
+                if ($oldSerial && (int) $oldSerial->client_id === (int) $customer->id) {
+                    $oldSerial->client_id = null;
+                    $oldSerial->save();
+                }
+            }
+
+            $newSerial = Stove::findOrFail($newSerialId);
+            $newSerial->client_id = $customer->id;
+            $newSerial->save();
+            $customer->serial_number = $newSerialId;
+        }
+
+        $customer->name = $fullName ?: $customer->name;
+        $customer->email_address = $request->email_address;
+        $customer->number = $request->number;
+        $customer->facebook = $request->facebook;
+        $customer->address = $request->address;
+        $customer->location_region = $request->location_region;
+        $customer->location_province = $request->location_province;
+        $customer->location_city = $request->location_city;
+        $customer->location_barangay = $request->location_barangay;
+        $customer->postal_code = $request->postal_code;
+        $customer->street_address = $request->street_address;
+        $customer->spo = $request->spo;
+        $customer->center = $request->center;
+        $customer->status = $request->status;
+        if (Schema::hasColumn('clients', 'latitude')) {
+            $customer->latitude = $request->latitude;
+        }
+        if (Schema::hasColumn('clients', 'longitude')) {
+            $customer->longitude = $request->longitude;
+        }
+        $customer->save();
+
+        Alert::success('Success', 'Customer updated successfully!')->persistent('Dismiss');
+        return redirect()->back();
     }
     
     public function changeAvatar(Request $request, $id)
@@ -227,12 +319,7 @@ class CustomerController extends Controller
     public function regions()
     {
         try {
-            $client = new GuzzleClient();
-            $response = $client->get('https://psgc.cloud/api/regions');
-            
-            return response()->json(
-                json_decode($response->getBody()->getContents(), true)
-            );
+            return response()->json($this->psgcGet('regions'));
         } catch (\Exception $e) {
             return response()->json([], 500);
         }
@@ -241,10 +328,20 @@ class CustomerController extends Controller
     public function provinces($region)
     {
         try {
-            $client = new GuzzleClient();
-            $response = $client->get("https://psgc.cloud/api/regions/{$region}/provinces");
+            $regionCode = $this->resolvePsgcCode('regions', $region);
 
-            return response()->json(json_decode($response->getBody()->getContents(), true));
+            return response()->json($this->psgcGet("regions/{$regionCode}/provinces"));
+        } catch (\Exception $e) {
+            return response()->json([], 500);
+        }
+    }
+
+    public function regionCities($region)
+    {
+        try {
+            $regionCode = $this->resolvePsgcCode('regions', $region);
+
+            return response()->json($this->psgcGet("regions/{$regionCode}/cities-municipalities"));
         } catch (\Exception $e) {
             return response()->json([], 500);
         }
@@ -253,10 +350,9 @@ class CustomerController extends Controller
     public function cities($province)
     {
         try {
-            $client = new GuzzleClient();
-            $response = $client->get("https://psgc.cloud/api/provinces/{$province}/cities-municipalities");
+            $provinceCode = $this->resolvePsgcCode('provinces', $province);
 
-            return response()->json(json_decode($response->getBody()->getContents(), true));
+            return response()->json($this->psgcGet("provinces/{$provinceCode}/cities-municipalities"));
         } catch (\Exception $e) {
             return response()->json([], 500);
         }
@@ -265,12 +361,45 @@ class CustomerController extends Controller
     public function barangays($city)
     {
         try {
-            $client = new GuzzleClient();
-            $response = $client->get("https://psgc.cloud/api/cities-municipalities/{$city}/barangays");
+            $cityCode = $this->resolvePsgcCode('cities-municipalities', $city);
 
-            return response()->json(json_decode($response->getBody()->getContents(), true));
+            return response()->json($this->psgcGet("cities-municipalities/{$cityCode}/barangays"));
         } catch (\Exception $e) {
             return response()->json([], 500);
         }
+    }
+
+    private function psgcGet($path)
+    {
+        $client = new GuzzleClient([
+            'base_uri' => 'https://psgc.cloud/api/',
+            'timeout' => 10,
+        ]);
+
+        $response = $client->get($path);
+
+        return json_decode($response->getBody()->getContents(), true);
+    }
+
+    private function resolvePsgcCode($endpoint, $value)
+    {
+        if (preg_match('/^\d+$/', $value)) {
+            return $value;
+        }
+
+        $normalize = function ($text) {
+            $text = preg_replace('/\s+/', ' ', trim((string) $text));
+            $text = preg_replace('/^(city|municipality)\s+of\s+/i', '', $text);
+
+            return mb_strtolower($text);
+        };
+
+        $normalizedValue = $normalize($value);
+        $items = $this->psgcGet($endpoint);
+        $match = collect($items)->first(function ($item) use ($normalizedValue, $normalize) {
+            return $normalize($item['name'] ?? '') === $normalizedValue;
+        });
+
+        return $match['code'] ?? $value;
     }
 }

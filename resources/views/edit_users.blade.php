@@ -1,4 +1,4 @@
-<div id="edit-users-{{ $user->id }}" class="modal fade" tabindex="-1" aria-labelledby="bs-example-modal-md" aria-hidden="true" style="display:none;">
+{{-- <div id="edit-users-{{ $user->id }}" class="modal fade" tabindex="-1" aria-labelledby="bs-example-modal-md" aria-hidden="true" style="display:none;">
   <div class="modal-dialog modal-dialog-scrollable modal-lg">
     <div class="modal-content">
       <div class="modal-header d-flex align-items-center">
@@ -128,6 +128,29 @@
       </div>
     </div>
   </div>
+</div> --}}
+
+<div class="modal fade" id="editUserModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5>Edit User</h5>
+      </div>
+
+      <div class="modal-body">
+        <input type="hidden" id="edit_user_id">
+
+        <input type="text" id="edit_name" class="form-control mb-2" placeholder="Name">
+        <input type="email" id="edit_email" class="form-control" placeholder="Email">
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-primary" id="saveUser">Save</button>
+      </div>
+
+    </div>
+  </div>
 </div>
 
 <style>
@@ -139,9 +162,9 @@
   padding: 1rem 1.5rem 0.5rem 1.5rem;
 }
 
-.modal-footer {
+/* .modal-footer {
   padding: 0.5rem 1.5rem 1rem 1.5rem;
-}
+} */
 
 .mb-3 {
   margin-bottom: 0.75rem !important;

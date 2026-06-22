@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 use App\TransactionDetail;
+use App\OrderDetail;
 use App\Item;
 use App\Client;
 use App\Dealer;
@@ -39,34 +40,41 @@ class TransactionController extends Controller
 
     public function adTransactions(Request $request)
     {
-        $customers = Client::where('status', 'Active')->whereHas('serial')->get();
-        $items = Item::get();
-        $dealers = Dealer::get();
-
         $user = auth()->user();
+        $centers = optional($user->ad)
+            ->areas
+            ? $user->ad->areas->pluck('area_name')->toArray()
+            : [];
 
-        $centers = $user->ad->areas->pluck('area_name')->toArray();
+        $dealers = Dealer::whereIn('area', $centers)->get();
+        
+        $dealerCenters = $dealers->pluck('center')->filter()->unique()->values()->toArray();
+        $customers = Client::where('status', 'Active')
+            ->whereHas('serial')
+            ->when(!empty($dealerCenters), function ($q) use ($dealerCenters) {
+                $q->whereIn('center', $dealerCenters);
+            })
+            ->get();
+        $items = Item::get();
 
+        $adUser = optional(auth()->user()->ad)->id;
+        $pendingOrdersCount = OrderDetail::where('ad_id', $adUser)
+            ->where('status', 'Pending')
+            ->count();
+        
         $transactions = [];
-        //  dd(auth()->user());
+
         $transactions = TransactionDetail::whereHas('adDealer', function($q) use ($centers) {
-            $q->whereIn('center', $centers);
+            $q->whereIn('area', $centers);
         })->get();
 
-        // if(auth()->user()->role == "Admin")
-        // {
-        //     $transactions = TransactionDetail::get();
-        // }
-        // elseif(auth()->user()->role == "Area Distributor")
-        // {
-        //     $transactions = TransactionDetail::where('dealer_id',auth()->user()->id)->get();
-        // }
         return view('area_distributor.transactions',
             array(
                 'transactions' => $transactions,
                 'items' => $items,
                 'customers' => $customers,
                 'dealers' => $dealers,
+                'pendingOrdersCount' => $pendingOrdersCount
             )
         );
     }
@@ -76,8 +84,7 @@ class TransactionController extends Controller
     {
         // dd($request->all());
         $item = Item::findOrfail($request->item_id);
-
-
+        
         $transaction = new TransactionDetail;
         $transaction->item = $item->item;
         $transaction->points_dealer = $item->dealer_points * $request->qty;
@@ -92,7 +99,52 @@ class TransactionController extends Controller
         $transaction->save();
 
 
-         Alert::success('Successfully Save')->persistent('Dismiss');
+        Alert::success('Successfully Save')->persistent('Dismiss');
+        return back();
+    }
+
+    public function storeAd(Request $request)
+    {
+        $request->validate([
+            'dealer' => 'required|integer',
+            'customer_id' => 'required|integer',
+            'item_id' => 'required|integer',
+            'qty' => 'required|numeric|min:1',
+            'date' => 'nullable|date',
+        ]);
+
+        $user = auth()->user();
+        $areas = optional($user->ad)
+            ->areas
+            ? $user->ad->areas->pluck('area_name')->toArray()
+            : [];
+
+        $dealer = Dealer::where('user_id', $request->dealer)
+            ->whereIn('area', $areas)
+            ->firstOrFail();
+
+        $customer = Client::where('status', 'Active')
+            ->whereHas('serial')
+            ->where('id', $request->customer_id)
+            ->where('center', $dealer->center)
+            ->firstOrFail();
+
+        $item = Item::findOrFail($request->item_id);
+
+        $transaction = new TransactionDetail;
+        $transaction->item = $item->item;
+        $transaction->points_dealer = $item->dealer_points * $request->qty;
+        $transaction->points_client = $item->customer_points * $request->qty;
+        $transaction->item_description = $item->item_description;
+        $transaction->qty = $request->qty;
+        $transaction->price = $item->price;
+        $transaction->client_id = $customer->id;
+        $transaction->dealer_id = $dealer->user_id;
+        $transaction->date = $request->date ?: date('Y-m-d');
+        $transaction->created_by = $user->id;
+        $transaction->save();
+
+        Alert::success('Successfully Save')->persistent('Dismiss');
         return back();
     }
     

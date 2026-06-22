@@ -3,12 +3,17 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class Dealer extends Model
+class Dealer extends Model implements Auditable
 {
+    use \OwenIt\Auditing\Auditable;
+    
     protected $fillable = [
         'user_id', 'name', 'email_address', 'number', 'facebook', 
-        'address', 'store_name', 'store_type', 'status', 'center'
+        'address', 'store_name', 'store_type', 'status', 'center', 'area', 'spo',
+        'location_region', 'location_province', 'location_city', 'location_barangay',
+        'postal_code', 'street_address', 'latitude', 'longitude'
     ];
 
     public function user()
@@ -29,5 +34,10 @@ class Dealer extends Model
     public function transactions()
     {
         return $this->hasMany(TransactionDetail::class);
+    }
+
+    public function ad()
+    {
+        return $this->belongsTo(AreaDistributor::class, 'ad_id');
     }
 }
