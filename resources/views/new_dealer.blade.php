@@ -169,7 +169,7 @@
             </div>
             <div class="fs-6 fw-bold col-md-12 mb-3"><i class="bi bi-building-fill"></i> Business Information</div>
             @if(auth()->user()->role === 'Admin')
-              <div class="col-md-12 mb-3">
+              <div class="col-md-12 mb-3" hidden>
                 <label class="form-label d-block">Dealer Type&nbsp;<span class="text-danger">*</span></label>
                 <div class="dealer-type-picker">
                   <label class="dealer-type-option">
@@ -187,7 +187,7 @@
                       <span class="dealer-type-check"><i class="bi bi-check"></i></span>
                     </span>
                   </label>
-                  <label class="dealer-type-option is-regular">
+                  {{-- <label class="dealer-type-option is-regular">
                     <input type="radio"
                       name="dealer_type"
                       value="Regular"
@@ -201,7 +201,7 @@
                       </span>
                       <span class="dealer-type-check"><i class="bi bi-check"></i></span>
                     </span>
-                  </label>
+                  </label> --}}
                 </div>
               </div>
             @else
