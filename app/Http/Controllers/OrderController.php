@@ -497,11 +497,15 @@ class OrderController extends Controller
             })
             ->findOrFail($id);
 
+        $isRegularDealer = strtolower((string) optional($order->adDealer)->dealer_type) === 'regular';
+
         $request->validate([
             'qty' => 'required|numeric|min:1',
             'payment_method' => 'required|in:voucher,cash,gcash,credit,bank_transfer',
             'delivery_type' => 'required|in:pickup,delivery',
-            'delivery_fee' => 'nullable|required_if:delivery_type,delivery|numeric|min:0',
+            'delivery_fee' => ($isRegularDealer && $request->delivery_type === 'delivery')
+                ? 'required|numeric|min:0'
+                : 'nullable|numeric|min:0',
             'status' => 'required|in:Pending,For Verification,For Delivery,Completed,Cancelled',
         ]);
 
@@ -529,7 +533,7 @@ class OrderController extends Controller
         $order->status = $request->status;
 
         if (Schema::hasColumn('order_details', 'delivery_fee')) {
-            $order->delivery_fee = $request->delivery_type === 'delivery'
+            $order->delivery_fee = $request->delivery_type === 'delivery' && $isRegularDealer
                 ? $request->delivery_fee
                 : null;
         }

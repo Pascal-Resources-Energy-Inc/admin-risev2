@@ -1413,7 +1413,7 @@
                 
                 {{-- @if(auth()->user()->role == "Admin" && auth()->user()->warehouse != ["lubao", "guinobatan"]) --}}
                 @if(auth()->user()->role === "Admin" && !in_array(auth()->user()->warehouse, ['lubao', 'guinobatan']))
-                    <div class="nav-item">
+                    {{-- <div class="nav-item">
                         <a href="javascript:void(0)" class="nav-link" data-bs-toggle="collapse" data-bs-target="#partnersMenu" aria-expanded="{{ in_array(Route::currentRouteName(), ['ads','pds','mds']) ? 'true' : 'false' }}">
                             <div class="nav-icon">
                                 <i class="bi bi-people-fill"></i>
@@ -1433,7 +1433,7 @@
                                 </li>
                             </ul>
                         </div>
-                    </div>
+                    </div> --}}
                     <div class="nav-item">
                         <a href="javascript:void(0)" class="nav-link" data-bs-toggle="collapse" data-bs-target="#dealersMenu" aria-expanded="{{ in_array(Route::currentRouteName(), ['ads','pds','mds']) ? 'true' : 'false' }}">
                             <div class="nav-icon">
@@ -1491,7 +1491,7 @@
                             <span class="nav-text">Rewards</span>
                         </a>
                     </div> --}}
-                    <div class="nav-item">
+                    {{-- <div class="nav-item">
                         <a href="javascript:void(0)" class="nav-link" data-bs-toggle="collapse" data-bs-target="#settingsMenu" aria-expanded="{{ in_array(Route::currentRouteName(), ['vouchers', 'rewards', 'items', 'raffles']) ? 'true' : 'false' }}">
                             <div class="nav-icon">
                                 <i class="bi bi-gear-fill"></i>
@@ -1517,8 +1517,8 @@
                                 </li>
                             </ul>
                         </div>
-                    </div>
-                    <div class="nav-item">
+                    </div> --}}
+                    {{-- <div class="nav-item">
                         <a href="javascript:void(0)" class="nav-link" data-bs-toggle="collapse" data-bs-target="#reportsMenu" aria-expanded="{{ in_array(Route::currentRouteName(), ['aging','dpo','isl','monthly-sales','voucher-history']) ? 'true' : 'false' }}">
                             <div class="nav-icon">
                                 <i class="bi bi-clipboard-data"></i>
@@ -1530,9 +1530,9 @@
                         <div class="collapse @if(in_array(Route::currentRouteName(), ['dsr','aging', 'dpo', 'isl', 'monthly-sales', 'voucher-history'])) show @endif"
                             id="reportsMenu">
                             <ul class="nav flex-column ms-3">
-                                {{-- <li class="nav-item">
+                                <li class="nav-item">
                                     <a href="{{ url('/reports/daily-sales') }}" class="nav-link @if(Route::currentRouteName() == 'dsr') active @endif" style="font-size: 14px">Daily Sales & Remittance Report</a>
-                                </li> --}}
+                                </li>
                                 <li class="nav-item">
                                     <a href="{{ url('/reports/dpo-report') }}" class="nav-link @if(Route::currentRouteName() == 'dpo') active @endif" style="font-size: 14px">Distributor Purchase Order Report</a>
                                 </li>
@@ -1550,7 +1550,7 @@
                                 </li>
                             </ul>
                         </div>
-                    </div>  
+                    </div>   --}}
                     {{-- <div class="nav-item">
                         <a href="javascript:void(0)" class="nav-link" data-bs-toggle="collapse" data-bs-target="#suppliesMenu" aria-expanded="{{ in_array(Route::currentRouteName(), ['areas','centers']) ? 'true' : 'false' }}">
                             <div class="nav-icon">
@@ -1619,7 +1619,7 @@
                         <span>Scan Loyalty</span>
                     </button>
                 @endif
-                <li class="nav-item d-none d-md-block me-2 mt-3 search-container">
+                <li class="nav-item d-none d-md-block me-2 search-container">
                     <form action="{{ url('/search') }}" method="GET" class="position-relative">
                         <input 
                         type="search" 
