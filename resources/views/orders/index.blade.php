@@ -499,6 +499,7 @@ table.dataTable {
                                                 data-payment="{{ $order->payment_method }}"
                                                 data-delivery="{{ $order->delivery_type }}"
                                                 data-delivery-fee="{{ $order->delivery_fee }}"
+                                                data-dealer-type="{{ optional($order->adDealer)->dealer_type ?: 'Project' }}"
                                                 @if(auth()->user()->role !== 'Admin')
                                                     data-track-stock="1"
                                                     data-stock="{{ $rowStock ?? 0 }}"
@@ -1088,13 +1089,18 @@ document.addEventListener('DOMContentLoaded', function () {
     let editSalesOrders = 0;
     let editInventoryStatus = 'No stock';
     let editDealerArea = '';
+    let editDealerType = 'Project';
 
     function toggleDeliveryFee() {
         const isDelivery = deliverySelect.value === 'delivery';
-        deliveryFeeWrapper.classList.toggle('d-none', !isDelivery);
-        deliveryFeeInput.required = isDelivery;
+        const isRegularDealer = String(editDealerType || '').toLowerCase() === 'regular';
+        const shouldShowDeliveryFee = isDelivery && isRegularDealer;
 
-        if (!isDelivery) {
+        deliveryFeeWrapper.classList.toggle('d-none', !shouldShowDeliveryFee);
+        deliveryFeeInput.required = shouldShowDeliveryFee;
+        deliveryFeeInput.disabled = !shouldShowDeliveryFee;
+
+        if (!shouldShowDeliveryFee) {
             deliveryFeeInput.value = '';
         }
     }
@@ -1243,6 +1249,7 @@ document.addEventListener('DOMContentLoaded', function () {
             editSalesOrders = editTracksStock ? parseFloat(this.dataset.salesOrders || 0) : 0;
             editInventoryStatus = this.dataset.inventoryStatus || (editAvailableStock <= 0 ? 'No stock' : 'Good');
             editDealerArea = this.dataset.area || '';
+            editDealerType = this.dataset.dealerType || 'Project';
             toggleDeliveryFee();
             refreshEditStockState();
 
@@ -1267,7 +1274,7 @@ document.addEventListener('DOMContentLoaded', function () {
         formData.append('qty', qtyInput.value);
         formData.append('payment_method', document.getElementById('edit-payment').value);
         formData.append('delivery_type', deliverySelect.value);
-        formData.append('delivery_fee', deliveryFeeInput.value);
+        formData.append('delivery_fee', deliveryFeeInput.disabled ? '' : deliveryFeeInput.value);
         formData.append('status', statusSelect.value);
         formData.append('_method', 'PUT');
 

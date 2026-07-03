@@ -101,6 +101,68 @@
         padding: 0;
     }
 
+    .dealer-tabs {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        background: #f8fafc;
+    }
+
+    .dealer-tab {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        min-height: 36px;
+        padding: 7px 13px;
+        border: 0;
+        border-radius: 7px;
+        color: #64748b;
+        background: transparent;
+        font-size: 12px;
+        font-weight: 800;
+        transition: color .18s ease, background-color .18s ease, box-shadow .18s ease;
+    }
+
+    .dealer-tab:hover {
+        color: #1d4ed8;
+        background: #fff;
+    }
+
+    .dealer-tab.active {
+        color: #1d4ed8;
+        background: #fff;
+        box-shadow: 0 3px 10px rgba(15, 23, 42, .08);
+    }
+
+    .dealer-tab[data-dealer-tab="Regular"].active {
+        color: #047857;
+    }
+
+    .dealer-tab-count {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 23px;
+        height: 23px;
+        padding: 0 7px;
+        border-radius: 999px;
+        color: inherit;
+        background: #e2e8f0;
+        font-size: 11px;
+    }
+
+    .dealer-tab.active .dealer-tab-count {
+        background: #dbeafe;
+    }
+
+    .dealer-tab[data-dealer-tab="Regular"].active .dealer-tab-count {
+        background: #d1fae5;
+    }
+
     .dealer-table {
         margin-bottom: 0 !important;
     }
@@ -207,6 +269,29 @@
         background: #fee2e2;
     }
 
+    .dealer-type {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 76px;
+        min-height: 28px;
+        border-radius: 999px;
+        padding: 4px 10px;
+        font-size: 12px;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    .dealer-type.is-project {
+        color: #1d4ed8;
+        background: #dbeafe;
+    }
+
+    .dealer-type.is-regular {
+        color: #047857;
+        background: #d1fae5;
+    }
+
     .dealer-muted {
         color: #64748b;
         max-width: 260px;
@@ -262,6 +347,12 @@
 @php
     $dealerPageTitle = $dealerPageTitle ?? 'Dealers';
     $dealerSingularTitle = $dealerSingularTitle ?? 'Dealer';
+    $projectDealerCount = $dealers->filter(function ($dealer) {
+        return strcasecmp((string) ($dealer->dealer_type ?: 'Project'), 'Regular') !== 0;
+    })->count();
+    $regularDealerCount = $dealers->filter(function ($dealer) {
+        return strcasecmp((string) $dealer->dealer_type, 'Regular') === 0;
+    })->count();
 @endphp
 <section class="dealer-page">
     <div class="dealer-head">
@@ -312,8 +403,30 @@
             <div class="card dealer-table-card w-100">
                 <div class="card-header bg-white d-flex flex-column flex-lg-row justify-content-between align-items-lg-center">
                     <div>
-                        <h5 class="mb-0">{{ $dealerPageTitle }}</h5>
-                        <div class="small text-muted">{{ $dealers->count() }} record{{ $dealers->count() == 1 ? '' : 's' }} listed</div>
+                        <h5 class="mb-0" id="dealerTableTitle">Project Dealers</h5>
+                        <div class="small text-muted" id="dealerTableCount">{{ $projectDealerCount }} record{{ $projectDealerCount == 1 ? '' : 's' }} listed</div>
+                    </div>
+                    <div class="dealer-tabs mt-3 mt-lg-0" role="tablist" aria-label="Dealer type">
+                        <button type="button"
+                            class="dealer-tab active"
+                            data-dealer-tab="Project"
+                            data-count="{{ $projectDealerCount }}"
+                            role="tab"
+                            aria-selected="true">
+                            <i class="ti ti-building-community"></i>
+                            Project
+                            <span class="dealer-tab-count">{{ number_format($projectDealerCount) }}</span>
+                        </button>
+                        <button type="button"
+                            class="dealer-tab"
+                            data-dealer-tab="Regular"
+                            data-count="{{ $regularDealerCount }}"
+                            role="tab"
+                            aria-selected="false">
+                            <i class="ti ti-building-store"></i>
+                            Regular
+                            <span class="dealer-tab-count">{{ number_format($regularDealerCount) }}</span>
+                        </button>
                     </div>
                 </div>
                 <div class="card-body">
@@ -323,6 +436,7 @@
                                 <thead>
                                     <tr>
                                         <th>{{ $dealerSingularTitle }} Reference</th>
+                                        {{-- <th>Dealer Type</th> --}}
                                         <th>{{ $dealerSingularTitle }} Name</th>
                                         <th>Store Name</th>
                                         <th>Store Type</th>
@@ -336,8 +450,14 @@
                                 </thead>
                                 <tbody id="adBody">
                                     @foreach($dealers as $dealer)
-                                    <tr>
+                                    @php $dealerType = strcasecmp((string) $dealer->dealer_type, 'Regular') === 0 ? 'Regular' : 'Project'; @endphp
+                                    <tr data-dealer-type="{{ $dealerType }}">
                                         <td scope="col"><span class="dealer-ref">{{  strtoupper($dealer->dealer_reference) }}</span></td>
+                                        {{-- <td>
+                                            <span class="dealer-type {{ $dealerType === 'Regular' ? 'is-regular' : 'is-project' }}">
+                                                {{ strtoupper($dealerType) }}
+                                            </span>
+                                        </td> --}}
                                         <td scope="col"><a href='view-dealer/{{$dealer->id}}' class="dealer-link">{{ strtoupper($dealer->name)}} </a></td>
                                         <td scope="col">{{ strtoupper($dealer->store_name ?? '-')}}</td>
                                         <td scope="col">{{ strtoupper($dealer->store_type ?? '-')}}</td>
@@ -362,6 +482,7 @@
                                 <thead>
                                     <tr>
                                         <th rowspan="2">{{ $dealerSingularTitle }} Ref</th>
+                                        {{-- <th rowspan="2">Dealer Type</th> --}}
                                         <th rowspan="2">{{ $dealerSingularTitle }} Name</th>
                                         <th rowspan="2">Store</th>
                                         <th rowspan="2">Type</th>
@@ -386,8 +507,14 @@
 
                                 <tbody id="adBody">
                                     @foreach($dealers as $dealer)
-                                    <tr>
+                                    @php $dealerType = strcasecmp((string) $dealer->dealer_type, 'Regular') === 0 ? 'Regular' : 'Project'; @endphp
+                                    <tr data-dealer-type="{{ $dealerType }}">
                                         <td><span class="dealer-ref">{{ $dealer->dealer_reference }}</span></td>
+                                        {{-- <td>
+                                            <span class="dealer-type {{ $dealerType === 'Regular' ? 'is-regular' : 'is-project' }}">
+                                                {{ strtoupper($dealerType) }}
+                                            </span>
+                                        </td> --}}
 
                                         <td>
                                             <a href="view-dealer/{{$dealer->id}}" class="dealer-link">
@@ -453,7 +580,22 @@
 <script src="https://cdn.datatables.net/1.10.25/js/dataTables.bootstrap4.min.js"></script>
 <script>
     $(document).ready(function () {
-        $('.transaction-table').DataTable({
+        let activeDealerType = 'Project';
+        const $dealerTable = $('.transaction-table');
+        const dealerTableNode = $dealerTable.get(0);
+
+        $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+            if (settings.nTable !== dealerTableNode) {
+                return true;
+            }
+
+            const row = settings.aoData[dataIndex] ? settings.aoData[dataIndex].nTr : null;
+            const rowDealerType = row ? row.getAttribute('data-dealer-type') : null;
+
+            return rowDealerType === activeDealerType;
+        });
+
+        const dealerTable = $dealerTable.DataTable({
             pageLength: 10,
             autoWidth: false,
             language: {
@@ -462,6 +604,29 @@
                 emptyTable: 'No dealers found.'
             }
         });
+
+        dealerTable.draw();
+
+        $('.dealer-tab').on('click', function () {
+            const $tab = $(this);
+            activeDealerType = $tab.data('dealer-tab');
+            const count = Number($tab.data('count') || 0);
+
+            $('.dealer-tab')
+                .removeClass('active')
+                .attr('aria-selected', 'false');
+            $tab
+                .addClass('active')
+                .attr('aria-selected', 'true');
+
+            $('#dealerTableTitle').text(activeDealerType + ' Dealers');
+            $('#dealerTableCount').text(
+                count.toLocaleString() + ' record' + (count === 1 ? '' : 's') + ' listed'
+            );
+
+            dealerTable.search('').page('first').draw();
+        });
+
         initSelect2(); // initial load
     });
 

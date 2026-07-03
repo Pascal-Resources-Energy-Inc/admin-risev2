@@ -180,7 +180,8 @@
                             <td><span class="ad-muted"><i class="ti ti-map-pin"></i> {{ strtoupper($ad->location_region ?: '-') }}</span></td>
                             <td class="ad-area-cell">
                                 @if($ad->areas->count())
-                                    <div class="ad-area-list">@foreach($ad->areas->take(4) as $area)<span class="ad-area-badge"><i class="ti ti-map-pin"></i>{{ strtoupper(($area->project_type ? $area->project_type . ': ' : '') . $area->area_name) }}</span>@endforeach @if($ad->areas->count() > 4)<span class="ad-area-badge ad-area-more">+{{ $ad->areas->count() - 4 }} more</span>@endif</div>
+                                    {{-- <div class="ad-area-list">@foreach($ad->areas->take(4) as $area)<span class="ad-area-badge"><i class="ti ti-map-pin"></i>{{ strtoupper(($area->project_type ? $area->project_type . ': ' : '') . $area->area_name) }}</span>@endforeach @if($ad->areas->count() > 4)<span class="ad-area-badge ad-area-more">+{{ $ad->areas->count() - 4 }} more</span>@endif</div> --}}
+                                    <div class="ad-area-list">@foreach($ad->areas->take(4) as $area)<span class="ad-area-badge"><i class="ti ti-map-pin"></i>{{ strtoupper($area->area_name) }}</span>@endforeach @if($ad->areas->count() > 4)<span class="ad-area-badge ad-area-more">+{{ $ad->areas->count() - 4 }} more</span>@endif</div>
                                 @else
                                     <span class="ad-no-area"><i class="ti ti-map-off"></i>No awarded areas</span>
                                 @endif

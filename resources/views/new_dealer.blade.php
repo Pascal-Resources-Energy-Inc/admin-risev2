@@ -1,3 +1,114 @@
+<style>
+  #new_dealer .dealer-type-picker {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  #new_dealer .dealer-type-option {
+    position: relative;
+    margin: 0;
+    cursor: pointer;
+  }
+
+  #new_dealer .dealer-type-option input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  #new_dealer .dealer-type-card {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    min-height: 92px;
+    padding: 16px;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    background: #fff;
+    transition: border-color .18s ease, background-color .18s ease, box-shadow .18s ease, transform .18s ease;
+  }
+
+  #new_dealer .dealer-type-option:hover .dealer-type-card {
+    border-color: #93c5fd;
+    transform: translateY(-1px);
+  }
+
+  #new_dealer .dealer-type-option input:checked + .dealer-type-card {
+    border-color: #2563eb;
+    background: #eff6ff;
+    box-shadow: 0 8px 20px rgba(37, 99, 235, .12);
+  }
+
+  #new_dealer .dealer-type-option input:focus-visible + .dealer-type-card {
+    outline: 3px solid rgba(37, 99, 235, .2);
+    outline-offset: 2px;
+  }
+
+  #new_dealer .dealer-type-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 11px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 46px;
+    color: #1d4ed8;
+    background: #dbeafe;
+    font-size: 22px;
+  }
+
+  #new_dealer .dealer-type-option.is-regular .dealer-type-icon {
+    color: #047857;
+    background: #d1fae5;
+  }
+
+  #new_dealer .dealer-type-content {
+    min-width: 0;
+    flex: 1;
+  }
+
+  #new_dealer .dealer-type-title {
+    display: block;
+    color: #111827;
+    font-size: 14px;
+    font-weight: 800;
+  }
+
+  #new_dealer .dealer-type-copy {
+    display: block;
+    margin-top: 3px;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  #new_dealer .dealer-type-check {
+    width: 22px;
+    height: 22px;
+    border: 2px solid #cbd5e1;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 22px;
+    color: transparent;
+    background: #fff;
+  }
+
+  #new_dealer .dealer-type-option input:checked + .dealer-type-card .dealer-type-check {
+    color: #fff;
+    border-color: #2563eb;
+    background: #2563eb;
+  }
+
+  @media (max-width: 575px) {
+    #new_dealer .dealer-type-picker {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
 <div id="new_dealer" class="modal fade modal-select2" tabindex="-1">
   <div class="modal-dialog modal-xl">
     <div class="modal-content">
@@ -57,6 +168,45 @@
               </div>
             </div>
             <div class="fs-6 fw-bold col-md-12 mb-3"><i class="bi bi-building-fill"></i> Business Information</div>
+            @if(auth()->user()->role === 'Admin')
+              <div class="col-md-12 mb-3">
+                <label class="form-label d-block">Dealer Type&nbsp;<span class="text-danger">*</span></label>
+                <div class="dealer-type-picker">
+                  <label class="dealer-type-option">
+                    <input type="radio"
+                      name="dealer_type"
+                      value="Project"
+                      {{ old('dealer_type', 'Project') === 'Project' ? 'checked' : '' }}
+                      required>
+                    <span class="dealer-type-card">
+                      <span class="dealer-type-icon"><i class="bi bi-building-gear"></i></span>
+                      <span class="dealer-type-content">
+                        <span class="dealer-type-title">Project Dealer</span>
+                        <span class="dealer-type-copy">Assigned to an SPO and Center.</span>
+                      </span>
+                      <span class="dealer-type-check"><i class="bi bi-check"></i></span>
+                    </span>
+                  </label>
+                  <label class="dealer-type-option is-regular">
+                    <input type="radio"
+                      name="dealer_type"
+                      value="Regular"
+                      {{ old('dealer_type') === 'Regular' ? 'checked' : '' }}
+                      required>
+                    <span class="dealer-type-card">
+                      <span class="dealer-type-icon"><i class="bi bi-shop"></i></span>
+                      <span class="dealer-type-content">
+                        <span class="dealer-type-title">Regular Dealer</span>
+                        <span class="dealer-type-copy">No SPO or Center assignment required.</span>
+                      </span>
+                      <span class="dealer-type-check"><i class="bi bi-check"></i></span>
+                    </span>
+                  </label>
+                </div>
+              </div>
+            @else
+              <input type="hidden" name="dealer_type" value="Project">
+            @endif
             <div class="col-md-6 mb-2">
               <label class="form-label" for="store_name">Store Name &nbsp;<span class="text-danger">*</span></label>
               <input type="text" class="form-control required" name='store_name' id="store_name" placeholder="Enter Store Name" data-uppercase>
@@ -73,16 +223,16 @@
                 <option value="Grocery">Grocery</option>
               </select>
             </div>
-            <div class="col-md-6 mb-2">
+            <div class="col-md-6 mb-2" id="dealerSpoWrap">
               <label class="form-label" for="spo">SPO&nbsp;<span class="text-danger">*</span></label>
-              <input type="text" class="form-control required" id="spo" name="spo" placeholder="Enter SPO" data-uppercase required/>
+              <input type="text" class="form-control required" id="spo" name="spo" value="{{ old('spo') }}" placeholder="Enter SPO" data-uppercase required/>
             </div>
-            <div class="col-md-6 mb-2">
+            <div class="col-md-6 mb-2" id="dealerCenterWrap">
               <label class="form-label" for="center">Center&nbsp;<span class="text-danger">*</span></label>
               <select class="form-control select2" id="center" name="center" required data-placeholder="Select Center">
                 <option value="">Select Center</option>
                 @foreach($centers ?? [] as $center)
-                    <option value="{{ $center->name }}">{{ $center->name }}</option>
+                    <option value="{{ $center->name }}" {{ old('center') === $center->name ? 'selected' : '' }}>{{ $center->name }}</option>
                 @endforeach
               </select>
             </div>
@@ -223,6 +373,11 @@
     });
 
     const $dealerForm = $('#newDealerForm');
+    const $dealerType = $('#new_dealer input[name="dealer_type"]');
+    const $dealerSpoWrap = $('#dealerSpoWrap');
+    const $dealerCenterWrap = $('#dealerCenterWrap');
+    const $spo = $('#new_dealer #spo');
+    const $center = $('#new_dealer #center');
     const $firstName = $('#new_dealer #first_name');
     const $lastName = $('#new_dealer #last_name');
     const $mothersName = $('#new_dealer #mothers_name');
@@ -232,6 +387,24 @@
 
     let duplicateDealerTimeout = null;
     let duplicateDealerRequestId = 0;
+
+    function updateDealerTypeFields() {
+      const selectedDealerType = $dealerType.filter(':checked').val() || $dealerType.val() || 'Project';
+      const isRegular = String(selectedDealerType).toLowerCase() === 'regular';
+
+      $dealerSpoWrap.toggleClass('d-none', isRegular);
+      $dealerCenterWrap.toggleClass('d-none', isRegular);
+      $spo.prop('disabled', isRegular).prop('required', !isRegular);
+      $center.prop('disabled', isRegular).prop('required', !isRegular);
+
+      if (isRegular) {
+        $spo.val('');
+        $center.val('').trigger('change');
+      }
+    }
+
+    $dealerType.on('change', updateDealerTypeFields);
+    updateDealerTypeFields();
 
     function setDuplicateDealerValidation(isDuplicate, message = duplicateDealerMessage) {
       $firstName.add($lastName).add($mothersName).toggleClass('is-invalid', isDuplicate);

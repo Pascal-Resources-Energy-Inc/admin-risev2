@@ -7,7 +7,7 @@ use App\Dealer;
 use App\Center;
 use App\TransactionDetail;
 use App\Item;
-use App\Area;
+use App\DmsArea;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 
@@ -23,7 +23,7 @@ class DealerController extends Controller
         $centers = Center::get();
         $dealers = Dealer::with('user')->get();
 
-        $areas = Area::with('areaAd.distributor')->get();
+        $areas = $this->dealerAreaOptions();
         return view('dealers',
             array(
                 'dealers' => $dealers,
@@ -53,7 +53,7 @@ class DealerController extends Controller
 
         $items = Item::select('item')->get();
         $centers = Center::get();
-        $areas = Area::with('areaAd.distributor')->get();
+        $areas = $this->dealerAreaOptions();
         $dealers = Dealer::with(['user', 'orders', 'sales'])
             ->whereHas('user', function ($q) {
                 $q->where('role', 'Mega Dealer');
@@ -80,6 +80,17 @@ class DealerController extends Controller
 
     public function newDealer(Request $request)
     {
+        $isAdmin = auth()->user()->role === 'Admin';
+        $dealerType = $isAdmin && strtolower((string) $request->dealer_type) === 'regular'
+            ? 'Regular'
+            : 'Project';
+
+        $request->validate([
+            'dealer_type' => $isAdmin ? 'required|in:Project,Regular' : 'nullable',
+            'spo' => $dealerType === 'Project' ? 'required|string|max:255' : 'nullable',
+            'center' => $dealerType === 'Project' ? 'required|string|max:255' : 'nullable',
+        ]);
+
         if ($this->dealerDuplicateExists(
             $request->first_name,
             $request->last_name,
@@ -113,22 +124,14 @@ class DealerController extends Controller
         $user->password = bcrypt('12345678');
         $user->save();
 
-        // Generate Client Reference
-        $latestDealer = Dealer::orderBy('id', 'desc')->first();
-
-        if ($latestDealer && $latestDealer->dealer_reference) {
-            $number = intval(substr($latestDealer->dealer_reference, 3)) + 1;
-        } else {
-            $number = 1;
-        }
-
-        $dealer_reference = 'PRD' . str_pad($number, 5, '0', STR_PAD_LEFT);
-
         $dealer = new Dealer;
         $dealer->user_id = $user->id;
-        $dealer->dealer_reference = $dealer_reference;
+        $dealer->dealer_reference = $this->nextDealerReference($dealerType);
         $dealer->name = $fullName;
-        $dealer->spo = $request->spo;
+        if (Schema::hasColumn('dealers', 'dealer_type')) {
+            $dealer->dealer_type = $dealerType;
+        }
+        $dealer->spo = $dealerType === 'Project' ? $request->spo : null;
         $dealer->email_address = $request->email_address;
         $dealer->number = $request->number;
         $dealer->facebook = $request->facebook;
@@ -145,7 +148,7 @@ class DealerController extends Controller
         }
         $dealer->store_name = $request->store_name;
         $dealer->store_type = $request->store_type;
-        $dealer->center = $request->center;
+        $dealer->center = $dealerType === 'Project' ? $request->center : null;
         $dealer->area = $request->area;
         $dealer->latitude = $request->latitude;
         $dealer->longitude = $request->longitude;
@@ -190,12 +193,20 @@ class DealerController extends Controller
             ->exists();
     }
 
+    private function dealerAreaOptions()
+    {
+        return DmsArea::with('areaAd.distributor')
+            ->whereNotNull('name')
+            ->orderBy('name')
+            ->get();
+    }
+
     public function view(Request $request,$id)
     {
         $dealer = Dealer::with('user')->findOrfail($id);
         $transactions = TransactionDetail::where('dealer_id',$dealer->user_id)->orderBy('id','desc')->get();
         $centers = Center::get();
-        $areas = Area::with('areaAd.distributor')->get();
+        $areas = $this->dealerAreaOptions();
         // dd($dealer);
         return view('dealer',
             array(
@@ -305,6 +316,19 @@ class DealerController extends Controller
     public function update(Request $request, $id)
     {
         $dealer = Dealer::findOrFail($id);
+        $isAdmin = auth()->user()->role === 'Admin';
+        $existingDealerType = Schema::hasColumn('dealers', 'dealer_type')
+            ? ($dealer->dealer_type ?: 'Project')
+            : 'Project';
+        $dealerType = $isAdmin
+            ? (strtolower((string) $request->dealer_type) === 'regular' ? 'Regular' : 'Project')
+            : $existingDealerType;
+
+        $request->validate([
+            'dealer_type' => $isAdmin ? 'required|in:Project,Regular' : 'nullable',
+            'spo' => $dealerType === 'Project' ? 'required|string|max:255' : 'nullable',
+            'center' => $dealerType === 'Project' ? 'required|string|max:255' : 'nullable',
+        ]);
 
         $fullName = trim(collect([
             $request->first_name,
@@ -328,6 +352,13 @@ class DealerController extends Controller
         $dealer->street_address = $request->street_address;
         $dealer->store_name = $request->store_name;
         $dealer->store_type = $request->store_type;
+        if ($isAdmin && strcasecmp($existingDealerType, $dealerType) !== 0) {
+            $dealer->dealer_reference = $this->nextDealerReference($dealerType);
+        }
+        if (Schema::hasColumn('dealers', 'dealer_type')) {
+            $dealer->dealer_type = $dealerType;
+        }
+        $dealer->spo = $dealerType === 'Project' ? $request->spo : null;
         $dealer->facebook = $request->facebook;
         $dealer->email_address = $request->email_address;
         $dealer->location_region = $request->location_region;
@@ -335,7 +366,7 @@ class DealerController extends Controller
         $dealer->location_city = $request->location_city;
         $dealer->location_barangay = $request->location_barangay;
         $dealer->postal_code = $request->postal_code;
-        $dealer->center = $request->center;
+        $dealer->center = $dealerType === 'Project' ? $request->center : null;
         $dealer->area = $request->area;
         $dealer->latitude = $request->latitude;
         $dealer->longitude = $request->longitude;
@@ -344,6 +375,29 @@ class DealerController extends Controller
 
         Alert::success('Success', 'Dealer updated successfully!');
         return redirect()->back();
+    }
+
+    private function nextDealerReference($dealerType)
+    {
+        if (strcasecmp((string) $dealerType, 'Regular') === 0) {
+            $year = date('Y');
+            $prefix = 'DL' . $year;
+            $padding = 4;
+        } else {
+            $prefix = 'PRD';
+            $padding = 5;
+        }
+
+        $latestSequence = Dealer::where('dealer_reference', 'like', $prefix . '%')
+            ->pluck('dealer_reference')
+            ->map(function ($reference) use ($prefix) {
+                $suffix = substr(strtoupper(trim((string) $reference)), strlen($prefix));
+
+                return ctype_digit($suffix) ? (int) $suffix : 0;
+            })
+            ->max() ?: 0;
+
+        return $prefix . str_pad($latestSequence + 1, $padding, '0', STR_PAD_LEFT);
     }
 
     public function getZipCode1(Request $request)
