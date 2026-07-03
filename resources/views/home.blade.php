@@ -208,7 +208,7 @@
   .sa-refresh { width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; color: #fff; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.16); border-radius: 11px; }
   .sa-refresh:hover { color: #fff; background: rgba(255,255,255,.18); }
   .sa-refresh.is-loading i { animation: saSpin .8s linear infinite; }
-  .sa-kpis { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
+  .sa-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
   .sa-kpi { position: relative; min-height: 132px; overflow: hidden; padding: 17px; background: #fff; border: 1px solid #e8ecf2; border-radius: 15px; box-shadow: 0 8px 25px rgba(15,23,42,.055); transition: transform .2s ease, box-shadow .2s ease; }
   .sa-kpi:hover { transform: translateY(-3px); box-shadow: 0 14px 30px rgba(15,23,42,.09); }
   .sa-kpi::after { content: ""; position: absolute; width: 70px; height: 70px; right: -28px; bottom: -30px; background: var(--sa-soft); border-radius: 50%; }
@@ -219,8 +219,10 @@
   .sa-kpi-note { display: block; margin-top: 8px; color: #98a2b3; font-size: 10px; font-weight: 700; }
   .sa-kpi.sales { --sa-color:#0f766e; --sa-soft:#ccfbf1; }
   .sa-kpi.month { --sa-color:#0369a1; --sa-soft:#e0f2fe; }
+  .sa-kpi.total-sales { --sa-color:#4338ca; --sa-soft:#e0e7ff; }
   .sa-kpi.transactions { --sa-color:#7c3aed; --sa-soft:#ede9fe; }
   .sa-kpi.units { --sa-color:#b45309; --sa-soft:#fef3c7; }
+  .sa-kpi.total-products { --sa-color:#be123c; --sa-soft:#ffe4e6; }
   .sa-kpi.dealers { --sa-color:#15803d; --sa-soft:#dcfce7; }
   .sa-kpi.orders { --sa-color:#b91c1c; --sa-soft:#fee2e2; }
   .sa-grid { display: grid; grid-template-columns: minmax(0, 1.75fr) minmax(300px, .75fr); gap: 14px; }
@@ -245,11 +247,12 @@
   .sa-updated { color: #98a2b3; font-size: 10px; font-weight: 700; }
   @keyframes saPulse { 50% { opacity: .45; transform: scale(.82); } }
   @keyframes saSpin { to { transform: rotate(360deg); } }
-  @media (max-width: 1250px) { .sa-kpis { grid-template-columns: repeat(3, 1fr); } }
-  @media (max-width: 900px) { .sa-grid { grid-template-columns: 1fr; } }
+  @media (max-width: 900px) {
+    .sa-kpis { grid-template-columns: repeat(2, 1fr); }
+    .sa-grid { grid-template-columns: 1fr; }
+  }
   @media (max-width: 700px) {
     .sa-hero { align-items: flex-start; flex-direction: column; padding: 22px; }
-    .sa-kpis { grid-template-columns: repeat(2, 1fr); }
     .sa-panel-head { align-items: flex-start; flex-direction: column; }
   }
   @media (max-width: 430px) { .sa-kpis { grid-template-columns: 1fr; } }
@@ -291,23 +294,35 @@
         <strong class="sa-kpi-value" id="saTodaySales">PHP 0</strong>
         <span class="sa-kpi-note">Live transaction revenue</span>
       </article>
-      <article class="sa-kpi month">
-        <div class="sa-kpi-top"><span class="sa-kpi-icon"><i class="ti ti-chart-line"></i></span></div>
-        <span class="sa-kpi-label">Month-to-date</span>
-        <strong class="sa-kpi-value" id="saMonthSales">PHP 0</strong>
-        <span class="sa-kpi-note">Current calendar month</span>
-      </article>
       <article class="sa-kpi transactions">
         <div class="sa-kpi-top"><span class="sa-kpi-icon"><i class="ti ti-receipt"></i></span></div>
         <span class="sa-kpi-label">Transactions Today</span>
         <strong class="sa-kpi-value" id="saTodayTransactions">0</strong>
         <span class="sa-kpi-note">Recorded sales activity</span>
       </article>
+      <article class="sa-kpi month">
+        <div class="sa-kpi-top"><span class="sa-kpi-icon"><i class="ti ti-chart-line"></i></span></div>
+        <span class="sa-kpi-label">Month-to-date</span>
+        <strong class="sa-kpi-value" id="saMonthSales">PHP 0</strong>
+        <span class="sa-kpi-note">Current calendar month</span>
+      </article>
       <article class="sa-kpi units">
         <div class="sa-kpi-top"><span class="sa-kpi-icon"><i class="ti ti-flame"></i></span></div>
         <span class="sa-kpi-label">Units This Month</span>
         <strong class="sa-kpi-value" id="saMonthUnits">0</strong>
         <span class="sa-kpi-note">Products moved</span>
+      </article>
+      <article class="sa-kpi total-sales">
+        <div class="sa-kpi-top"><span class="sa-kpi-icon"><i class="ti ti-report-money"></i></span></div>
+        <span class="sa-kpi-label">Total Sales</span>
+        <strong class="sa-kpi-value" id="saTotalSales">PHP 0</strong>
+        <span class="sa-kpi-note">All-time transaction revenue</span>
+      </article>
+      <article class="sa-kpi total-products">
+        <div class="sa-kpi-top"><span class="sa-kpi-icon"><i class="ti ti-package"></i></span></div>
+        <span class="sa-kpi-label">Total Products Sold</span>
+        <strong class="sa-kpi-value" id="saTotalProductsSold">0</strong>
+        <span class="sa-kpi-note">All-time product quantity</span>
       </article>
       <article class="sa-kpi dealers">
         <div class="sa-kpi-top"><span class="sa-kpi-icon"><i class="ti ti-building-store"></i></span></div>
@@ -316,10 +331,10 @@
         <span class="sa-kpi-note">With sales in 30 days</span>
       </article>
       <article class="sa-kpi orders">
-        <div class="sa-kpi-top"><span class="sa-kpi-icon"><i class="ti ti-alert-circle"></i></span></div>
-        <span class="sa-kpi-label">Pending Orders</span>
-        <strong class="sa-kpi-value" id="saPendingOrders">0</strong>
-        <span class="sa-kpi-note">Needs operational action</span>
+        <div class="sa-kpi-top"><span class="sa-kpi-icon"><i class="ti ti-users"></i></span></div>
+        <span class="sa-kpi-label">Active Customers</span>
+        <strong class="sa-kpi-value" id="saActiveCustomers">0</strong>
+        <span class="sa-kpi-note">Currently active accounts</span>
       </article>
     </div>
 
@@ -1391,10 +1406,12 @@
     function renderKpis(kpis) {
         setText('saTodaySales', peso.format(kpis.today_sales || 0));
         setText('saMonthSales', peso.format(kpis.month_sales || 0));
+        setText('saTotalSales', peso.format(kpis.total_sales || 0));
         setText('saTodayTransactions', wholeNumber.format(kpis.today_transactions || 0));
         setText('saMonthUnits', wholeNumber.format(kpis.month_units || 0));
+        setText('saTotalProductsSold', wholeNumber.format(kpis.total_products_sold || 0));
         setText('saActiveDealers', wholeNumber.format(kpis.active_dealers || 0));
-        setText('saPendingOrders', wholeNumber.format(kpis.pending_orders || 0));
+        setText('saActiveCustomers', wholeNumber.format(kpis.active_customers || 0));
     }
 
     function renderSalesChart(rows) {

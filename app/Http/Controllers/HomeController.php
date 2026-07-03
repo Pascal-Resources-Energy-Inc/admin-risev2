@@ -197,15 +197,16 @@ class HomeController extends Controller
             ->first();
         $todaySales = (float) optional($todaySalesRow)->total;
         $monthSales = (float) optional($monthSalesRow)->total;
+        $allTimeTotals = TransactionDetail::selectRaw(
+                'COALESCE(SUM(price * qty), 0) as total_sales, COALESCE(SUM(qty), 0) as total_products_sold'
+            )
+            ->first();
         $todayTransactions = TransactionDetail::whereDate('created_at', $today)->count();
         $monthUnits = (float) TransactionDetail::where('created_at', '>=', $monthStart)->sum('qty');
         $activeDealers = TransactionDetail::where('created_at', '>=', Carbon::now()->subDays(30))
             ->whereNotNull('dealer_id')
             ->distinct()
             ->count('dealer_id');
-
-        $pendingDealerOrders = OrderDetail::where('status', 'Pending')->count();
-        $pendingAdOrders = AdPurchaseOrder::whereIn('status', ['Pending', 'For Verification'])->count();
 
         $dailyRows = TransactionDetail::selectRaw(
                 'DATE(created_at) as sale_date, COALESCE(SUM(price * qty), 0) as sales, COALESCE(SUM(qty), 0) as units'
@@ -268,10 +269,12 @@ class HomeController extends Controller
             'kpis' => [
                 'today_sales' => $todaySales,
                 'month_sales' => $monthSales,
+                'total_sales' => (float) optional($allTimeTotals)->total_sales,
                 'today_transactions' => $todayTransactions,
                 'month_units' => $monthUnits,
+                'total_products_sold' => (float) optional($allTimeTotals)->total_products_sold,
                 'active_dealers' => $activeDealers,
-                'pending_orders' => $pendingDealerOrders + $pendingAdOrders,
+                'active_customers' => Client::where('status', 'Active')->count(),
             ],
             'sales_trend' => $salesTrend,
             'order_statuses' => $orderStatuses,
