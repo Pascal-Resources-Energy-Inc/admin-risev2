@@ -151,7 +151,7 @@
                             $currentDealerType = old('dealer_type', $dealer->dealer_type ?: 'Project');
                         @endphp
                         @if(auth()->user()->role === 'Admin')
-                            <div class="col-md-12 mb-3">
+                            <div class="col-md-12 mb-3" hidden>
                                 <label class="form-label d-block">Dealer Type <span class="text-danger">*</span></label>
                                 <div class="edit-dealer-type-picker">
                                     <label class="edit-dealer-type-option">
@@ -166,7 +166,7 @@
                                             <span class="edit-dealer-type-check"><i class="bi bi-check"></i></span>
                                         </span>
                                     </label>
-                                    <label class="edit-dealer-type-option is-regular">
+                                    {{-- <label class="edit-dealer-type-option is-regular">
                                         <input type="radio" name="dealer_type" value="Regular"
                                             {{ $currentDealerType === 'Regular' ? 'checked' : '' }} required>
                                         <span class="edit-dealer-type-card">
@@ -177,7 +177,7 @@
                                             </span>
                                             <span class="edit-dealer-type-check"><i class="bi bi-check"></i></span>
                                         </span>
-                                    </label>
+                                    </label> --}}
                                 </div>
                             </div>
                         @else
