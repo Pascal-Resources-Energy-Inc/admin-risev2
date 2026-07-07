@@ -45,15 +45,6 @@
             max-width: 100%;
         }
 
-        .chosen-container {
-            width: 100% !important;
-        }
-
-        .chosen-drop {
-            max-height: 200px;
-            overflow-y: auto;
-        }
-
     }
 
     .search-name-responsive{
@@ -68,91 +59,14 @@
         }
     }
 
-.chosen-container .chosen-single {
-  height: calc(2.25rem + 2px);
-  padding: 0.375rem 0.75rem;
-  font-size: 1rem;
-  line-height: 1.5;
-  color: #495057;
-  background-color: #fff;
-  border: 1px solid #ced4da;
-  border-radius: 0.25rem;
-  box-shadow: none;
+.transaction-pagination .pagination {
+    justify-content: flex-end;
+    margin-bottom: 0;
 }
-
-.chosen-container-active.chosen-with-drop .chosen-single {
-  border-color: #80bdff;
-  box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
-}
-
-.chosen-container .chosen-drop {
-  border: 1px solid #ced4da;
-  border-top: none;
-  border-radius: 0 0 0.25rem 0.25rem;
-  box-shadow: 0 0.5rem 1rem rgba(0,0,0,.15);
-}
-
-.chosen-container .chosen-results {
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.chosen-container .chosen-search input {
-  height: calc(1.5em + 0.75rem + 2px);
-  padding: 0.375rem 0.75rem;
-  font-size: 1rem;
-  border: 1px solid #ced4da;
-  border-radius: 0.25rem;
-}
-
-.dataTables_length {
-  float: left;
-  margin-top: 15px;
-  margin-bottom: 5px;
-}
-
-.dataTables_filter {
-  float: right;
-  margin-top: 15px;
-  margin-bottom: 5px;
-}
-
-.dataTables_wrapper .dataTables_paginate .paginate_button:focus {
-    box-shadow: none;
-    outline: none;
-}
-
-.export-btn-custom {
-    width: 130px;
-    height: 38px;
-    font-size: 14px;
-    padding: 6px 12px;
-}
-
-.dataTables_wrapper .dataTables_length,
-.dataTables_wrapper .dataTables_filter {
-    margin-bottom: 0 !important;
-}
-
-table.dataTable {
-    margin-top: 5px !important;
-}
-
-.card-body > .dataTables_wrapper {
-    margin-bottom: 0 !important;
-}
-
-.dataTables_wrapper .row:first-child {
-    margin-bottom: 0 !important;
-}
-
-
 </style>
-<link rel="stylesheet" href="https://cdn.datatables.net/1.10.25/css/dataTables.bootstrap4.min.css">
 <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.min.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
-<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css">
 
 @section('head')
 <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -171,9 +85,7 @@ table.dataTable {
                             <i class="ti ti-brand-producthunt fs-8 fw-lighter"></i>
                           </div>
                           <h5 class="text-white fw-bold fs-14 text-nowrap">
-                          {{ $transactions->sum(function($transaction) {
-                                return $transaction->price * $transaction->qty;
-                            }) }}
+                          {{ number_format($transactionSummary->total_sales ?? 0, 2) }}
                           </h5>
                           <p class="opacity-50 mb-0 ">TOTAL SALES</p>
                         </div>
@@ -186,7 +98,7 @@ table.dataTable {
                             <i class="ti ti-brand-producthunt fs-8 fw-lighter"></i>
                           </div>
                           <h5 class="text-white fw-bold fs-14 text-nowrap">
-                            {{$transactions->count()}}
+                            {{ number_format($transactionSummary->transaction_count ?? 0) }}
                           </h5>
                           <p class="opacity-50 mb-0 ">TRANSACTIONS</p>
                         </div>
@@ -199,7 +111,7 @@ table.dataTable {
                             <i class="ti ti-brand-producthunt fs-8 fw-lighter"></i>
                           </div>
                           <h5 class="text-white fw-bold fs-14 text-nowrap">
-                            {{$transactions->sum('qty')}}
+                            {{ number_format($transactionSummary->total_qty ?? 0) }}
                           </h5>
                           <p class="opacity-50 mb-0 ">QTY SOLD</p>
                         </div>
@@ -212,7 +124,7 @@ table.dataTable {
                             <i class="ti ti-brand-producthunt fs-8 fw-lighter"></i>
                           </div>
                           <h5 class="text-white fw-bold fs-14 text-nowrap">
-                            {{$transactions->sum('points_dealer') + $transactions->sum('points_client')}}
+                            {{ number_format($transactionSummary->total_points ?? 0) }}
                           </h5>
                           <p class="opacity-50 mb-0 ">TOTAL POINTS</p>
                         </div>
@@ -229,7 +141,6 @@ table.dataTable {
                           <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTransactionModalAdmin">
                               <i class="bi bi-plus-lg"></i> Search Name
                           </button>
-                          <div id="exportExcelContainer"></div>
                           <button type="button" class="btn btn-danger btn-sm" id="deleteSelectedBtn" title="Delete Selected" style="display: none; height: 38px;">
                               <i class="bi bi-trash"></i> Delete All
                           </button>
@@ -248,7 +159,7 @@ table.dataTable {
                           <thead>
                               <tr>
                                   @if(auth()->user()->role == "Admin" && auth()->user()->can_delete === "on")
-                                      <th scope="col" style="width: 50px; text-align: center;">
+                                      <th scope="col" class="no-sort" style="width: 50px; text-align: center;">
                                           <div class="d-flex align-items-center justify-content-center">
                                               <input type="checkbox" id="selectAll" title="Select All" style="cursor: pointer;">
                                           </div>
@@ -264,7 +175,7 @@ table.dataTable {
                                   <th scope="col">Customer Points</th>
                                   <th scope="col">Item</th>
                                   @if(auth()->user()->role == "Admin" && auth()->user()->can_delete === "on")
-                                      <th scope="col" style="width: 80px; text-align: center;">Actions</th>
+                                      <th scope="col" class="no-sort" style="width: 80px; text-align: center;">Actions</th>
                                   @endif
                               </tr>
                           </thead>
@@ -300,6 +211,11 @@ table.dataTable {
                           </tbody>
                       </table>
                   </div>
+                  @if($transactions->hasPages())
+                    <div class="transaction-pagination mt-3">
+                      {{ $transactions->links() }}
+                    </div>
+                  @endif
                 </div>
             </div>
         </div>
@@ -316,15 +232,9 @@ table.dataTable {
 @endsection
 
 @section('javascript')
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/chosen/1.8.7/chosen.jquery.min.js"></script>
-<script src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.10.25/js/dataTables.bootstrap4.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap4.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
 
 {{-- <script>
  $(document).ready(function() {
@@ -340,16 +250,48 @@ table.dataTable {
 });
 </script> --}}
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
-    new TomSelect('#customerSelect', {
-      create: false,
-      allowEmptyOption: true,
-      placeholder: "Search Customer"
+$(function() {
+    const $table = $('#example');
+    if (!$table.length || !$.fn.DataTable) return;
+
+    const defaultOrderColumn = $table.find('thead th').first().hasClass('no-sort') ? 1 : 0;
+
+    $table.DataTable({
+        paging: false,
+        info: false,
+        searching: true,
+        ordering: true,
+        autoWidth: false,
+        deferRender: true,
+        order: [[defaultOrderColumn, 'desc']],
+        columnDefs: [
+            {
+                targets: 'no-sort',
+                orderable: false,
+                searchable: false
+            }
+        ],
+        language: {
+            search: 'Search current page:'
+        }
     });
-    new TomSelect('#dealer', {
-      create: false,
-      allowEmptyOption: true,
-      placeholder: "Search Dealer"
+});
+</script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    [
+      ['#customerSelect', 'Search Customer'],
+      ['#customerSelect123', 'Search Customer'],
+      ['#dealer', 'Search Dealer']
+    ].forEach(function (config) {
+      var element = document.querySelector(config[0]);
+      if (!element || element.tomselect || !window.TomSelect) return;
+
+      new TomSelect(element, {
+        create: false,
+        allowEmptyOption: true,
+        placeholder: config[1]
+      });
     });
   });
 </script>
@@ -362,34 +304,6 @@ $(document).ready(function() {
             'X-CSRF-TOKEN': csrfToken
         }
     });
-
-    const table = $('#example').DataTable({
-        dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
-             '<"row"<"col-sm-12"tr>>' +
-             '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
-        buttons: [
-            {
-                extend: 'excelHtml5',
-                text: 'Export Excel',
-                className: 'btn btn-sm btn-success export-btn-custom',
-                title: 'Transactions'
-            }
-        ],
-        columnDefs: [
-            { 
-                orderable: false, 
-                targets: [0, -1] // Disable sorting on first column (checkbox) and last column (actions)
-            },
-            {
-                className: 'text-center', // Center align the checkbox column
-                targets: [0]
-            }
-        ],
-        destroy: true,
-        order: [[1, 'desc']] // Default sort by ID column (index 1) in descending order
-    });
-
-    table.buttons().container().appendTo('#exportExcelContainer');
 
     $(document).on('change', '.checkbox-item', function() {
         updateUI();
@@ -596,8 +510,28 @@ $(document).ready(function() {
 
 <script>
  let html5QrcodeScanner = null;
+ let html5QrcodeLoader = null;
+
+function loadQrScannerLibrary() {
+    if (window.Html5Qrcode) {
+        return Promise.resolve();
+    }
+
+    if (!html5QrcodeLoader) {
+        html5QrcodeLoader = new Promise(function(resolve, reject) {
+            const script = document.createElement('script');
+            script.src = 'https://unpkg.com/html5-qrcode';
+            script.onload = resolve;
+            script.onerror = reject;
+            document.head.appendChild(script);
+        });
+    }
+
+    return html5QrcodeLoader;
+}
 
 function startScanner() {
+    loadQrScannerLibrary().then(function() {
     if (!html5QrcodeScanner) {
         document.getElementById("reader").innerHTML = "";
         html5QrcodeScanner = new Html5Qrcode("reader");
@@ -618,6 +552,9 @@ function startScanner() {
         }
     ).catch(err => {
         console.error("Unable to start scanning.", err);
+    });
+    }).catch(function() {
+        alert('Unable to load QR scanner. Please check your connection and try again.');
     });
 }
 

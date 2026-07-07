@@ -188,11 +188,15 @@ class HomeController extends Controller
         $today = Carbon::today();
         $monthStart = Carbon::now()->startOfMonth();
         $thirtyDaysAgo = Carbon::today()->subDays(29);
+        $saleDate = 'COALESCE(`date`, DATE(`created_at`))';
 
-        $todaySalesRow = TransactionDetail::whereDate('created_at', $today)
+        $todaySalesRow = TransactionDetail::whereRaw($saleDate . ' = ?', [$today->toDateString()])
             ->selectRaw('COALESCE(SUM(price * qty), 0) as total')
             ->first();
-        $monthSalesRow = TransactionDetail::where('created_at', '>=', $monthStart)
+        $monthSalesRow = TransactionDetail::whereRaw($saleDate . ' BETWEEN ? AND ?', [
+                $monthStart->toDateString(),
+                $today->toDateString(),
+            ])
             ->selectRaw('COALESCE(SUM(price * qty), 0) as total')
             ->first();
         $todaySales = (float) optional($todaySalesRow)->total;
@@ -201,18 +205,29 @@ class HomeController extends Controller
                 'COALESCE(SUM(price * qty), 0) as total_sales, COALESCE(SUM(qty), 0) as total_products_sold'
             )
             ->first();
-        $todayTransactions = TransactionDetail::whereDate('created_at', $today)->count();
-        $monthUnits = (float) TransactionDetail::where('created_at', '>=', $monthStart)->sum('qty');
-        $activeDealers = TransactionDetail::where('created_at', '>=', Carbon::now()->subDays(30))
+        $todayTransactions = TransactionDetail::whereRaw($saleDate . ' = ?', [$today->toDateString()])->count();
+        $monthUnits = (float) TransactionDetail::whereRaw($saleDate . ' BETWEEN ? AND ?', [
+                $monthStart->toDateString(),
+                $today->toDateString(),
+            ])
+            ->sum('qty');
+        $activeDealers = TransactionDetail::whereRaw($saleDate . ' BETWEEN ? AND ?', [
+                $thirtyDaysAgo->toDateString(),
+                $today->toDateString(),
+            ])
             ->whereNotNull('dealer_id')
+            ->where('dealer_id', '>', 0)
             ->distinct()
             ->count('dealer_id');
 
         $dailyRows = TransactionDetail::selectRaw(
-                'DATE(created_at) as sale_date, COALESCE(SUM(price * qty), 0) as sales, COALESCE(SUM(qty), 0) as units'
+                $saleDate . ' as sale_date, COALESCE(SUM(price * qty), 0) as sales, COALESCE(SUM(qty), 0) as units'
             )
-            ->whereDate('created_at', '>=', $thirtyDaysAgo)
-            ->groupBy(DB::raw('DATE(created_at)'))
+            ->whereRaw($saleDate . ' BETWEEN ? AND ?', [
+                $thirtyDaysAgo->toDateString(),
+                $today->toDateString(),
+            ])
+            ->groupBy(DB::raw($saleDate))
             ->orderBy('sale_date')
             ->get()
             ->keyBy('sale_date');
