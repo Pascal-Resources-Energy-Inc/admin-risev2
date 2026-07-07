@@ -1,6 +1,5 @@
 @extends('layouts.header')
 @section('css')
-<link rel="stylesheet" href="{{ asset('design/assets/libs/jvectormap/jquery-jvectormap.css') }}">
 <style>
   :root {
     --dashboard-ink: #172033;
@@ -53,9 +52,6 @@
     .dashboard-panel-head, .dashboard-pagination { align-items: stretch; flex-direction: column; }
   }
 
-  .content-area:has(.welcome-dealer) {
-      margin-top: 90px !important;
-  }
   .stats-card {
       background: white;
       border: none;
@@ -235,7 +231,6 @@
   .sa-chart-legend i { width: 8px; height: 8px; display: inline-block; border-radius: 50%; }
   .sa-chart { min-height: 310px; padding: 6px 12px 0; }
   .sa-side-stack { display: grid; gap: 14px; }
-  .sa-status-chart { min-height: 205px; padding: 4px 10px 0; }
   .sa-pulse-list { display: grid; gap: 0; }
   .sa-pulse-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 17px; border-top: 1px solid #f0f2f5; }
   .sa-pulse-item:first-child { border-top: 0; }
@@ -354,12 +349,6 @@
       </article>
 
       <div class="sa-side-stack">
-        {{-- <article class="sa-panel">
-          <div class="sa-panel-head">
-            <div><h5>Order Pipeline</h5><p>Dealer and distributor orders</p></div>
-          </div>
-          <div class="sa-status-chart" id="saOrderChart"></div>
-        </article> --}}
         <article class="sa-panel">
           <div class="sa-panel-head">
             <div><h5>Live Transaction Pulse</h5><p>Most recent recorded sales</p></div>
@@ -402,7 +391,7 @@
                         <i class="ti ti-shopping-cart"></i>
                     </div>
                     <div class="stats-number">
-                        {{number_format($transactions_details->sum('qty'),0)}} 
+                        {{ number_format($total_products_sold ?? $transactions_details->sum('qty'), 0) }} 
                     </div>
                     <div class="stats-label">Products Sold</div>
                 </div>
@@ -414,7 +403,7 @@
                         <i class="ti ti-map-pin"></i>
                     </div>
                     <div class="stats-number">
-                        {{count($dealers)}} 
+                        {{ number_format($total_dealers ?? count($dealers)) }} 
                     </div>
                     <div class="stats-label">Dealer</div>
                 </div>
@@ -1358,32 +1347,33 @@
   </section>        
 @endsection
 @section('javascript')
-<script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs/qrcode.min.js"></script>
  @if(auth()->user()->role == "Client")
+      <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs/qrcode.min.js"></script>
       <script>
-          const qrcode = new QRCode(document.getElementById('qrcode'), {
-              text: "{{ $customer->serial->serial_number }}",
-              width: 128,
-              height: 128,
-              colorDark : '#000',
-              colorLight : '#fff',
-              correctLevel : QRCode.CorrectLevel.H
+          document.addEventListener('DOMContentLoaded', function () {
+              const qrTarget = document.getElementById('qrcode');
+              if (!qrTarget || !window.QRCode) return;
+
+              new QRCode(qrTarget, {
+                  text: "{{ $customer->serial->serial_number }}",
+                  width: 128,
+                  height: 128,
+                  colorDark : '#000',
+                  colorLight : '#fff',
+                  correctLevel : QRCode.CorrectLevel.H
+              });
           });
       </script>
   @endif
 
 
-<script src="{{asset('design/assets/libs/jvectormap/jquery-jvectormap.min.js')}}"></script>
 <script src="{{asset('design/assets/libs/apexcharts/dist/apexcharts.min.js')}}"></script>
-<script src="{{asset('design/assets/js/extra-libs/jvectormap/jquery-jvectormap-us-aea-en.js')}}"></script>
-<script src="{{asset('design/assets/js/dashboards/dashboard.js')}}"></script>
 
 @if($isSuperAdminDashboard)
 <script>
 (function () {
     var endpoint = @json(route('home.live-overview'));
     var salesChart = null;
-    var orderChart = null;
     var refreshButton = document.getElementById('saRefreshButton');
     var peso = new Intl.NumberFormat('en-PH', {
         style: 'currency',
@@ -1489,52 +1479,6 @@
         }
     }
 
-    function renderOrderChart(rows) {
-        var usableRows = rows.filter(function (row) { return Number(row.total) > 0; });
-        var options = {
-            series: usableRows.length ? usableRows.map(function (row) { return Number(row.total); }) : [1],
-            labels: usableRows.length ? usableRows.map(function (row) { return row.status; }) : ['No orders'],
-            chart: { type: 'donut', height: 205, fontFamily: 'inherit' },
-            colors: usableRows.length ? ['#0f8ca8', '#f59e0b', '#16a34a', '#7c3aed', '#dc2626', '#64748b'] : ['#e5e7eb'],
-            dataLabels: { enabled: false },
-            stroke: { width: 3, colors: ['#fff'] },
-            legend: {
-                position: 'bottom',
-                fontSize: '10px',
-                markers: { width: 7, height: 7, radius: 7 },
-                itemMargin: { horizontal: 6, vertical: 3 }
-            },
-            plotOptions: {
-                pie: {
-                    donut: {
-                        size: '70%',
-                        labels: {
-                            show: true,
-                            total: {
-                                show: true,
-                                label: 'Orders',
-                                fontSize: '10px',
-                                formatter: function (chart) {
-                                    return usableRows.length
-                                        ? wholeNumber.format(chart.globals.seriesTotals.reduce(function (sum, value) { return sum + value; }, 0))
-                                        : '0';
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            tooltip: { enabled: usableRows.length > 0 }
-        };
-
-        if (orderChart) {
-            orderChart.updateOptions(options);
-        } else {
-            orderChart = new ApexCharts(document.querySelector('#saOrderChart'), options);
-            orderChart.render();
-        }
-    }
-
     function renderRecentTransactions(rows) {
         var container = document.getElementById('saRecentTransactions');
         if (!container) return;
@@ -1573,7 +1517,6 @@
         .then(function (data) {
             renderKpis(data.kpis || {});
             renderSalesChart(data.sales_trend || []);
-            renderOrderChart(data.order_statuses || []);
             renderRecentTransactions(data.recent_transactions || []);
             setText('saUpdatedAt', 'updated ' + new Date(data.generated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
         })
@@ -1596,11 +1539,11 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('=== MAP DEBUG START ===');
-    
+    const mapRoot = document.getElementById('philippineMap');
+    if (!mapRoot) return;
+
+    const initDashboardMap = function () {
     const mapData = @json($map_data);
-    console.log('Map Data received:', mapData);
-    console.log('Number of provinces with data:', Object.keys(mapData).length);
     
     const colors = {
         high: '#5BC2E7',
@@ -1609,10 +1552,7 @@ document.addEventListener('DOMContentLoaded', function() {
         none: '#f8f8f8'
     };
     
-    const allPaths = document.querySelectorAll('#philippineMap svg path');
-    console.log('Total SVG paths found:', allPaths.length);
-    
-    let coloredCount = 0;
+    const allPaths = mapRoot.querySelectorAll('svg path');
     
     let tooltip = document.getElementById('mapTooltip');
     if (!tooltip) {
@@ -1638,10 +1578,7 @@ document.addEventListener('DOMContentLoaded', function() {
             path.style.fill = color;
             path.style.cursor = 'pointer';
             path.style.transition = 'all 0.3s ease';
-            
-            coloredCount++;
-            console.log(`Colored ${pathId} (${title}): ${data.level} - ${data.count}/${data.total} barangays (${data.percentage}%)`);
-            
+
             path.addEventListener('mouseenter', function(e) {
                 this.style.opacity = '0.8';
                 this.style.strokeWidth = '1.5';
@@ -1687,9 +1624,6 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     });
-    
-    console.log(`Successfully colored ${coloredCount} provinces`);
-    console.log('=== MAP DEBUG END ===');
     
     function showTooltip(event, province, reachedBarangays, totalBarangays, level, percentage) {
         const tooltip = document.getElementById('mapTooltip');
@@ -1765,6 +1699,13 @@ document.addEventListener('DOMContentLoaded', function() {
     function hideTooltip() {
         const tooltip = document.getElementById('mapTooltip');
         tooltip.style.display = 'none';
+    }
+    };
+
+    if (window.requestIdleCallback) {
+        window.requestIdleCallback(initDashboardMap, { timeout: 1500 });
+    } else {
+        window.setTimeout(initDashboardMap, 250);
     }
 
     let provinceData = [];
@@ -1881,7 +1822,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         html += `
             <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
-                <a class="page-link" href="#" onclick="changePage(${currentPage - 1}); return false;">
+                <a class="page-link" href="#" onclick="changeProvincePage(${currentPage - 1}); return false;">
                     <i class="ti ti-chevron-left"></i>
                 </a>
             </li>
@@ -1896,7 +1837,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         if (startPage > 1) {
-            html += `<li class="page-item"><a class="page-link" href="#" onclick="changePage(1); return false;">1</a></li>`;
+            html += `<li class="page-item"><a class="page-link" href="#" onclick="changeProvincePage(1); return false;">1</a></li>`;
             if (startPage > 2) {
                 html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
             }
@@ -1905,7 +1846,7 @@ document.addEventListener('DOMContentLoaded', function() {
         for (let i = startPage; i <= endPage; i++) {
             html += `
                 <li class="page-item ${i === currentPage ? 'active' : ''}">
-                    <a class="page-link" href="#" onclick="changePage(${i}); return false;">${i}</a>
+                    <a class="page-link" href="#" onclick="changeProvincePage(${i}); return false;">${i}</a>
                 </li>
             `;
         }
@@ -1914,12 +1855,12 @@ document.addEventListener('DOMContentLoaded', function() {
             if (endPage < totalPages - 1) {
                 html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
             }
-            html += `<li class="page-item"><a class="page-link" href="#" onclick="changePage(${totalPages}); return false;">${totalPages}</a></li>`;
+            html += `<li class="page-item"><a class="page-link" href="#" onclick="changeProvincePage(${totalPages}); return false;">${totalPages}</a></li>`;
         }
         
         html += `
             <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
-                <a class="page-link" href="#" onclick="changePage(${currentPage + 1}); return false;">
+                <a class="page-link" href="#" onclick="changeProvincePage(${currentPage + 1}); return false;">
                     <i class="ti ti-chevron-right"></i>
                 </a>
             </li>
@@ -1928,7 +1869,7 @@ document.addEventListener('DOMContentLoaded', function() {
         pagination.innerHTML = html;
     }
 
-    function changePage(page) {
+    function changeProvincePage(page) {
         const totalPages = Math.ceil(filteredProvinceData.length / entriesPerPage);
         if (page < 1 || page > totalPages) return;
         currentPage = page;
@@ -1996,7 +1937,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     window.showProvinceDetails = showProvinceDetails;
-    window.changePage = changePage;
+    window.changeProvincePage = changeProvincePage;
     window.exportProvinceData = exportProvinceData;
 });
 </script>
@@ -2119,22 +2060,6 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <script>
-const allTransactions = {!! json_encode(
-    $transactions_details->map(function($transaction) {
-        return [
-            'date' => date('M d, Y', strtotime($transaction->created_at)),
-            'quantity' => number_format($transaction->qty, 2),
-            'amount' => number_format($transaction->qty * $transaction->price, 2),
-            'dealer' => strtoupper($transaction->dealer->name ?? ''),
-            'customer' => strtoupper($transaction->customer->name ?? ''),
-            'dealer_points' => $transaction->points_dealer,
-            'customer_points' => $transaction->points_client,
-            'item' => $transaction->item,
-            'customer_id' => optional($transaction->customer)->id ?? 0
-        ];
-    })
-) !!};
-
 function showTransactionDetails(date, quantity, amount, dealer, customer, dealerPoints, customerPoints, item) {
     document.getElementById('customerName').textContent = customer;
     
@@ -2155,60 +2080,17 @@ function showTransactionDetails(date, quantity, amount, dealer, customer, dealer
     `;
     tbody.innerHTML = row;
 }
-
-function loadCustomerTransactions(customerId, customerName) {
-    document.getElementById('customerName').textContent = customerName;
-    
-    const customerTransactions = allTransactions.filter(transaction => 
-        transaction.customer_id == customerId
-    );
-    
-    const tbody = document.getElementById('customerTransactions');
-    tbody.innerHTML = '';
-    
-    customerTransactions.forEach(transaction => {
-        const row = `
-            <tr>
-                <td>${transaction.date}</td>
-                <td>${transaction.quantity}</td>
-                <td>${transaction.amount}</td>
-                <td>${transaction.dealer}</td>
-                <td>${transaction.customer}</td>
-                <td><span class='text-success'>${transaction.dealer_points}</span></td>
-                <td><span class='text-success'>${transaction.customer_points}</span></td>
-                <td>${transaction.item}</td>
-            </tr>
-        `;
-        tbody.innerHTML += row;
-    });
-    
-    if (customerTransactions.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="text-center">No transactions found for this customer.</td></tr>';
-    }
-}
-
-function updateTableEntries() {
-    const entriesPerPage = parseInt(document.getElementById('entriesPerPage').value);
-    const allRows = document.querySelectorAll('.transaction-row');
-    const totalEntries = allRows.length;
-    
-    allRows.forEach((row, index) => {
-        if (index < entriesPerPage) {
-            row.style.display = '';
-        } else {
-            row.style.display = 'none';
-        }
-    });
-    
-    const showing = Math.min(entriesPerPage, totalEntries);
-    document.getElementById('entriesInfo').textContent = 
-        `Showing 1 to ${showing} of ${totalEntries} entries`;
-}
 </script>
 
 <script>
 // Donut Chart for Top 10 Dealers
-$(document).ready(function() {
+document.addEventListener('DOMContentLoaded', function() {
+  const chartTarget = document.querySelector("#dealers-donut-chart");
+  if (!chartTarget || !window.ApexCharts) return;
+  const deferChart = window.requestIdleCallback
+    ? function (callback) { window.requestIdleCallback(callback, { timeout: 1200 }); }
+    : function (callback) { window.setTimeout(callback, 200); };
+
   const dealersData = @json($dealers);
   const dealerNames = dealersData.slice(0, 10).map(dealer => dealer.dealer?.name || 'Unknown');
   const dealerPoints = dealersData.slice(0, 10).map(dealer => parseFloat(dealer.total_points));
@@ -2255,14 +2137,21 @@ $(document).ready(function() {
     labels: dealerNames,
   };
 
-  var donutChart = new ApexCharts(document.querySelector("#dealers-donut-chart"), donutOptions);
-  donutChart.render();
+  deferChart(function () {
+    new ApexCharts(chartTarget, donutOptions).render();
+  });
 });
 </script>
 
 <script>
 // Donut Chart for Top 10 Customers
-$(document).ready(function() {
+document.addEventListener('DOMContentLoaded', function() {
+  const chartTarget = document.querySelector("#customers-donut-chart");
+  if (!chartTarget || !window.ApexCharts) return;
+  const deferChart = window.requestIdleCallback
+    ? function (callback) { window.requestIdleCallback(callback, { timeout: 1200 }); }
+    : function (callback) { window.setTimeout(callback, 200); };
+
   const customersData = @json($top_customers ?? []);
   const customerNames = customersData.slice(0, 10).map(customer => customer.customer?.name || 'Unknown');
   const customerPoints = customersData.slice(0, 10).map(customer => parseFloat(customer.total_points));
@@ -2310,8 +2199,9 @@ $(document).ready(function() {
     labels: customerNames,
   };
 
-  var customersDonutChart = new ApexCharts(document.querySelector("#customers-donut-chart"), customersDonutOptions);
-  customersDonutChart.render();
+  deferChart(function () {
+    new ApexCharts(chartTarget, customersDonutOptions).render();
+  });
 });
 </script>
 
@@ -2323,6 +2213,8 @@ const initialViewType = @json($view_type);
 
 // Initialize chart on page load
 $(function () {
+  if (!document.querySelector('#chart-bar-stacked')) return;
+
   renderChart(initialCategories, initialQty, {{ $selected_year }}, {{ $selected_month ?? 'null' }}, initialViewType);
   
   // Handle year selection change
@@ -2359,8 +2251,6 @@ function loadChartData(year, month = null) {
       },
       cache: false,
       success: function(response) {
-        console.log('Data loaded for year:', year, 'month:', month, response);
-        
         // Update available months dropdown
         updateMonthsDropdown(response.available_months, month);
         
@@ -2411,12 +2301,16 @@ function updateViewModeIndicator(viewType) {
 }
 
 function renderChart(categories, qty, year, month = null, viewType = 'yearly') {
+  if (!window.ApexCharts) return;
+
   if (chartInstance) {
     chartInstance.destroy();
     chartInstance = null;
   }
 
   const chartElement = document.querySelector('#chart-bar-stacked');
+  if (!chartElement) return;
+
   chartElement.innerHTML = '';
 
   const options = {
@@ -2643,11 +2537,12 @@ document.addEventListener('DOMContentLoaded', function() {
     updateEntriesInfo();
 });
 </script>
-{{-- <script src="{{asset('design/assets/js/apex-chart/apex.bar.init.js')}}"></script> --}}
-<script src="{{asset('design/assets/js/dashboards/dashboard.js')}}"></script>
 <script>
   document.addEventListener("DOMContentLoaded", function () {
-    var myModal = new bootstrap.Modal(document.getElementById('homeModal'));
+    var homeModal = document.getElementById('homeModal');
+    if (!homeModal) return;
+
+    var myModal = new bootstrap.Modal(homeModal);
     myModal.show();
   });
 </script>

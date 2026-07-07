@@ -127,7 +127,7 @@
                         </div>
                         <div class="col-md-4 mb-2">
                             <label>Middle Name</label>
-                            <input type="text" name="middle_name" class="form-control" placeholder="Enter Middle Name" value="{{ old('middle_name', $dealer->user->middle_name) }}" data-uppercase required>
+                            <input type="text" name="middle_name" class="form-control" placeholder="Enter Middle Name" value="{{ old('middle_name', $dealer->user->middle_name) }}" data-uppercase>
                         </div>
                         <div class="col-md-4 mb-2">
                             <label>Last Name</label>

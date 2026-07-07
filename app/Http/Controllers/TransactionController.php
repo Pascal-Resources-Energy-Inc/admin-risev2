@@ -18,19 +18,29 @@ class TransactionController extends Controller
         $customers = Client::where('status', 'Active')->whereHas('serial')->get();
         $items = Item::get();
         $dealers = Dealer::get();
-         $transactions = [];
-        //  dd(auth()->user());
-        if(auth()->user()->role == "Admin")
-        {
-            $transactions = TransactionDetail::get();
+        $transactionQuery = TransactionDetail::with(['dealer', 'customer'])
+            ->orderBy('id', 'desc');
+
+        if (auth()->user()->role == "Dealer") {
+            $transactionQuery->where('dealer_id', auth()->user()->id);
         }
-        elseif(auth()->user()->role == "Dealer")
-        {
-            $transactions = TransactionDetail::where('dealer_id',auth()->user()->id)->get();
-        }
+
+        $summaryQuery = clone $transactionQuery;
+        $summaryQuery->getQuery()->orders = null;
+
+        $transactionSummary = $summaryQuery
+            ->selectRaw('COUNT(*) as transaction_count, COALESCE(SUM(price * qty), 0) as total_sales, COALESCE(SUM(qty), 0) as total_qty, COALESCE(SUM(points_dealer), 0) + COALESCE(SUM(points_client), 0) as total_points')
+            ->first();
+
+        $transactions = $transactionQuery
+            ->select('id', 'date', 'qty', 'price', 'dealer_id', 'client_id', 'points_dealer', 'points_client', 'item', 'payment_method')
+            ->paginate(50)
+            ->appends($request->query());
+
         return view('transactions',
             array(
                 'transactions' => $transactions,
+                'transactionSummary' => $transactionSummary,
                 'items' => $items,
                 'customers' => $customers,
                 'dealers' => $dealers,
@@ -62,15 +72,28 @@ class TransactionController extends Controller
             ->where('status', 'Pending')
             ->count();
         
-        $transactions = [];
+        $transactionQuery = TransactionDetail::with(['dealer', 'customer'])
+            ->whereHas('adDealer', function($q) use ($centers) {
+                $q->whereIn('area', $centers);
+            })
+            ->orderBy('id', 'desc');
 
-        $transactions = TransactionDetail::whereHas('adDealer', function($q) use ($centers) {
-            $q->whereIn('area', $centers);
-        })->get();
+        $summaryQuery = clone $transactionQuery;
+        $summaryQuery->getQuery()->orders = null;
+
+        $transactionSummary = $summaryQuery
+            ->selectRaw('COUNT(*) as transaction_count, COALESCE(SUM(price * qty), 0) as total_sales, COALESCE(SUM(qty), 0) as total_qty, COALESCE(SUM(points_dealer), 0) + COALESCE(SUM(points_client), 0) as total_points')
+            ->first();
+
+        $transactions = $transactionQuery
+            ->select('id', 'date', 'qty', 'price', 'dealer_id', 'client_id', 'points_dealer', 'points_client', 'item', 'payment_method')
+            ->paginate(50)
+            ->appends($request->query());
 
         return view('area_distributor.transactions',
             array(
                 'transactions' => $transactions,
+                'transactionSummary' => $transactionSummary,
                 'items' => $items,
                 'customers' => $customers,
                 'dealers' => $dealers,
