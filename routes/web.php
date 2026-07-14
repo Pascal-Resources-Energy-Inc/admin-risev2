@@ -203,5 +203,9 @@ Route::get('/reports/monthly-sales/export', 'ReportController@exportMonthlySales
 Route::get('/reports/voucher-history', 'ReportController@voucherHistoryReport')->name('voucher-history');
 Route::get('/reports/voucher-history/export', 'ReportController@exportVoucherHistory')->name('voucher-history.export');
 
+Route::get('/stock-requests', 'DealerStockRequestController@adminIndex')->name('admin.stock.requests');
+Route::post('/stock-requests/{id}/approve', 'DealerStockRequestController@approve')->name('admin.stock.requests.approve');
+Route::post('/stock-requests/{id}/reject', 'DealerStockRequestController@reject')->name('admin.stock.requests.reject');
+
 });
 
