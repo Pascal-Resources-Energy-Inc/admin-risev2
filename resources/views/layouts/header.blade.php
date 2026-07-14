@@ -1483,6 +1483,20 @@
                             <span class="nav-text">Users</span>
                         </a>
                     </div>
+                    <div class="nav-item">
+                        <a href="{{ route('admin.stock.requests') }}" class="nav-link @if(Route::currentRouteName() == 'admin.stock.requests') active @endif position-relative">
+                            <div class="nav-icon position-relative">
+                                <i class="bi bi-patch-check-fill"></i>
+                            </div>
+                            <span class="nav-text">Stock Requests Approval</span>
+                            @if(!empty($pendingStockRequestsCount) && $pendingStockRequestsCount > 0)
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                    {{ $pendingStockRequestsCount > 99 ? '99+' : $pendingStockRequestsCount }}
+                                    <span class="visually-hidden">pending stock requests</span>
+                                </span>
+                            @endif
+                        </a>
+                    </div>
                     {{-- <div class="nav-item">
                         <a href="{{url('/rewards')}}" class="nav-link @if(Route::currentRouteName() == 'rewards')active @endif">
                             <div class="nav-icon">
@@ -2539,6 +2553,7 @@
             }, 5000);
         });
     </script>
-    
+
+    @yield('js')
 </body>
 </html>
