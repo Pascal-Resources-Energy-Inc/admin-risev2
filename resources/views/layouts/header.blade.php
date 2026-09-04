@@ -2017,6 +2017,22 @@
     @yield('javascript')
 
     <script>
+        function formatArea(option) {
+            if (!option.id) {
+                return option.text;
+            }
+
+            const $option = $(option.element);
+            const owner = $option.data('user');
+            const areaName = $('<div>').text(option.text || '').html();
+            const ownerName = $('<div>').text(owner || 'No User').html();
+
+            return '<div class="d-flex flex-column">'
+                + '<span>' + areaName + '</span>'
+                + '<small class="text-muted">Assigned to: ' + ownerName + '</small>'
+                + '</div>';
+        }
+
         function logout() {
             event.preventDefault();
             document.getElementById('logout-form').submit();

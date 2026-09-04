@@ -96,7 +96,7 @@
                         <p><i class="bi bi-geo-alt"></i> {{ strtoupper($customer->address) }}</p>
                         <p><i class="bi bi-facebook"></i> {{ strtoupper($customer->facebook) }}</p>
                         <p><i class="bi bi-envelope"></i> {{ strtoupper($customer->email_address) }}</p>
-                        <p><i class="bi bi-upc"></i> {{ strtoupper($customer->serial_number) }}</p>
+                        <p><i class="bi bi-upc"></i> {{ strtoupper($customer->serial->serial_number) }}</p>
                     </div>
                     <!-- Customer Personal Details -->
                     {{-- <p><strong>Name:</strong> {{$customer->name}}</p>

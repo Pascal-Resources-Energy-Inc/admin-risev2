@@ -140,6 +140,20 @@
                 @endforeach
               </select>
             </div>
+            <div class="col-md-6 mb-2">
+              <label class="form-label" for="area">Sales Territory&nbsp;<span class="text-danger">*</span></label>
+              <select class="form-control select2 select2-area" id="area" name="area" required data-placeholder="Select Area">
+                <option value="">Select Area</option>
+                @foreach($areas ?? [] as $area)
+                  <option value="{{ $area->name }}" data-user="{{ $area->areaAd->distributor->name ?? 'No User' }}" {{ old('area') === $area->name ? 'selected' : '' }}>
+                    {{ $area->name }}
+                  </option>
+                @endforeach
+              </select>
+              @if($errors->has('area'))
+                <div class="text-danger small mt-1">{{ $errors->first('area') }}</div>
+              @endif
+            </div>
           </div>
           <div class="col-md-12 mb-2 mt-3">
             <label class="form-label fw-semibold">

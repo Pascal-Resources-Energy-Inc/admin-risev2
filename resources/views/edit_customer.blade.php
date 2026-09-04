@@ -71,6 +71,20 @@
                             </select>
                         </div>
                         <div class="col-md-3 mb-2">
+                            <label class="form-label" for="edit_customer_area">Sales Territory <span class="text-danger">*</span></label>
+                            <select class="form-control select2 select2-area" id="edit_customer_area" name="area" required data-placeholder="Select Area">
+                                <option value="">Select Area</option>
+                                @foreach($areas ?? [] as $area)
+                                    <option value="{{ $area->name }}" data-user="{{ $area->areaAd->distributor->name ?? 'No User' }}" {{ old('area', $customer->area) === $area->name ? 'selected' : '' }}>
+                                        {{ $area->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @if($errors->has('area'))
+                                <div class="text-danger small mt-1">{{ $errors->first('area') }}</div>
+                            @endif
+                        </div>
+                        <div class="col-md-3 mb-2">
                             <label>Status</label>
                             <select class="form-control" name="status">
                                 <option value="Active" {{ $customer->status === 'Active' ? 'selected' : '' }}>Active</option>

@@ -7,6 +7,7 @@ use App\TransactionDetail;
 use Illuminate\Http\Request;
 use App\Client;
 use App\Center;
+use App\DmsArea;
 use RealRashid\SweetAlert\Facades\Alert;
 use GuzzleHttp\Client as GuzzleClient;
 use Illuminate\Support\Facades\Schema;
@@ -20,13 +21,36 @@ class CustomerController extends Controller
         $inactiveCustomers = Client::where('status', 'Inactive')->count();
 
         $centers = Center::get();
+        $areas = $this->salesTerritoryOptions();
         $stoves = Stove::where('client_id',null)->get();
-        $customers = Client::with(['transactions', 'serial'])->get();
+        $perPage = (int) $request->input('per_page', 15);
+        $perPage = in_array($perPage, [10, 15, 25, 50]) ? $perPage : 15;
+
+        $customersQuery = Client::with(['transactions', 'serial'])->orderBy('name');
+
+        if ($request->filled('search')) {
+            $search = trim($request->input('search'));
+            $customersQuery->where(function ($query) use ($search) {
+                $query->where('client_reference', 'like', '%' . $search . '%')
+                    ->orWhere('name', 'like', '%' . $search . '%')
+                    ->orWhere('number', 'like', '%' . $search . '%')
+                    ->orWhere('email_address', 'like', '%' . $search . '%')
+                    ->orWhere('center', 'like', '%' . $search . '%')
+                    ->orWhere('spo', 'like', '%' . $search . '%');
+            });
+        }
+
+        if (in_array($request->input('status'), ['Active', 'Inactive'])) {
+            $customersQuery->where('status', $request->input('status'));
+        }
+
+        $customers = $customersQuery->paginate($perPage)->appends($request->except('page'));
         return view('customers',
             array(
                 'stoves' => $stoves,
                 'customers' => $customers,
                 'centers' => $centers,
+                'areas' => $areas,
                 'activeCustomers' => $activeCustomers,
                 'inactiveCustomers' => $inactiveCustomers
             )
@@ -37,6 +61,7 @@ class CustomerController extends Controller
         $transactions = TransactionDetail::where('client_id',$id)->orderBy('id','desc')->get();
         $customer = Client::with(['user', 'serial'])->findOrfail($id);
         $centers = Center::get();
+        $areas = $this->salesTerritoryOptions();
         $stoves = Stove::whereNull('client_id')
             ->orWhere('client_id', $customer->id)
             ->get();
@@ -46,6 +71,7 @@ class CustomerController extends Controller
                 'customer' => $customer,
                 'transactions' => $transactions,
                 'centers' => $centers,
+                'areas' => $areas,
                 'stoves' => $stoves,
                 
             )
@@ -58,15 +84,21 @@ class CustomerController extends Controller
     public function newCustomer(Request $request)
     {
         $stoves = Stove::where('client_id',null)->get();
+        $areas = $this->salesTerritoryOptions();
         return view('new-customer',
             array(
-                'stoves' => $stoves
+                'stoves' => $stoves,
+                'areas' => $areas
             )
         );
     }
 
     public function saveCustomer(Request $request)
     {
+        $request->validate([
+            'area' => 'required|string|max:255',
+        ]);
+
         $fullName = trim(collect([
             $request->first_name,
             $request->middle_name,
@@ -113,6 +145,7 @@ class CustomerController extends Controller
         $customer->street_address = $request->street_address;
         $customer->spo = $request->spo;
         $customer->center = $request->center;
+        $customer->area = $request->area;
         $customer->status = $request->status;
         if (Schema::hasColumn('clients', 'latitude')) {
             $customer->latitude = $request->latitude;
@@ -133,6 +166,10 @@ class CustomerController extends Controller
 
     public function update(Request $request, $id)
     {
+        $request->validate([
+            'area' => 'required|string|max:255',
+        ]);
+
         $customer = Client::findOrFail($id);
 
         $fullName = trim(collect([
@@ -182,6 +219,7 @@ class CustomerController extends Controller
         $customer->street_address = $request->street_address;
         $customer->spo = $request->spo;
         $customer->center = $request->center;
+        $customer->area = $request->area;
         $customer->status = $request->status;
         if (Schema::hasColumn('clients', 'latitude')) {
             $customer->latitude = $request->latitude;
@@ -401,5 +439,13 @@ class CustomerController extends Controller
         });
 
         return $match['code'] ?? $value;
+    }
+
+    private function salesTerritoryOptions()
+    {
+        return DmsArea::with('areaAd.distributor')
+            ->whereNotNull('name')
+            ->orderBy('name')
+            ->get();
     }
 }
