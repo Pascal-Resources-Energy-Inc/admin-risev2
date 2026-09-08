@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Client;
 use App\Center;
 use App\DmsArea;
+use App\DmsAreaGeographicCoverage;
 use RealRashid\SweetAlert\Facades\Alert;
 use GuzzleHttp\Client as GuzzleClient;
 use Illuminate\Support\Facades\Schema;
@@ -80,6 +81,47 @@ class CustomerController extends Controller
     public function show(Request $request)
     {
         return view('customer-dashboard');
+    }
+
+    public function territoriesForLocation(Request $request)
+    {
+        $location = [
+            'region' => trim((string) $request->input('region')),
+            'province' => trim((string) $request->input('province')),
+            'city' => trim((string) $request->input('city')),
+            'barangay' => trim((string) $request->input('barangay')),
+        ];
+
+        if (in_array('', $location, true)) {
+            return response()->json(['ready' => false, 'territories' => []]);
+        }
+
+        $territories = DmsAreaGeographicCoverage::with('area.areaAd.distributor')
+            ->get()
+            ->filter(function ($coverage) use ($location) {
+                return $this->sameLocation($coverage->region, $location['region'])
+                    && $this->sameLocation($coverage->province, $location['province'])
+                    && $this->sameLocation($coverage->city_municipality, $location['city'])
+                    && $this->sameLocation($coverage->barangay, $location['barangay']);
+            })
+            ->map(function ($coverage) {
+                $area = $coverage->area;
+
+                return [
+                    'name' => $area ? $area->name : null,
+                    'owner' => optional(optional(optional($area)->areaAd)->distributor)->name ?: 'No User',
+                ];
+            })
+            ->filter(function ($area) {
+                return !empty($area['name']);
+            })
+            ->unique('name')
+            ->values();
+
+        return response()->json([
+            'ready' => true,
+            'territories' => $territories,
+        ]);
     }
     public function newCustomer(Request $request)
     {
@@ -447,5 +489,18 @@ class CustomerController extends Controller
             ->whereNotNull('name')
             ->orderBy('name')
             ->get();
+    }
+
+    private function sameLocation($first, $second)
+    {
+        return $this->normalizeLocationValue($first) === $this->normalizeLocationValue($second);
+    }
+
+    private function normalizeLocationValue($value)
+    {
+        $value = preg_replace('/\s+/', ' ', trim((string) $value));
+        $value = preg_replace('/^(city|municipality)\s+of\s+/i', '', $value);
+
+        return mb_strtolower($value);
     }
 }

@@ -2085,6 +2085,125 @@
             initSelect2(this);
         });
 
+        function initCustomerTerritoryCoverage(parent = document) {
+            const endpoint = @json(route('customers.territories-for-location'));
+
+            $(parent).find('[data-territory-select]').each(function () {
+                const $territory = $(this);
+                if (!$territory.data('allTerritoryOptions')) {
+                    $territory.data('allTerritoryOptions', $territory.find('option').clone());
+                }
+
+                const fields = [
+                    $territory.data('locationRegion'),
+                    $territory.data('locationProvince'),
+                    $territory.data('locationCity'),
+                    $territory.data('locationBarangay')
+                ];
+
+                $(fields.join(','))
+                    .off('change.customerTerritoryCoverage')
+                    .on('change.customerTerritoryCoverage', function () {
+                        updateCustomerTerritoryCoverage($territory, endpoint);
+                    });
+
+                updateCustomerTerritoryCoverage($territory, endpoint);
+            });
+        }
+
+        function setCustomerTerritoryNotice($territory, message, tone) {
+            const $notice = $territory.siblings('[data-territory-status]');
+            if (!message) {
+                $notice.addClass('d-none').removeClass('d-block border rounded px-2 py-1 bg-light text-success text-primary text-danger');
+                return;
+            }
+
+            $notice.text(message)
+                .removeClass('d-none text-success text-primary text-danger')
+                .addClass('d-block border rounded px-2 py-1 bg-light ' + tone);
+        }
+
+        function renderCustomerTerritories($territory, territories, selectedValue) {
+            if ($territory.hasClass('select2-hidden-accessible')) $territory.select2('destroy');
+
+            $territory.empty().append($('<option>', { value: '', text: 'Select Area' }));
+            $.each(territories, function (_, territory) {
+                $territory.append($('<option>', { value: territory.name, text: territory.name })
+                    .attr('data-user', territory.owner || 'No User'));
+            });
+            $territory.val(selectedValue || '');
+            initSelect2($territory.parent());
+        }
+
+        function restoreCustomerTerritories($territory) {
+            const selectedValue = $territory.val();
+            if ($territory.hasClass('select2-hidden-accessible')) $territory.select2('destroy');
+
+            $territory.empty().append($territory.data('allTerritoryOptions').clone()).val(selectedValue);
+            initSelect2($territory.parent());
+        }
+
+        function updateCustomerTerritoryCoverage($territory, endpoint) {
+            const location = {
+                region: $($territory.data('locationRegion')).val() || '',
+                province: $($territory.data('locationProvince')).val() || '',
+                city: $($territory.data('locationCity')).val() || '',
+                barangay: $($territory.data('locationBarangay')).val() || ''
+            };
+            const complete = Object.keys(location).every(function (key) {
+                return String(location[key]).trim() !== '';
+            });
+
+            if (!complete) {
+                restoreCustomerTerritories($territory);
+                setCustomerTerritoryNotice($territory, '', '');
+                return;
+            }
+
+            const requestId = ($territory.data('coverageRequestId') || 0) + 1;
+            $territory.data('coverageRequestId', requestId);
+            setCustomerTerritoryNotice($territory, 'Checking geographic coverage…', '');
+
+            fetch(endpoint + '?' + $.param(location), { headers: { Accept: 'application/json' } })
+                .then(function (response) {
+                    if (!response.ok) throw new Error('Coverage lookup failed');
+                    return response.json();
+                })
+                .then(function (data) {
+                    if ($territory.data('coverageRequestId') !== requestId) return;
+
+                    const areas = data.territories || [];
+                    const previousValue = $territory.val();
+                    if (areas.length === 1) {
+                        renderCustomerTerritories($territory, areas, areas[0].name);
+                        setCustomerTerritoryNotice($territory, 'Area auto-populated from geographic coverage.', 'text-success');
+                    } else if (areas.length > 1) {
+                        const selectedValue = areas.some(function (area) {
+                            return area.name === previousValue;
+                        }) ? previousValue : '';
+                        renderCustomerTerritories($territory, areas, selectedValue);
+                        setCustomerTerritoryNotice($territory, 'Multiple area names cover this address. Please choose one.', 'text-primary');
+                    } else {
+                        restoreCustomerTerritories($territory);
+                        setCustomerTerritoryNotice($territory, 'No area covers this address. Please select an area name.', 'text-danger');
+                    }
+                })
+                .catch(function () {
+                    if ($territory.data('coverageRequestId') === requestId) {
+                        restoreCustomerTerritories($territory);
+                        setCustomerTerritoryNotice($territory, 'Coverage lookup is unavailable. Please select an area name.', 'text-danger');
+                    }
+                });
+        }
+
+        $(document).ready(function () {
+            initCustomerTerritoryCoverage();
+        });
+
+        $(document).on('shown.bs.modal', '.modal', function () {
+            initCustomerTerritoryCoverage(this);
+        });
+
         document.addEventListener('focusin', function (e) {
             if (e.target.closest(".select2-container")) {
                 e.stopPropagation();
