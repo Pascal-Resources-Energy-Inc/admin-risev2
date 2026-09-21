@@ -9,12 +9,6 @@
 <link rel="stylesheet" href="{{ asset('design/assets/css/dashboard.css') }}">
 @section('content')
 
-  @if(auth()->check())
-    @if(auth()->user()->role == "Admin")
-      @include('alert')
-    @endif
-  @endif
-
   @php
     $stockCollection = $stockLevels ?? collect();
     $topDealer = ($topDealers ?? collect())->first();

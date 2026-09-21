@@ -261,10 +261,10 @@
     $isSuperAdminDashboard = auth()->user()->role === 'Admin' && blank(auth()->user()->warehouse);
   @endphp
 
-  @if(auth()->user()->role == "Admin")
+  {{-- @if(auth()->user()->role == "Admin")
     @include('alert')
   @elseif( auth()->user()->role == "Area Distributor")
-  @endif
+  @endif --}}
 
   @if($isSuperAdminDashboard)
   <section class="sa-command" id="superAdminCommand">
@@ -2536,14 +2536,5 @@ document.addEventListener('DOMContentLoaded', function() {
     updatePagination();
     updateEntriesInfo();
 });
-</script>
-<script>
-  document.addEventListener("DOMContentLoaded", function () {
-    var homeModal = document.getElementById('homeModal');
-    if (!homeModal) return;
-
-    var myModal = new bootstrap.Modal(homeModal);
-    myModal.show();
-  });
 </script>
 @endsection

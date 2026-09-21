@@ -173,6 +173,25 @@
             box-shadow: 0 10px 24px rgba(220, 38, 38, .22);
         }
 
+        .followup-alert-btn {
+            align-items: center;
+            background: #0f7bb7;
+            border: 0;
+            border-radius: 50%;
+            box-shadow: 0 10px 24px rgba(15, 123, 183, .22);
+            color: #fff;
+            display: inline-flex;
+            height: 42px;
+            justify-content: center;
+            position: relative;
+            transition: transform .18s ease, background-color .18s ease;
+            width: 42px;
+        }
+
+        .followup-alert-btn:hover { background: #08699f; transform: translateY(-1px); }
+        .followup-alert-btn:focus-visible { outline: 3px solid #8dd4ff; outline-offset: 3px; }
+        .followup-alert-badge { align-items: center; background: #f97316; border: 2px solid #fff; border-radius: 99px; color: #fff; display: inline-flex; font-size: 10px; font-weight: 800; height: 20px; justify-content: center; min-width: 20px; padding: 0 5px; position: absolute; right: -6px; top: -6px; }
+
         .notification-menu {
             width: min(430px, calc(100vw - 24px));
             border: 0;
@@ -1497,6 +1516,12 @@
                             @endif
                         </a>
                     </div>
+                    <div class="nav-item">
+                        <a href="{{ route('serial-numbers.index') }}" class="nav-link @if(Route::currentRouteName() == 'serial-numbers.index') active @endif">
+                            <div class="nav-icon"><i class="bi bi-upc-scan"></i></div>
+                            <span class="nav-text">Serial Numbers</span>
+                        </a>
+                    </div>
                     {{-- <div class="nav-item">
                         <a href="{{url('/rewards')}}" class="nav-link @if(Route::currentRouteName() == 'rewards')active @endif">
                             <div class="nav-icon">
@@ -1869,6 +1894,13 @@
                         <small class="opacity-75">Open notifications to see the latest update.</small>
                     </div>
                 </div>
+                @if(auth()->user()->role === 'Admin')
+                    <button type="button" class="followup-alert-btn" id="customerAlertToggle" aria-expanded="false" aria-controls="customerAlertDrawer" title="Customer follow-up alerts">
+                        <i class="bi bi-person-exclamation fs-6" aria-hidden="true"></i>
+                        <span class="followup-alert-badge" @if($customersLessForAlert->isEmpty()) hidden @endif>{{ $customersLessForAlert->count() > 99 ? '99+' : $customersLessForAlert->count() }}</span>
+                        <span class="visually-hidden">{{ $customersLessForAlert->count() }} customer follow-up alerts</span>
+                    </button>
+                @endif
                 @endif
 
                 <div class="dropdown">
@@ -1991,6 +2023,10 @@
     <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
         {{ csrf_field() }}
     </form>
+
+    @if(auth()->check() && auth()->user()->role === 'Admin')
+        @include('alert')
+    @endif
 
     <!-- Bootstrap JS -->
     

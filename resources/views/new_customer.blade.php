@@ -1,7 +1,7 @@
 {{-- <div id="new_customer" class="modal fade" tabindex="-1" aria-labelledby="bs-example-modal-md" aria-hidden="true">
   <div class="modal-dialog modal-lg"> --}}
 <div id="new_customer" class="modal fade modal-select2" tabindex="-1">
-  <div class="modal-dialog modal-xl">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
     <div class="modal-content">
       <div class="modal-header d-flex align-items-center">
         <h4 class="modal-title" id="myModalLabel">New Customer</h4>
@@ -142,7 +142,7 @@
             </div>
             <div class="col-md-6 mb-2">
               <label class="form-label" for="area">Sales Territory&nbsp;<span class="text-danger">*</span></label>
-              <select class="form-control select2 select2-area" id="customer_area" name="area" required data-placeholder="Select Area"
+              <select class="form-control select2 sales-territory-select" id="customer_area" name="area" required data-placeholder="Select Area"
                 data-territory-select data-location-region="#location_region" data-location-province="#location_province"
                 data-location-city="#location_city" data-location-barangay="#location_barangay">
                 <option value="">Select Area</option>

@@ -1,5 +1,5 @@
 <div class="modal fade modal-select2" id="editCustomerModal" tabindex="-1">
-    <div class="modal-dialog modal-xl">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Edit Customer Information</h5>
@@ -72,7 +72,7 @@
                         </div>
                         <div class="col-md-3 mb-2">
                             <label class="form-label" for="edit_customer_area">Sales Territory <span class="text-danger">*</span></label>
-                            <select class="form-control select2 select2-area" id="edit_customer_area" name="area" required data-placeholder="Select Area"
+                            <select class="form-control select2 sales-territory-select" id="edit_customer_area" name="area" required data-placeholder="Select Area"
                                 data-territory-select data-location-region="#edit_customer_region" data-location-province="#edit_customer_province"
                                 data-location-city="#edit_customer_city" data-location-barangay="#edit_customer_barangay">
                                 <option value="">Select Area</option>

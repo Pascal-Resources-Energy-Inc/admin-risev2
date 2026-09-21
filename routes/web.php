@@ -208,5 +208,10 @@ Route::get('/stock-requests', 'DealerStockRequestController@adminIndex')->name('
 Route::post('/stock-requests/{id}/approve', 'DealerStockRequestController@approve')->name('admin.stock.requests.approve');
 Route::post('/stock-requests/{id}/reject', 'DealerStockRequestController@reject')->name('admin.stock.requests.reject');
 
+// Serial Number Management
+Route::get('/serial-numbers', 'SerialNumberController@index')->name('serial-numbers.index');
+Route::post('/serial-numbers', 'SerialNumberController@store')->name('serial-numbers.store');
+Route::put('/serial-numbers/{id}', 'SerialNumberController@update')->name('serial-numbers.update');
+
 });
 
