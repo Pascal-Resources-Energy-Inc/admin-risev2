@@ -133,6 +133,7 @@ Route::post('/dealer/update/{id}', 'DealerController@update')->name('dealer.upda
 Route::get('/get-zipcode1', [DealerController::class, 'getZipCode1']);
 
 Route::get('/customers','CustomerController@index')->name('customers');
+Route::get('/customers/territories-for-location', 'CustomerController@territoriesForLocation')->name('customers.territories-for-location');
 Route::get('/customer','CustomerController@view')->name('customer');
 Route::get('/dashboard-customer','CustomerController@show')->name('customer');
 Route::get('/new-customer','CustomerController@newCustomer')->name('newcustomer');
@@ -204,8 +205,14 @@ Route::get('/reports/voucher-history', 'ReportController@voucherHistoryReport')-
 Route::get('/reports/voucher-history/export', 'ReportController@exportVoucherHistory')->name('voucher-history.export');
 
 Route::get('/stock-requests', 'DealerStockRequestController@adminIndex')->name('admin.stock.requests');
+Route::get('/stock-requests/{id}/attachments/{index}', 'DealerStockRequestController@viewAttachment')->name('admin.stock.requests.attachments.view');
 Route::post('/stock-requests/{id}/approve', 'DealerStockRequestController@approve')->name('admin.stock.requests.approve');
 Route::post('/stock-requests/{id}/reject', 'DealerStockRequestController@reject')->name('admin.stock.requests.reject');
+
+// Serial Number Management
+Route::get('/serial-numbers', 'SerialNumberController@index')->name('serial-numbers.index');
+Route::post('/serial-numbers', 'SerialNumberController@store')->name('serial-numbers.store');
+Route::put('/serial-numbers/{id}', 'SerialNumberController@update')->name('serial-numbers.update');
 
 });
 

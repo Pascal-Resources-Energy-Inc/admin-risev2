@@ -3,11 +3,8 @@
 @section('css')
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chosen/1.8.7/chosen.min.css">
-<link rel="stylesheet" href="https://cdn.datatables.net/1.10.25/css/dataTables.bootstrap4.min.css">
-<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap4.min.css">
 
 <style>
-  
 .chosen-container .chosen-single {
   height: calc(2.25rem + 2px);
   padding: 0.375rem 0.75rem;
@@ -45,18 +42,62 @@
   border-radius: 0.25rem;
 }
 
-.dataTables_length {
-  float: left;
-  margin-top: 15px;
-  margin-bottom: 5px;
+.customer-toolbar {
+  background: #f8fafc;
+  border: 1px solid #e9ecef;
+  border-radius: .5rem;
+  padding: 1rem;
 }
 
-.dataTables_filter {
-  float: right;
-  margin-top: 15px;
-  margin-bottom: 5px;
+.customer-search {
+  min-width: 260px;
 }
 
+.customer-table th {
+  border-top: 0;
+  color: #6c757d;
+  font-size: .75rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.customer-table td {
+  vertical-align: middle;
+}
+
+.customer-name {
+  color: #1f2937;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.customer-name:hover {
+  color: #0d6efd;
+}
+
+.customer-meta {
+  color: #6c757d;
+  font-size: .82rem;
+}
+
+.customer-pagination .page-link {
+  border-radius: .35rem;
+  margin: 0 .15rem;
+  border: 0;
+  color: #495057;
+}
+
+.customer-pagination .page-item.active .page-link {
+  background: #0d6efd;
+}
+
+.empty-state {
+  padding: 3.5rem 1rem;
+  text-align: center;
+  color: #6c757d;
+}
 </style>
 
 @endsection
@@ -91,95 +132,139 @@
     </div>
   </div>
   <div class="row">
-      <div class="col-lg-12 col-xl-12 d-flex align-items-stretch">
-          <div class="card w-100">
-              <div class="card-body">
-                  <h5>Customers <button class="btn-sm btn-success btn" data-bs-toggle="modal"  data-bs-target="#new_customer">+ Add</button></h5>
-                <div class="table-responsive">
-                  <table id="example" class="table table-bordered table-striped transaction-table" style="width:100%">
-                      <thead>
-                        <tr>
-                            <th>Customer Reference</th>
-                            <th>Customer Name</th>
-                            <th>Contact Number</th>
-                            <th>Email Address</th>
-                            <th style="display:none;">Date Start</th>
-                            <th style="display:none;">As of Now</th>
-                            <th>Serial Number</th>
-                            <th>Address</th>
-                            <th>Total Points</th>
-                            {{-- <th>Last Transaction</th> --}}
-                            <th>Center</th>
-                            <th>SPO</th>
-                            <th style="display:none;">Remarks</th>
-                            <th>Status</th>
-                        </tr>
-                      </thead>
-                      <tbody id="customerBody">
-                          @foreach($customers as $customer)
-                        <tr>
-                          <td>{{ $customer->client_reference }}</td>
-                          <td><a href='view-client/{{$customer->id}}'>{{ strtoupper($customer->name) }}</a></td>
-                          <td>{{ $customer->number }}</td>
-                          <td>{{ strtoupper($customer->email_address) }}</td>
-                          <td style="display:none;">
-                              @php
-                                  $firstTransaction = $customer->transactions->sortBy('date')->first();
-                              @endphp
-
-                              {{ $firstTransaction ? date('M d, Y', strtotime($firstTransaction->date)) : 'No Data' }}
-                          </td>
-                          <td style="display:none;">
-                              {{ \Carbon\Carbon::now()->format('M d, Y') }}
-                          </td>
-                          <td>
-                            @if($customer->serial)
-                              {{ $customer->serial->serial_number }}
-                            @else 
-                              -
-                            @endif
-                          </td>
-                          <td>
-                            {{ strtoupper(
-                                implode(', ', array_filter([
-                                    $customer->street_address,
-                                    $customer->location_barangay,
-                                    $customer->location_city,
-                                    $customer->location_province
-                                ])) . ' ' . $customer->postal_code
-                            ) }}
-                          </td>
-                          <td>{{ $customer->transactions->sum('points_client') }}</td>
-                          {{-- <td>
-                              @php
-                                  $transaction = ($customer->transactions)->sortByDesc('date')->first();
-                              @endphp
-                              @if($transaction)
-                                  {{ date('M d, Y', strtotime($transaction->date)) }}
-                              @else
-                                  No Data
-                              @endif
-                          </td> --}}
-                          
-                          <td style="display:none;">@if($customer->serial && !empty($customer->serial->remarks)) SN# @if($customer->serial) {{ $customer->serial->serial_number }} @endif used to be owned by @if($customer->serial && $customer->serial->remarks) @php $previousOwner = \App\Client::find($customer->serial->remarks); @endphp {{ $previousOwner ? $previousOwner->name : 'Unknown Client' }} @endif  @endif</td>
-                          <td>{{ strtoupper($customer->center) }}</td>
-                          <td>{{ strtoupper($customer->spo) }}</td>
-                          <td>
-                            @if($customer->status == 'Active')
-                              <span class="badge badge-success">Active</span>
-                            @else 
-                              <span class="badge badge-danger">Inactive</span>
-                            @endif
-                          </td>
-                        </tr>
-                        @endforeach
-
-                      </tbody>
-                  </table>
+    <div class="col-lg-12 col-xl-12 d-flex align-items-stretch">
+        <div class="card w-100">
+            <div class="card-body">
+                <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
+                  <div>
+                    <h5 class="mb-1">Customers</h5>
+                    <p class="text-muted mb-0 small">Manage your customer directory and account status.</p>
+                  </div>
+                  <button class="btn btn-success mt-3 mt-sm-0" data-bs-toggle="modal" data-bs-target="#new_customer">
+                    <i class="ti ti-plus me-1"></i> Add customer
+                  </button>
                 </div>
+
+                <form method="GET" action="{{ route('customers') }}" class="customer-toolbar mb-4">
+                  <div class="row align-items-end">
+                    <div class="col-md-6 col-lg-5 mb-3 mb-md-0">
+                      <label for="customer-search" class="form-label small font-weight-bold mb-1">Search customers</label>
+                      <input id="customer-search" class="form-control customer-search" type="search" name="search" value="{{ request('search') }}" placeholder="Name, reference, contact, email, center...">
+                    </div>
+                    <div class="col-6 col-md-3 col-lg-2">
+                      <label for="customer-status" class="form-label small font-weight-bold mb-1">Status</label>
+                      <select id="customer-status" class="form-control" name="status">
+                        <option value="">All statuses</option>
+                        <option value="Active" {{ request('status') === 'Active' ? 'selected' : '' }}>Active</option>
+                        <option value="Inactive" {{ request('status') === 'Inactive' ? 'selected' : '' }}>Inactive</option>
+                      </select>
+                    </div>
+                    <div class="col-6 col-md-3 col-lg-2">
+                      <label for="per-page" class="form-label small font-weight-bold mb-1">Per page</label>
+                      <select id="per-page" class="form-control" name="per_page">
+                        @foreach([10, 15, 25, 50] as $size)
+                          <option value="{{ $size }}" {{ (int) request('per_page', 15) === $size ? 'selected' : '' }}>{{ $size }}</option>
+                        @endforeach
+                      </select>
+                    </div>
+                    <div class="col-lg-3 mt-3 mt-lg-0 d-flex">
+                      <button class="btn btn-primary mr-2" type="submit"><i class="ti ti-search me-1"></i> Search</button>
+                      @if(request('search') !== null || request('status') !== null || request('per_page') !== null)
+                        <a class="btn btn-light" href="{{ route('customers') }}">Reset</a>
+                      @endif
+                    </div>
+                  </div>
+                </form>
+              <div class="table-responsive">
+                <table class="table customer-table mb-0" style="width:100%">
+                    <thead>
+                      <tr>
+                          <th>Customer Reference</th>
+                          <th>Customer Name</th>
+                          <th>Contact Number</th>
+                          <th>Email Address</th>
+                          <th>Serial Number</th>
+                          <th>Address</th>
+                          <th>Total Points</th>
+                          <th>Center</th>
+                          <th>SPO</th>
+                          <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody id="customerBody">
+                        @foreach($customers as $customer)
+                      <tr>
+                        <td><span class="font-weight-bold">{{ $customer->client_reference }}</span></td>
+                        <td>
+                          <a class="customer-name" href="{{ route('client.view', $customer->id) }}">{{ strtoupper($customer->name) }}</a>
+                          <div class="customer-meta d-md-none">{{ $customer->number ?: 'No contact number' }}</div>
+                        </td>
+                        <td>{{ $customer->number ?: '—' }}</td>
+                        <td>{{ $customer->email_address ? strtoupper($customer->email_address) : '—' }}</td>
+                        <td>
+                          @if($customer->serial)
+                            {{ $customer->serial->serial_number }}
+                          @else
+                            -
+                          @endif
+                        </td>
+                        <td>
+                          {{ strtoupper(
+                              implode(', ', array_filter([
+                                  $customer->street_address,
+                                  $customer->location_barangay,
+                                  $customer->location_city,
+                                  $customer->location_province
+                              ])) . ' ' . $customer->postal_code
+                          ) }}
+                        </td>
+                        <td>{{ $customer->transactions->sum('points_client') }}</td>
+                        <td>{{ $customer->center ? strtoupper($customer->center) : '—' }}</td>
+                        <td>{{ $customer->spo ? strtoupper($customer->spo) : '—' }}</td>
+                        <td>
+                          @if($customer->status == 'Active')
+                            <span class="badge badge-success px-2 py-1">Active</span>
+                          @else
+                            <span class="badge badge-danger px-2 py-1">Inactive</span>
+                          @endif
+                        </td>
+                      </tr>
+                      @endforeach
+
+                    </tbody>
+                </table>
               </div>
-          </div>
-      </div>
+              @if($customers->isEmpty())
+                <div class="empty-state">
+                  <i class="ti ti-users fs-8 d-block mb-2"></i>
+                  <h6 class="mb-1">No customers found</h6>
+                  <p class="mb-0">Try adjusting your search or filters.</p>
+                </div>
+              @else
+                <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between border-top pt-3 mt-3">
+                  <p class="text-muted small mb-3 mb-md-0">
+                    Showing {{ $customers->firstItem() }}–{{ $customers->lastItem() }} of {{ $customers->total() }} customers
+                  </p>
+                  <nav aria-label="Customer pages">
+                    <ul class="pagination customer-pagination mb-0">
+                      <li class="page-item {{ $customers->onFirstPage() ? 'disabled' : '' }}">
+                        <a class="page-link" href="{{ $customers->previousPageUrl() ?: '#' }}" aria-label="Previous">&laquo;</a>
+                      </li>
+                      @for($page = max(1, $customers->currentPage() - 2); $page <= min($customers->lastPage(), $customers->currentPage() + 2); $page++)
+                        <li class="page-item {{ $page === $customers->currentPage() ? 'active' : '' }}">
+                          <a class="page-link" href="{{ $customers->url($page) }}">{{ $page }}</a>
+                        </li>
+                      @endfor
+                      <li class="page-item {{ $customers->hasMorePages() ? '' : 'disabled' }}">
+                        <a class="page-link" href="{{ $customers->nextPageUrl() ?: '#' }}" aria-label="Next">&raquo;</a>
+                      </li>
+                    </ul>
+                  </nav>
+                </div>
+              @endif
+            </div>
+        </div>
+    </div>
   </div>
     
 </section>
@@ -189,47 +274,9 @@
 <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chosen/1.8.7/chosen.jquery.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.10.25/js/dataTables.bootstrap4.min.js"></script>
 
 <script>
 $(document).ready(function() {
-  var table = $('#example').DataTable({
-    dom: '<"row"<"col-sm-12"B>>' +
-         '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
-         '<"row"<"col-sm-12"tr>>' +
-         '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
-    
-    pageLength: 25,
-    lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-    
-    buttons: [
-      {
-        extend: 'excelHtml5',
-        text: 'Export Excel',
-        className: 'btn btn-sm btn-success',
-        title: 'Customers',
-        exportOptions: {
-          columns: [5, 0, 1, 2, 3, 4, 7, 6, 8, 9, 10],
-          modifier: {
-            search: 'applied',
-            order: 'current',
-            page: 'all'
-          },
-          rows: function (idx, data, node) {
-            return true;
-          }
-        }
-      }
-    ],
-    rowCallback: function(row, data, index) {
-      if (data[10] === 'Inactive') {
-        $(row).hide();
-      }
-      return row;
-    }
-  });
-
   $('#new_customer').on('shown.bs.modal', function () {
     if (typeof map === 'undefined' || !map) {
       initMap();
@@ -239,39 +286,10 @@ $(document).ready(function() {
       }, 200);
     }
   });
-});
-</script>
-<script>
-  $(document).ready(function(){
-    $('.chosen-select').chosen({
+  $('.chosen-select').chosen({
       width: '100%'
     });
-    
-  });
+});
 </script>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const searchInput = document.getElementById('customerSearch');
-        const customerRows = document.querySelectorAll('#customerBody tr');
 
-        if (!searchInput) {
-            return;
-        }
-        
-        searchInput.addEventListener('input', function() {
-            const searchTerm = searchInput.value.toLowerCase();
-
-            customerRows.forEach(row => {
-                const customerName = row.cells[0].textContent.toLowerCase();
-                const stoveId = row.cells[4].textContent.toLowerCase();
-
-                if (customerName.includes(searchTerm) || stoveId.includes(searchTerm)) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-        });
-    });
-</script>
 @endsection

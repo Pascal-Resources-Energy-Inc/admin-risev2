@@ -10,12 +10,6 @@
 
 <!--  Header End -->
   <!-- Welcome Section Start -->
-@if(auth()->check())
-  @if(auth()->user()->role == "Admin")
-    @include('alert')
-  @endif
-@endif
-
 <section>
   <div class="row g-3">
     {{-- TOTAL SALES --}}

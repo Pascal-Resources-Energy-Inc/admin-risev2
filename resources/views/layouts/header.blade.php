@@ -173,6 +173,25 @@
             box-shadow: 0 10px 24px rgba(220, 38, 38, .22);
         }
 
+        .followup-alert-btn {
+            align-items: center;
+            background: #0f7bb7;
+            border: 0;
+            border-radius: 50%;
+            box-shadow: 0 10px 24px rgba(15, 123, 183, .22);
+            color: #fff;
+            display: inline-flex;
+            height: 42px;
+            justify-content: center;
+            position: relative;
+            transition: transform .18s ease, background-color .18s ease;
+            width: 42px;
+        }
+
+        .followup-alert-btn:hover { background: #08699f; transform: translateY(-1px); }
+        .followup-alert-btn:focus-visible { outline: 3px solid #8dd4ff; outline-offset: 3px; }
+        .followup-alert-badge { align-items: center; background: #f97316; border: 2px solid #fff; border-radius: 99px; color: #fff; display: inline-flex; font-size: 10px; font-weight: 800; height: 20px; justify-content: center; min-width: 20px; padding: 0 5px; position: absolute; right: -6px; top: -6px; }
+
         .notification-menu {
             width: min(430px, calc(100vw - 24px));
             border: 0;
@@ -1497,6 +1516,12 @@
                             @endif
                         </a>
                     </div>
+                    <div class="nav-item">
+                        <a href="{{ route('serial-numbers.index') }}" class="nav-link @if(Route::currentRouteName() == 'serial-numbers.index') active @endif">
+                            <div class="nav-icon"><i class="bi bi-upc-scan"></i></div>
+                            <span class="nav-text">Serial Numbers</span>
+                        </a>
+                    </div>
                     {{-- <div class="nav-item">
                         <a href="{{url('/rewards')}}" class="nav-link @if(Route::currentRouteName() == 'rewards')active @endif">
                             <div class="nav-icon">
@@ -1869,6 +1894,13 @@
                         <small class="opacity-75">Open notifications to see the latest update.</small>
                     </div>
                 </div>
+                @if(auth()->user()->role === 'Admin')
+                    <button type="button" class="followup-alert-btn" id="customerAlertToggle" aria-expanded="false" aria-controls="customerAlertDrawer" title="Customer follow-up alerts">
+                        <i class="bi bi-person-exclamation fs-6" aria-hidden="true"></i>
+                        <span class="followup-alert-badge" @if($customersLessForAlert->isEmpty()) hidden @endif>{{ $customersLessForAlert->count() > 99 ? '99+' : $customersLessForAlert->count() }}</span>
+                        <span class="visually-hidden">{{ $customersLessForAlert->count() }} customer follow-up alerts</span>
+                    </button>
+                @endif
                 @endif
 
                 <div class="dropdown">
@@ -1992,6 +2024,10 @@
         {{ csrf_field() }}
     </form>
 
+    @if(auth()->check() && auth()->user()->role === 'Admin')
+        @include('alert')
+    @endif
+
     <!-- Bootstrap JS -->
     
     <!-- Original scripts -->
@@ -2017,6 +2053,22 @@
     @yield('javascript')
 
     <script>
+        function formatArea(option) {
+            if (!option.id) {
+                return option.text;
+            }
+
+            const $option = $(option.element);
+            const owner = $option.data('user');
+            const areaName = $('<div>').text(option.text || '').html();
+            const ownerName = $('<div>').text(owner || 'No User').html();
+
+            return '<div class="d-flex flex-column">'
+                + '<span>' + areaName + '</span>'
+                + '<small class="text-muted">Assigned to: ' + ownerName + '</small>'
+                + '</div>';
+        }
+
         function logout() {
             event.preventDefault();
             document.getElementById('logout-form').submit();
@@ -2067,6 +2119,125 @@
         // Re-init ONLY inside modal when opened
         $(document).on('shown.bs.modal', '.modal', function () {
             initSelect2(this);
+        });
+
+        function initCustomerTerritoryCoverage(parent = document) {
+            const endpoint = @json(route('customers.territories-for-location'));
+
+            $(parent).find('[data-territory-select]').each(function () {
+                const $territory = $(this);
+                if (!$territory.data('allTerritoryOptions')) {
+                    $territory.data('allTerritoryOptions', $territory.find('option').clone());
+                }
+
+                const fields = [
+                    $territory.data('locationRegion'),
+                    $territory.data('locationProvince'),
+                    $territory.data('locationCity'),
+                    $territory.data('locationBarangay')
+                ];
+
+                $(fields.join(','))
+                    .off('change.customerTerritoryCoverage')
+                    .on('change.customerTerritoryCoverage', function () {
+                        updateCustomerTerritoryCoverage($territory, endpoint);
+                    });
+
+                updateCustomerTerritoryCoverage($territory, endpoint);
+            });
+        }
+
+        function setCustomerTerritoryNotice($territory, message, tone) {
+            const $notice = $territory.siblings('[data-territory-status]');
+            if (!message) {
+                $notice.addClass('d-none').removeClass('d-block border rounded px-2 py-1 bg-light text-success text-primary text-danger');
+                return;
+            }
+
+            $notice.text(message)
+                .removeClass('d-none text-success text-primary text-danger')
+                .addClass('d-block border rounded px-2 py-1 bg-light ' + tone);
+        }
+
+        function renderCustomerTerritories($territory, territories, selectedValue) {
+            if ($territory.hasClass('select2-hidden-accessible')) $territory.select2('destroy');
+
+            $territory.empty().append($('<option>', { value: '', text: 'Select Area' }));
+            $.each(territories, function (_, territory) {
+                $territory.append($('<option>', { value: territory.name, text: territory.name })
+                    .attr('data-user', territory.owner || 'No User'));
+            });
+            $territory.val(selectedValue || '');
+            initSelect2($territory.parent());
+        }
+
+        function restoreCustomerTerritories($territory) {
+            const selectedValue = $territory.val();
+            if ($territory.hasClass('select2-hidden-accessible')) $territory.select2('destroy');
+
+            $territory.empty().append($territory.data('allTerritoryOptions').clone()).val(selectedValue);
+            initSelect2($territory.parent());
+        }
+
+        function updateCustomerTerritoryCoverage($territory, endpoint) {
+            const location = {
+                region: $($territory.data('locationRegion')).val() || '',
+                province: $($territory.data('locationProvince')).val() || '',
+                city: $($territory.data('locationCity')).val() || '',
+                barangay: $($territory.data('locationBarangay')).val() || ''
+            };
+            const complete = Object.keys(location).every(function (key) {
+                return String(location[key]).trim() !== '';
+            });
+
+            if (!complete) {
+                restoreCustomerTerritories($territory);
+                setCustomerTerritoryNotice($territory, '', '');
+                return;
+            }
+
+            const requestId = ($territory.data('coverageRequestId') || 0) + 1;
+            $territory.data('coverageRequestId', requestId);
+            setCustomerTerritoryNotice($territory, 'Checking geographic coverage…', '');
+
+            fetch(endpoint + '?' + $.param(location), { headers: { Accept: 'application/json' } })
+                .then(function (response) {
+                    if (!response.ok) throw new Error('Coverage lookup failed');
+                    return response.json();
+                })
+                .then(function (data) {
+                    if ($territory.data('coverageRequestId') !== requestId) return;
+
+                    const areas = data.territories || [];
+                    const previousValue = $territory.val();
+                    if (areas.length === 1) {
+                        renderCustomerTerritories($territory, areas, areas[0].name);
+                        setCustomerTerritoryNotice($territory, 'Area auto-populated from geographic coverage.', 'text-success');
+                    } else if (areas.length > 1) {
+                        const selectedValue = areas.some(function (area) {
+                            return area.name === previousValue;
+                        }) ? previousValue : '';
+                        renderCustomerTerritories($territory, areas, selectedValue);
+                        setCustomerTerritoryNotice($territory, 'Multiple area names cover this address. Please choose one.', 'text-primary');
+                    } else {
+                        restoreCustomerTerritories($territory);
+                        setCustomerTerritoryNotice($territory, 'No area covers this address. Please select an area name.', 'text-danger');
+                    }
+                })
+                .catch(function () {
+                    if ($territory.data('coverageRequestId') === requestId) {
+                        restoreCustomerTerritories($territory);
+                        setCustomerTerritoryNotice($territory, 'Coverage lookup is unavailable. Please select an area name.', 'text-danger');
+                    }
+                });
+        }
+
+        $(document).ready(function () {
+            initCustomerTerritoryCoverage();
+        });
+
+        $(document).on('shown.bs.modal', '.modal', function () {
+            initCustomerTerritoryCoverage(this);
         });
 
         document.addEventListener('focusin', function (e) {

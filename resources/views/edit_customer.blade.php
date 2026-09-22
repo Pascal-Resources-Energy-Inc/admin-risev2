@@ -1,5 +1,5 @@
 <div class="modal fade modal-select2" id="editCustomerModal" tabindex="-1">
-    <div class="modal-dialog modal-xl">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Edit Customer Information</h5>
@@ -69,6 +69,23 @@
                                     </option>
                                 @endforeach
                             </select>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <label class="form-label" for="edit_customer_area">Sales Territory <span class="text-danger">*</span></label>
+                            <select class="form-control select2 sales-territory-select" id="edit_customer_area" name="area" required data-placeholder="Select Area"
+                                data-territory-select data-location-region="#edit_customer_region" data-location-province="#edit_customer_province"
+                                data-location-city="#edit_customer_city" data-location-barangay="#edit_customer_barangay">
+                                <option value="">Select Area</option>
+                                @foreach($areas ?? [] as $area)
+                                    <option value="{{ $area->name }}" data-user="{{ $area->areaAd->distributor->name ?? 'No User' }}" {{ old('area', $customer->area) === $area->name ? 'selected' : '' }}>
+                                        {{ $area->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @if($errors->has('area'))
+                                <div class="text-danger small mt-1">{{ $errors->first('area') }}</div>
+                            @endif
+                            <div class="small mt-2 d-none" data-territory-status aria-live="polite"></div>
                         </div>
                         <div class="col-md-3 mb-2">
                             <label>Status</label>

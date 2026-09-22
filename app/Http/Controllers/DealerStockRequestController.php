@@ -8,6 +8,7 @@ use App\Product;
 use App\TransactionDetail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
 
 class DealerStockRequestController extends Controller
@@ -24,13 +25,24 @@ class DealerStockRequestController extends Controller
         $product = Product::on('dms')->findOrFail($request->product_id);
 
         DB::transaction(function () use ($request, $product) {
-            $existing = DealerStockRequest::where('dealer_id', auth()->id())->where('product_id', $product->id)->lockForUpdate()->first();
+            $existingPendingRequest = DealerStockRequest::where('dealer_id', auth()->id())
+                ->where('product_id', $product->id)
+                ->where('status', 'Pending')
+                ->lockForUpdate()
+                ->first();
             abort_if($this->stockForDealer($product, auth()->id()) > 0, 422, 'You already have stock for this item. You cannot request more until all current stock is used.');
-            abort_if($existing && $existing->status === 'Pending', 422, 'This item already has a pending stock request.');
-            DealerStockRequest::updateOrCreate(
-                ['dealer_id' => auth()->id(), 'product_id' => $product->id],
-                ['quantity' => $request->quantity, 'status' => 'Pending', 'remarks' => null, 'reviewed_by' => null, 'reviewed_at' => null, 'approved_order_id' => null]
-            );
+            abort_if($existingPendingRequest, 422, 'This item already has a pending stock request.');
+
+            DealerStockRequest::create([
+                'dealer_id' => auth()->id(),
+                'product_id' => $product->id,
+                'quantity' => $request->quantity,
+                'status' => 'Pending',
+                'remarks' => null,
+                'reviewed_by' => null,
+                'reviewed_at' => null,
+                'approved_order_id' => null,
+            ]);
         });
         return redirect()->route('dealer.stock.inventory')->with('success', 'Stock request submitted for admin approval.');
     }
@@ -48,15 +60,43 @@ class DealerStockRequestController extends Controller
         return view('admin_stock_requests', compact('requests', 'products'));
     }
 
-    public function approve($id)
+    public function viewAttachment($id, $index)
+    {
+        $this->authenticatedAdmin();
+
+        $stockRequest = DealerStockRequest::findOrFail($id);
+        $path = $stockRequest->attachment_links->get((int) $index);
+        $relativePath = ltrim(str_replace('\\', '/', (string) $path), '/');
+
+        abort_unless(
+            $path && strpos($relativePath, 'uploads/stock-request-attachments/') === 0,
+            404,
+            'Attachment not found.'
+        );
+
+        $file = base_path('../crms-risev2/public/' . $relativePath);
+        abort_unless(File::isFile($file), 404, 'This attachment file is no longer available.');
+
+        return response()->file($file, [
+            'Content-Disposition' => 'inline; filename="' . basename($file) . '"',
+        ]);
+    }
+
+    public function approve(Request $request, $id)
     {
         $admin = $this->authenticatedAdmin();
+        $request->validate(['quantity' => 'required|integer|min:1|max:100000']);
+        $approvedQuantity = (int) $request->quantity;
 
-        $error = DB::transaction(function () use ($id, $admin) {
+        $error = DB::transaction(function () use ($id, $admin, $approvedQuantity) {
             $stockRequest = DealerStockRequest::lockForUpdate()->findOrFail($id);
 
             if ($stockRequest->status !== 'Pending') {
                 return 'This request has already been ' . strtolower($stockRequest->status) . '.';
+            }
+
+            if ($approvedQuantity > $stockRequest->quantity) {
+                return 'The approved quantity cannot be higher than the requested quantity of ' . number_format($stockRequest->quantity) . ' units.';
             }
 
             // Stock request product IDs belong to the DMS product database.
@@ -73,7 +113,7 @@ class DealerStockRequestController extends Controller
             if (Schema::hasColumn('order_details', 'sku')) $order->sku = $product->sku;
             $order->transaction_id = 'STK-' . str_pad(($last ? $last->id : 0) + 1, 6, '0', STR_PAD_LEFT);
             $order->item_description = $product->description;
-            $order->qty = $stockRequest->quantity;
+            $order->qty = $approvedQuantity;
             $order->price = $product->dealer_price ?? $product->price ?? 0;
             $order->date = now()->toDateString();
             $order->dealer_id = $stockRequest->dealer_id;
@@ -83,6 +123,7 @@ class DealerStockRequestController extends Controller
             if (Schema::hasColumn('order_details', 'remarks')) $order->remarks = 'Dealer stock request approved by ' . $admin->name;
             $order->save();
             $stockRequest->update([
+                'quantity' => $approvedQuantity,
                 'status' => 'Approved',
                 'reviewed_by' => $admin->id,
                 'reviewed_at' => now(),
