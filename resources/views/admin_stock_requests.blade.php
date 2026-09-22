@@ -5,6 +5,7 @@
     $pendingCount = $requests->where('status', 'Pending')->count();
     $approvedCount = $requests->where('status', 'Approved')->count();
     $rejectedCount = $requests->where('status', 'Rejected')->count();
+    $cancelledCount = $requests->where('status', 'Cancelled')->count();
 @endphp
 
 <div class="stock-approval-page">
@@ -44,6 +45,7 @@
                 <button type="button" class="filter-tab" data-filter="pending" role="tab" aria-selected="false">Pending <span>{{ $pendingCount }}</span></button>
                 <button type="button" class="filter-tab" data-filter="approved" role="tab" aria-selected="false">Approved <span>{{ $approvedCount }}</span></button>
                 <button type="button" class="filter-tab" data-filter="rejected" role="tab" aria-selected="false">Rejected <span>{{ $rejectedCount }}</span></button>
+                <button type="button" class="filter-tab" data-filter="cancelled" role="tab" aria-selected="false">Cancelled <span>{{ $cancelledCount }}</span></button>
             </div>
         </div>
         <p class="request-results" id="requestResults" aria-live="polite">Showing {{ $requests->count() }} request{{ $requests->count() === 1 ? '' : 's' }}</p>
@@ -51,22 +53,34 @@
         <div class="request-list" id="requestList">
             @forelse($requests as $request)
                 @php
-                    $dealerName = optional($request->dealer)->name ?? 'Dealer #' . $request->dealer_id;
-                    $storeName = optional(optional($request->dealer)->dealer)->store_name ?: 'Dealer account';
+                    $dealer = $request->dealer;
+                    $dealerProfile = optional($dealer)->dealer;
+                    $dealerName = optional($dealer)->name ?? 'Dealer #' . $request->dealer_id;
+                    $storeName = optional($dealerProfile)->store_name ?: 'Dealer account';
+                    $dealerArea = trim((string) optional($dealerProfile)->area) ?: 'Area not assigned';
+                    $requestAttachments = $request->attachment_links;
                     $productName = optional($products->get($request->product_id))->product_name ?? 'Product #' . $request->product_id;
                     $status = strtolower($request->status);
                 @endphp
-                <article class="request-item" data-status="{{ $status }}" data-search="{{ strtolower($dealerName . ' ' . $storeName . ' ' . $productName) }}">
+                <article class="request-item" data-status="{{ $status }}" data-search="{{ strtolower($dealerName . ' ' . $storeName . ' ' . $dealerArea . ' ' . $productName) }}">
                     <div class="dealer-avatar" aria-hidden="true">{{ strtoupper(substr($dealerName, 0, 1)) }}</div>
                     <div class="request-details">
-                        <div class="request-primary"><div><h3>{{ $dealerName }}</h3><p class="store-name"><i class="bi bi-shop"></i>{{ $storeName }}</p></div><span class="status-pill {{ $status }}"><i class="bi {{ $status === 'pending' ? 'bi-clock' : ($status === 'approved' ? 'bi-check-lg' : 'bi-x-lg') }}"></i>{{ $request->status }}</span></div>
+                        <div class="request-primary"><div><h3>{{ $dealerName }}</h3><p class="store-name"><i class="bi bi-shop"></i>{{ $storeName }}</p><p class="dealer-area"><i class="bi bi-geo-alt"></i><span>Area:</span>{{ $dealerArea }}</p></div><span class="status-pill {{ $status }}"><i class="bi {{ $status === 'pending' ? 'bi-clock' : ($status === 'approved' ? 'bi-check-lg' : 'bi-x-lg') }}"></i>{{ $request->status }}</span></div>
                         <div class="request-meta"><span><i class="bi bi-box-seam"></i>{{ $productName }}</span><span><i class="bi bi-layers"></i><b>{{ number_format($request->quantity) }}</b> units requested</span><span><i class="bi bi-calendar3"></i>{{ optional($request->created_at)->format('M d, Y · g:i A') }}</span></div>
+                        @if($requestAttachments->isNotEmpty())
+                            <div class="request-attachments" aria-label="Stock request attachments">
+                                <span class="attachment-label"><i class="bi bi-paperclip"></i>Request attachments</span>
+                                @foreach($requestAttachments as $index => $path)
+                                    <a href="{{ route('admin.stock.requests.attachments.view', ['id' => $request->id, 'index' => $index]) }}" class="attachment-link" target="_blank" rel="noopener"><i class="bi bi-paperclip"></i>Attachment {{ $index + 1 }}<i class="bi bi-box-arrow-up-right"></i></a>
+                                @endforeach
+                            </div>
+                        @endif
                         @if($request->remarks)<p class="request-note"><i class="bi bi-chat-left-text"></i><span><b>{{ $request->status === 'Rejected' ? 'Rejection reason:' : 'Note:' }}</b> {{ $request->remarks }}</span></p>@endif
                         @if($request->status !== 'Pending' && $request->reviewer)<p class="reviewed-by">Reviewed by {{ $request->reviewer->name }}{{ $request->reviewed_at ? ' on ' . $request->reviewed_at->format('M d, Y') : '' }}</p>@endif
                     </div>
                     @if($request->status === 'Pending')
                         <div class="request-actions">
-                            <form method="POST" action="{{ route('admin.stock.requests.approve', ['id' => $request->id]) }}" class="approve-form">@csrf<button class="button button-approve" type="submit"><i class="bi bi-check-lg"></i>Approve</button></form>
+                            <button class="button button-approve" type="button" data-approve-id="{{ $request->id }}" data-dealer="{{ $dealerName }}" data-product="{{ $productName }}" data-quantity="{{ $request->quantity }}"><i class="bi bi-check-lg"></i>Approve</button>
                             <button class="button button-reject" type="button" data-reject-id="{{ $request->id }}" data-dealer="{{ $dealerName }}" data-product="{{ $productName }}"><i class="bi bi-x-lg"></i>Reject</button>
                         </div>
                     @endif
@@ -89,6 +103,17 @@
         <textarea id="rejectionRemarks" name="remarks" maxlength="500" required placeholder="Enter a clear reason for the dealer..."></textarea>
         <div class="character-count"><span id="characterCount">0</span>/500</div>
         <div class="dialog-actions"><button type="button" class="button button-cancel" data-close-dialog>Cancel</button><button class="button button-confirm-reject" type="submit"><i class="bi bi-x-lg"></i>Reject request</button></div>
+    </form>
+</div>
+
+<div class="dialog-backdrop" id="approveModal" hidden aria-hidden="true">
+    <form id="approveForm" method="POST" class="decision-dialog" aria-labelledby="approveTitle">@csrf
+        <button type="button" class="dialog-close" data-close-dialog aria-label="Close"><i class="bi bi-x-lg"></i></button>
+        <span class="dialog-icon approve-icon"><i class="bi bi-check-lg"></i></span>
+        <h2 id="approveTitle">Approve stock request?</h2>
+        <p id="approveDescription">Confirm the stock quantity before approval.</p>
+        <label class="approval-quantity" for="approveQuantity"><span>Quantity to approve</span><input id="approveQuantity" name="quantity" type="number" min="1" max="100000" required inputmode="numeric"><small>units</small></label><p class="approval-quantity-help">The approved quantity cannot be higher than the dealer’s requested amount.</p>
+        <div class="dialog-actions"><button type="button" class="button button-cancel" data-close-dialog>Back</button><button class="button button-approve" type="submit"><i class="bi bi-check-lg"></i>Confirm approval</button></div>
     </form>
 </div>
 </div>
@@ -123,6 +148,22 @@ body.main-layout{background:#f4f7fb!important}.page-heading{align-items:flex-sta
     .request-item:focus-within { background: #f4fbff; box-shadow: inset 3px 0 0 #2c9dcc; }
     .filter-tabs::-webkit-scrollbar { height: 5px; }
     .filter-tabs::-webkit-scrollbar-thumb { background: #cad8e4; border-radius: 99px; }
+    .dealer-area { align-items: center; color: #5d8294; display: flex; font-size: 11px; gap: 5px; margin: 4px 0 0; }
+    .dealer-area i { color: #3c9fc4; }
+    .dealer-area span { color: #6c7f8f; font-weight: 800; }
+    .request-attachments { align-items: center; display: flex; flex-wrap: wrap; gap: 7px; margin-top: 11px; }
+    .attachment-label { align-items: center; color: #7a8998; display: inline-flex; font-size: 10px; font-weight: 800; gap: 5px; text-transform: uppercase; }
+    .attachment-label i { color: #3c9fc4; font-size: 12px; }
+    .attachment-link { align-items: center; background: #f1f9fc; border: 1px solid #cfebf4; border-radius: 7px; color: #16779c; display: inline-flex; font-size: 11px; font-weight: 800; gap: 5px; padding: 6px 8px; text-decoration: none; transition: .2s; }
+    .attachment-link:hover { background: #e1f5fb; border-color: #93d4e8; color: #0f6689; transform: translateY(-1px); }
+    .attachment-link .bi-box-arrow-up-right { font-size: 9px; opacity: .7; }
+    .approve-icon { background: #e9f9ef; color: #168450; }
+    .approval-quantity { align-items: baseline; background: #f3fbf6; border: 1px solid #cdebd9; border-radius: 10px; display: flex; gap: 7px; margin: 18px 0 21px; padding: 14px; }
+    .approval-quantity span { color: #587267; font-size: 12px; font-weight: 800; margin-right: auto; }
+    .approval-quantity input { background: #fff; border: 1px solid #b9dfc8; border-radius: 7px; color: #13683d; font-size: 19px; font-weight: 900; line-height: 1; max-width: 108px; outline: 0; padding: 7px 8px; text-align: center; }
+    .approval-quantity input:focus { border-color: #168450; box-shadow: 0 0 0 3px rgba(22, 132, 80, .13); }
+    .approval-quantity small { color: #6a8276; font-size: 11px; font-weight: 700; }
+    .approval-quantity-help { color: #728093; font-size: 11px; margin: -13px 0 19px; }
 
     @media (min-width: 761px) and (max-width: 1024px) {
         .stock-approval-page { padding: 28px 24px 42px; }
@@ -149,6 +190,8 @@ body.main-layout{background:#f4f7fb!important}.page-heading{align-items:flex-sta
         .approve-form, .approve-form .button, .request-actions > .button { width: 100%; }
         .button { min-height: 42px; padding: 10px; }
         .request-note { font-size: 11px; }
+        .request-attachments { align-items: flex-start; flex-direction: column; gap: 6px; }
+        .attachment-link { width: fit-content; }
         .decision-dialog { max-height: calc(100vh - 24px); overflow-y: auto; padding: 22px 18px; }
     }
 
@@ -165,17 +208,19 @@ body.main-layout{background:#f4f7fb!important}.page-heading{align-items:flex-sta
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     var list = document.getElementById('requestList'), search = document.getElementById('requestSearch'), noResults = document.getElementById('noResults'), results = document.getElementById('requestResults');
-    var activeFilter = 'all', modal = document.getElementById('rejectModal'), form = document.getElementById('rejectForm'), textarea = document.getElementById('rejectionRemarks');
+    var activeFilter = 'all', modal = document.getElementById('rejectModal'), form = document.getElementById('rejectForm'), textarea = document.getElementById('rejectionRemarks'), approveModal = document.getElementById('approveModal'), approveForm = document.getElementById('approveForm');
     function filterRequests() { var term = search.value.toLowerCase().trim(), visible = 0; list.querySelectorAll('.request-item').forEach(function (item) { var show = (activeFilter === 'all' || item.dataset.status === activeFilter) && item.dataset.search.indexOf(term) !== -1; item.hidden = !show; if (show) visible++; }); noResults.hidden = visible > 0 || !list.querySelector('.request-item'); if (results) results.textContent = 'Showing ' + visible + ' request' + (visible === 1 ? '' : 's') + (activeFilter === 'all' ? '' : ' · ' + activeFilter); }
     search.addEventListener('input', filterRequests);
     document.querySelectorAll('.filter-tab').forEach(function (tab) { tab.addEventListener('click', function () { activeFilter = tab.dataset.filter; document.querySelectorAll('.filter-tab').forEach(function (button) { button.classList.toggle('active', button === tab); button.setAttribute('aria-selected', button === tab ? 'true' : 'false'); }); filterRequests(); }); });
+    document.querySelectorAll('[data-approve-id]').forEach(function (button) { button.addEventListener('click', function () { var quantityInput = document.getElementById('approveQuantity'); approveForm.action = '{{ url('/stock-requests') }}/' + button.dataset.approveId + '/approve'; document.getElementById('approveDescription').textContent = 'Review up to ' + button.dataset.quantity + ' requested units of ' + button.dataset.product + ' for ' + button.dataset.dealer + '.'; quantityInput.value = button.dataset.quantity; quantityInput.max = button.dataset.quantity; approveModal.hidden = false; approveModal.setAttribute('aria-hidden', 'false'); quantityInput.focus(); }); });
     document.querySelectorAll('[data-reject-id]').forEach(function (button) { button.addEventListener('click', function () { form.action = '{{ url('/stock-requests') }}/' + button.dataset.rejectId + '/reject'; document.getElementById('rejectDescription').textContent = 'Reject the request for ' + button.dataset.product + ' from ' + button.dataset.dealer + '? Tell them why.'; textarea.value = ''; document.getElementById('characterCount').textContent = '0'; modal.hidden = false; modal.setAttribute('aria-hidden', 'false'); textarea.focus(); }); });
-    function closeModal() { modal.hidden = true; modal.setAttribute('aria-hidden', 'true'); }
+    function closeModal() { [modal, approveModal].forEach(function (dialog) { dialog.hidden = true; dialog.setAttribute('aria-hidden', 'true'); }); }
     document.querySelectorAll('[data-close-dialog]').forEach(function (button) { button.addEventListener('click', closeModal); });
     modal.addEventListener('click', function (event) { if (event.target === modal) closeModal(); });
-    document.addEventListener('keydown', function (event) { if (event.key === 'Escape' && !modal.hidden) closeModal(); });
+    approveModal.addEventListener('click', function (event) { if (event.target === approveModal) closeModal(); });
+    document.addEventListener('keydown', function (event) { if (event.key === 'Escape' && (!modal.hidden || !approveModal.hidden)) closeModal(); });
     textarea.addEventListener('input', function () { document.getElementById('characterCount').textContent = textarea.value.length; });
-    document.querySelectorAll('.approve-form, #rejectForm').forEach(function (requestForm) { requestForm.addEventListener('submit', function () { var submit = requestForm.querySelector('[type="submit"]'); if (submit) { submit.disabled = true; submit.innerHTML = '<i class="bi bi-arrow-repeat"></i> Processing...'; } }); });
+    document.querySelectorAll('#approveForm, #rejectForm').forEach(function (requestForm) { requestForm.addEventListener('submit', function () { var submit = requestForm.querySelector('[type="submit"]'); if (submit) { submit.disabled = true; submit.innerHTML = '<i class="bi bi-arrow-repeat"></i> Processing...'; } }); });
     document.querySelectorAll('.alert-message button').forEach(function (button) { button.addEventListener('click', function () { button.closest('.alert-message').remove(); }); });
 });
 </script>
