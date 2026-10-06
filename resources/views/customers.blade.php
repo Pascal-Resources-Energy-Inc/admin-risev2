@@ -3,6 +3,7 @@
 @section('css')
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chosen/1.8.7/chosen.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css">
 
 <style>
 .chosen-container .chosen-single {
@@ -82,22 +83,24 @@
   font-size: .82rem;
 }
 
-.customer-pagination .page-link {
-  border-radius: .35rem;
-  margin: 0 .15rem;
-  border: 0;
-  color: #495057;
+.customer-table-shell {
+  min-height: 190px;
 }
 
-.customer-pagination .page-item.active .page-link {
-  background: #0d6efd;
+.dataTables_wrapper .dataTables_processing {
+  background: #fff;
+  border: 1px solid #dbeafe;
+  border-radius: .6rem;
+  box-shadow: 0 .75rem 1.5rem rgba(15, 23, 42, .12);
+  color: #1d4ed8;
+  font-size: .85rem;
+  font-weight: 600;
+  margin-left: 0;
+  padding: .7rem 1rem;
+  transform: translateX(-50%);
+  width: auto;
 }
 
-.empty-state {
-  padding: 3.5rem 1rem;
-  text-align: center;
-  color: #6c757d;
-}
 </style>
 
 @endsection
@@ -145,7 +148,7 @@
                   </button>
                 </div>
 
-                <form method="GET" action="{{ route('customers') }}" class="customer-toolbar mb-4">
+                <form id="customerFilterForm" class="customer-toolbar mb-4">
                   <div class="row align-items-end">
                     <div class="col-md-6 col-lg-5 mb-3 mb-md-0">
                       <label for="customer-search" class="form-label small font-weight-bold mb-1">Search customers</label>
@@ -169,14 +172,12 @@
                     </div>
                     <div class="col-lg-3 mt-3 mt-lg-0 d-flex">
                       <button class="btn btn-primary mr-2" type="submit"><i class="ti ti-search me-1"></i> Search</button>
-                      @if(request('search') !== null || request('status') !== null || request('per_page') !== null)
-                        <a class="btn btn-light" href="{{ route('customers') }}">Reset</a>
-                      @endif
+                      <a class="btn btn-light" href="{{ route('customers') }}">Reset</a>
                     </div>
                   </div>
                 </form>
-              <div class="table-responsive">
-                <table class="table customer-table mb-0" style="width:100%">
+              <div class="table-responsive customer-table-shell" id="customerTableShell" aria-busy="false">
+                <table id="customerTable" class="table customer-table mb-0" style="width:100%">
                     <thead>
                       <tr>
                           <th>Customer Reference</th>
@@ -191,77 +192,9 @@
                           <th>Status</th>
                       </tr>
                     </thead>
-                    <tbody id="customerBody">
-                        @foreach($customers as $customer)
-                      <tr>
-                        <td><span class="font-weight-bold">{{ $customer->client_reference }}</span></td>
-                        <td>
-                          <a class="customer-name" href="{{ route('client.view', $customer->id) }}">{{ strtoupper($customer->name) }}</a>
-                          <div class="customer-meta d-md-none">{{ $customer->number ?: 'No contact number' }}</div>
-                        </td>
-                        <td>{{ $customer->number ?: '—' }}</td>
-                        <td>{{ $customer->email_address ? strtoupper($customer->email_address) : '—' }}</td>
-                        <td>
-                          @if($customer->serial)
-                            {{ $customer->serial->serial_number }}
-                          @else
-                            -
-                          @endif
-                        </td>
-                        <td>
-                          {{ strtoupper(
-                              implode(', ', array_filter([
-                                  $customer->street_address,
-                                  $customer->location_barangay,
-                                  $customer->location_city,
-                                  $customer->location_province
-                              ])) . ' ' . $customer->postal_code
-                          ) }}
-                        </td>
-                        <td>{{ $customer->transactions->sum('points_client') }}</td>
-                        <td>{{ $customer->center ? strtoupper($customer->center) : '—' }}</td>
-                        <td>{{ $customer->spo ? strtoupper($customer->spo) : '—' }}</td>
-                        <td>
-                          @if($customer->status == 'Active')
-                            <span class="badge badge-success px-2 py-1">Active</span>
-                          @else
-                            <span class="badge badge-danger px-2 py-1">Inactive</span>
-                          @endif
-                        </td>
-                      </tr>
-                      @endforeach
-
-                    </tbody>
+                    <tbody></tbody>
                 </table>
               </div>
-              @if($customers->isEmpty())
-                <div class="empty-state">
-                  <i class="ti ti-users fs-8 d-block mb-2"></i>
-                  <h6 class="mb-1">No customers found</h6>
-                  <p class="mb-0">Try adjusting your search or filters.</p>
-                </div>
-              @else
-                <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between border-top pt-3 mt-3">
-                  <p class="text-muted small mb-3 mb-md-0">
-                    Showing {{ $customers->firstItem() }}–{{ $customers->lastItem() }} of {{ $customers->total() }} customers
-                  </p>
-                  <nav aria-label="Customer pages">
-                    <ul class="pagination customer-pagination mb-0">
-                      <li class="page-item {{ $customers->onFirstPage() ? 'disabled' : '' }}">
-                        <a class="page-link" href="{{ $customers->previousPageUrl() ?: '#' }}" aria-label="Previous">&laquo;</a>
-                      </li>
-                      @for($page = max(1, $customers->currentPage() - 2); $page <= min($customers->lastPage(), $customers->currentPage() + 2); $page++)
-                        <li class="page-item {{ $page === $customers->currentPage() ? 'active' : '' }}">
-                          <a class="page-link" href="{{ $customers->url($page) }}">{{ $page }}</a>
-                        </li>
-                      @endfor
-                      <li class="page-item {{ $customers->hasMorePages() ? '' : 'disabled' }}">
-                        <a class="page-link" href="{{ $customers->nextPageUrl() ?: '#' }}" aria-label="Next">&raquo;</a>
-                      </li>
-                    </ul>
-                  </nav>
-                </div>
-              @endif
             </div>
         </div>
     </div>
@@ -274,6 +207,8 @@
 <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chosen/1.8.7/chosen.jquery.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
 
 <script>
 $(document).ready(function() {
@@ -289,6 +224,50 @@ $(document).ready(function() {
   $('.chosen-select').chosen({
       width: '100%'
     });
+
+  var customerTable = $('#customerTable').DataTable({
+    processing: true,
+    serverSide: true,
+    pageLength: 15,
+    lengthMenu: [10, 15, 25, 50],
+    ajax: {
+      url: "{{ route('customers.data') }}",
+      data: function (data) {
+        data.status = $('#customer-status').val();
+      }
+    },
+    columns: [
+      { data: 'reference', name: 'clients.client_reference' },
+      { data: 'customer_name', name: 'clients.name' },
+      { data: 'number', name: 'clients.number' },
+      { data: 'email_address', name: 'clients.email_address' },
+      { data: 'serial_number', orderable: false, searchable: false },
+      { data: 'address', orderable: false, searchable: false },
+      { data: 'points', orderable: false, searchable: false },
+      { data: 'center', name: 'clients.center' },
+      { data: 'spo', name: 'clients.spo' },
+      { data: 'status_badge', name: 'clients.status' }
+    ],
+    language: {
+      processing: 'Loading customers…',
+      emptyTable: 'No customers found.',
+      zeroRecords: 'No customers match your search.'
+    }
+  });
+
+  $('#customerFilterForm').on('submit', function (event) {
+    event.preventDefault();
+    customerTable.search($('#customer-search').val()).draw();
+  });
+  $('#customer-status').on('change', function () { customerTable.ajax.reload(); });
+  $('#per-page').on('change', function () { customerTable.page.len(Number(this.value)).draw(); });
+  $('.customer-toolbar .btn-light').on('click', function (event) {
+    event.preventDefault();
+    $('#customer-search').val('');
+    $('#customer-status').val('');
+    $('#per-page').val('15');
+    customerTable.search('').page.len(15).draw();
+  });
 });
 </script>
 

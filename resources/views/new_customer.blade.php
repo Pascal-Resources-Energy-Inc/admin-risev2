@@ -1,6 +1,6 @@
 {{-- <div id="new_customer" class="modal fade" tabindex="-1" aria-labelledby="bs-example-modal-md" aria-hidden="true">
   <div class="modal-dialog modal-lg"> --}}
-<div id="new_customer" class="modal fade modal-select2" tabindex="-1">
+<div id="new_customer" class="modal fade modal-select2" tabindex="-1" style="display: none;" aria-hidden="true">
   <div class="modal-dialog modal-xl modal-dialog-scrollable">
     <div class="modal-content">
       <div class="modal-header d-flex align-items-center">

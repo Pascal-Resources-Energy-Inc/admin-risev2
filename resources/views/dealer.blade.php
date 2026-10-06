@@ -128,7 +128,8 @@
           <div class='text-center'>
             {{-- <img src="{{$dealer->avatar ? asset($dealer->avatar) : asset('design/assets/images/profile/user-1.png')}}" alt="Avatar Image" class="img-fluid rounded-circle" style="width: 100px; height: 100px;"> --}}
             <img src="{{$dealer->avatar ? asset($dealer->avatar) : asset('design/assets/images/profile/user-1.png')}}" class="profile-avatar mx-auto">
-            <div class="profile-name">{{ trim(strtoupper($dealer->user->first_name ?? '')) . ' ' . strtoupper(($dealer->user->last_name ?? '')) ?: ( strtoupper($dealer->name ?? '')) }}</div>
+            {{-- <div class="profile-name">{{ trim(strtoupper($dealer->user->first_name ?? '')) . ' ' . strtoupper(($dealer->user->last_name ?? '')) ?: ( strtoupper($dealer->name ?? '')) }}</div> --}}
+            <div class="profile-name">{{ strtoupper($dealer->name) }}</div>
             <div class="text-muted small">{{ strtoupper($dealer->store_name) }}</div>
           </div>  
           <br>

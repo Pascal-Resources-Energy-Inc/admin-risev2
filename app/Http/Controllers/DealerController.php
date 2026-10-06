@@ -9,6 +9,7 @@ use App\TransactionDetail;
 use App\Item;
 use App\DmsArea;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 class DealerController extends Controller
@@ -21,9 +22,15 @@ class DealerController extends Controller
         $items = Item::select('item')->get(); // master list of items
         
         $centers = Center::get();
-        $dealers = Dealer::with('user')->get();
+        $hasDealerType = Schema::hasColumn('dealers', 'dealer_type');
+        $projectDealerCount = $hasDealerType ? Dealer::where(function ($query) {
+            $query->whereNull('dealer_type')->orWhere('dealer_type', '!=', 'Regular');
+        })->count() : Dealer::count();
+        $regularDealerCount = $hasDealerType ? Dealer::where('dealer_type', 'Regular')->count() : 0;
+        $dealers = auth()->user()->role === 'Admin' ? collect() : Dealer::with('user')->get();
 
         $areas = $this->dealerAreaOptions();
+        $mfis = $this->mfiOptions();
         return view('dealers',
             array(
                 'dealers' => $dealers,
@@ -31,10 +38,44 @@ class DealerController extends Controller
                 'inactiveDealers' => $inactiveDealers,
                 'items' => $items,
                 'centers' => $centers,
-                'areas' => $areas
+                'areas' => $areas,
+                'mfis' => $mfis,
+                'projectDealerCount' => $projectDealerCount,
+                'regularDealerCount' => $regularDealerCount,
 
             )
         );
+    }
+
+    public function datatable(Request $request)
+    {
+        abort_unless(auth()->user() && auth()->user()->role === 'Admin', 403);
+
+        $orders = DB::table('order_details')->select('dealer_id', DB::raw('COALESCE(SUM(qty), 0) as stock_qty'))->groupBy('dealer_id');
+        $sales = DB::table('transaction_details')->select('dealer_id', DB::raw('COALESCE(SUM(qty), 0) as sold_qty'))->groupBy('dealer_id');
+        $query = Dealer::query()->leftJoinSub($orders, 'dealer_order_totals', function ($join) { $join->on('dealer_order_totals.dealer_id', '=', 'dealers.user_id'); })->leftJoinSub($sales, 'dealer_sales_totals', function ($join) { $join->on('dealer_sales_totals.dealer_id', '=', 'dealers.user_id'); })->select('dealers.*', 'dealer_order_totals.stock_qty', 'dealer_sales_totals.sold_qty');
+
+        if (Schema::hasColumn('dealers', 'dealer_type')) {
+            if ($request->dealer_type === 'Regular') {
+                $query->where('dealers.dealer_type', 'Regular');
+            } else {
+                $query->where(function ($builder) { $builder->whereNull('dealers.dealer_type')->orWhere('dealers.dealer_type', '!=', 'Regular'); });
+            }
+        }
+
+        return \Yajra\DataTables\Facades\DataTables::eloquent($query)
+            ->addColumn('reference', function ($dealer) { return '<span class="dealer-ref">' . e(strtoupper($dealer->dealer_reference)) . '</span>'; })
+            ->addColumn('name', function ($dealer) { return '<a href="' . route('dealer.view', $dealer->id) . '" class="dealer-link">' . e(strtoupper($dealer->name)) . '</a>'; })
+            ->editColumn('store_name', function ($dealer) { return e(strtoupper($dealer->store_name ?: '-')); })
+            ->editColumn('store_type', function ($dealer) { return e(strtoupper($dealer->store_type ?: '-')); })
+            ->editColumn('number', function ($dealer) { return e($dealer->number ?: '-'); })
+            ->addColumn('stock', function ($dealer) { return '<span class="dealer-metric is-stock">' . number_format($dealer->stock_qty ?: 0) . '</span>'; })
+            ->addColumn('sold', function ($dealer) { return '<span class="dealer-metric is-sold">' . number_format($dealer->sold_qty ?: 0) . '</span>'; })
+            ->addColumn('address', function ($dealer) { return '<div class="dealer-muted">' . e(strtoupper($dealer->address ?: '-')) . '</div>'; })
+            ->addColumn('area', function ($dealer) { return '<div class="dealer-muted">' . e(strtoupper($dealer->area ?: '-')) . '</div>'; })
+            ->addColumn('status_badge', function ($dealer) { return '<span class="dealer-status ' . ($dealer->status === 'Active' ? 'is-active' : 'is-inactive') . '">' . e($dealer->status) . '</span>'; })
+            ->rawColumns(['reference', 'name', 'stock', 'sold', 'address', 'area', 'status_badge'])
+            ->toJson();
     }
 
     public function megaDealers(Request $request)
@@ -54,6 +95,7 @@ class DealerController extends Controller
         $items = Item::select('item')->get();
         $centers = Center::get();
         $areas = $this->dealerAreaOptions();
+        $mfis = $this->mfiOptions();
         $dealers = Dealer::with(['user', 'orders', 'sales'])
             ->whereHas('user', function ($q) {
                 $q->where('role', 'Mega Dealer');
@@ -67,6 +109,7 @@ class DealerController extends Controller
             'items' => $items,
             'centers' => $centers,
             'areas' => $areas,
+            'mfis' => $mfis,
             'dealerPageTitle' => 'Mega Dealers',
             'dealerSingularTitle' => 'Mega Dealer',
             'dealerRouteName' => 'mds',
@@ -89,6 +132,7 @@ class DealerController extends Controller
             'dealer_type' => $isAdmin ? 'required|in:Project,Regular' : 'nullable',
             'spo' => $dealerType === 'Project' ? 'required|string|max:255' : 'nullable',
             'center' => $dealerType === 'Project' ? 'required|string|max:255' : 'nullable',
+            'mfi' => 'required|string|max:100|exists:dms.mfis,name',
         ]);
 
         if ($this->dealerDuplicateExists(
@@ -150,6 +194,9 @@ class DealerController extends Controller
         $dealer->store_type = $request->store_type;
         $dealer->center = $dealerType === 'Project' ? $request->center : null;
         $dealer->area = $request->area;
+        if (Schema::hasColumn('dealers', 'mfi')) {
+            $dealer->mfi = $request->mfi;
+        }
         $dealer->latitude = $request->latitude;
         $dealer->longitude = $request->longitude;
         $dealer->status = "Active";
@@ -201,12 +248,24 @@ class DealerController extends Controller
             ->get();
     }
 
+    private function mfiOptions()
+    {
+        if (!Schema::connection('dms')->hasTable('mfis')) {
+            return collect();
+        }
+
+        return DB::connection('dms')->table('mfis')
+            ->orderBy('name')
+            ->pluck('name');
+    }
+
     public function view(Request $request,$id)
     {
         $dealer = Dealer::with('user')->findOrfail($id);
         $transactions = TransactionDetail::where('dealer_id',$dealer->user_id)->orderBy('id','desc')->get();
         $centers = Center::get();
         $areas = $this->dealerAreaOptions();
+        $mfis = $this->mfiOptions();
         // dd($dealer);
         return view('dealer',
             array(
@@ -214,6 +273,7 @@ class DealerController extends Controller
                 'transactions' => $transactions,
                 'centers' => $centers,
                 'areas' => $areas,
+                'mfis' => $mfis,
             )
         );
     }
@@ -264,17 +324,32 @@ class DealerController extends Controller
         return back();
     }
 
+    public function showValidId($id)
+    {
+        Dealer::findOrFail($id);
+
+        return redirect()->to('view-dealer/' . $id);
+    }
+
     public function uploadValidId(Request $request,$id)
     {
-        // dd($request->all());
+        $request->validate([
+            'valid_id_type' => 'required|string|max:100',
+            'id_number' => 'nullable|string|max:100',
+            'id_file' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
+        ]);
+
         $customer = Dealer::findOrfail($id);
         $customer->valid_id = $request->valid_id_type;
         $customer->valid_id_number = $request->id_number;
 
         $attachment = $request->file('id_file');
-        $original_name = $attachment->getClientOriginalName();
-        $name = time().'_'.$attachment->getClientOriginalName();
-        $attachment->move(public_path().'/valid_ids/', $name);
+        $directory = public_path('valid_ids');
+        if (! is_dir($directory)) {
+            mkdir($directory, 0755, true);
+        }
+        $name = time() . '_' . uniqid() . '.' . $attachment->getClientOriginalExtension();
+        $attachment->move($directory, $name);
         $file_name = '/valid_ids/'.$name;
 
         $customer->valid_file = $file_name;
@@ -328,6 +403,7 @@ class DealerController extends Controller
             'dealer_type' => $isAdmin ? 'required|in:Project,Regular' : 'nullable',
             'spo' => $dealerType === 'Project' ? 'required|string|max:255' : 'nullable',
             'center' => $dealerType === 'Project' ? 'required|string|max:255' : 'nullable',
+            'mfi' => 'required|string|max:100|exists:dms.mfis,name',
         ]);
 
         $fullName = trim(collect([
@@ -337,13 +413,15 @@ class DealerController extends Controller
         ])->filter()->implode(' '));
 
         if ($dealer->user_id) {
+            $userUpdate = ['name' => $fullName ?: $request->name];
 
-            User::where('id', $dealer->user_id)->update([
-                'name' => $fullName ?: $request->name,
-                'first_name' => $request->first_name,
-                'middle_name' => $request->middle_name,
-                'last_name' => $request->last_name,
-            ]);
+            foreach (['first_name', 'middle_name', 'last_name'] as $column) {
+                if (Schema::hasColumn('users', $column)) {
+                    $userUpdate[$column] = $request->{$column};
+                }
+            }
+
+            User::where('id', $dealer->user_id)->update($userUpdate);
         }
 
         $dealer->name = $fullName ?: $request->name;
@@ -368,6 +446,9 @@ class DealerController extends Controller
         $dealer->postal_code = $request->postal_code;
         $dealer->center = $dealerType === 'Project' ? $request->center : null;
         $dealer->area = $request->area;
+        if (Schema::hasColumn('dealers', 'mfi')) {
+            $dealer->mfi = $request->mfi;
+        }
         $dealer->latitude = $request->latitude;
         $dealer->longitude = $request->longitude;
 

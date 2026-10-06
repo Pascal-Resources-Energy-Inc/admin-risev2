@@ -1,0 +1,6 @@
+<div class="modal-header"><div><h5 class="modal-title">{{ $center ? 'Edit Center' : 'Add Center' }}</h5><p>Keep the center aligned with its DMS MFI.</p></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+<div class="modal-body"><div class="row g-3">
+    <div class="col-12"><label for="{{ $formId }}Name">Center name <span class="text-danger">*</span></label><input id="{{ $formId }}Name" class="form-control" name="name" value="{{ old('name', optional($center)->name) }}" placeholder="Enter center name" required autofocus></div>
+    <div class="col-12"><label for="{{ $formId }}Mfi">MFI <span class="text-danger">*</span></label><select id="{{ $formId }}Mfi" class="form-select" name="mfi" required><option value="">Select MFI</option>@foreach($mfis as $mfi)<option value="{{ $mfi }}" {{ old('mfi', optional($center)->mfi) === $mfi ? 'selected' : '' }}>{{ $mfi }}</option>@endforeach</select><small>The MFI is sourced from the DMS master list.</small></div>
+</div></div>
+<div class="modal-footer"><button class="btn btn-light" type="button" data-bs-dismiss="modal">Cancel</button><button class="btn btn-primary" type="submit"><i class="bi bi-check-lg me-1"></i>{{ $center ? 'Save changes' : 'Add Center' }}</button></div>

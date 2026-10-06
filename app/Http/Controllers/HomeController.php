@@ -39,57 +39,36 @@ class HomeController extends Controller
     {
         $dealer = "";
         $customer = "";
-        $threeDaysAgo = Carbon::now()->subDays(7)->toDateString();
+        $user = auth()->user();
+        $role = $user->role;
         
         $selectedYear = $request->get('year', Carbon::now()->year);
         $selectedMonth = $request->get('month', null);
         $viewType = $selectedMonth ? 'monthly' : 'yearly';
 
-        // $adUser = auth()->user()->ad->id;
-        $adUser = optional(auth()->user()->ad)->id;
+        $adUser = optional($user->ad)->id;
         $pendingOrdersCount = OrderDetail::where('ad_id', $adUser)
             ->where('status', 'Pending')
             ->count();
-            
-        $customers_less = Client::where('status', 'Active')->whereDoesntHave('latestTransaction', function ($q) use ($threeDaysAgo) {
-            $q->where('date', '>=', $threeDaysAgo);
-        })
-        ->whereHas('latestTransaction')
-        ->orderBy(
-            DB::raw('(SELECT date FROM transaction_details WHERE transaction_details.client_id = clients.id ORDER BY date DESC LIMIT 1)'),
-            'desc'
-        )
-        ->get();
 
-        $customers = Client::whereHas('transactions')->get();
-        $transactions = Transaction::orderBy('id','desc')->get();
-        $dealers = Dealer::get();
-        $transactions_details = TransactionDetail::orderBy('id','desc')->get();
-
-        if(auth()->user()->role == "Dealer")
-        {
-            $dealer = Dealer::with('sales')->where('user_id',auth()->user()->id)->first();
-            $transactions_details = TransactionDetail::where('dealer_id',auth()->user()->id)->orderBy('id','desc')->get();
-            $total_sales = TransactionDetail::where('dealer_id',auth()->user()->id)->sum('price');
-
-            $totalEarnedPointsDealer = $dealer->sales->sum('points_dealer');
-            $redeemedPointsDealer = abs(RedeemedHistory::where('user_id', auth()->user()->id)->sum('points_amount'));
-            $dealerAvailablePoints = $totalEarnedPointsDealer - $redeemedPointsDealer;
+        $transactionDetailsQuery = TransactionDetail::with(['customer', 'dealer'])->latest('id');
+        if ($role === 'Dealer') {
+            $dealer = Dealer::where('user_id', $user->id)->first();
+            $transactionDetailsQuery->where('dealer_id', $user->id);
+            $dealerAvailablePoints = (float) TransactionDetail::where('dealer_id', $user->id)->sum('points_dealer')
+                - abs((float) RedeemedHistory::where('user_id', $user->id)->sum('points_amount'));
+        } elseif ($role === 'Client') {
+            $customer = Client::where('user_id', $user->id)->first();
+            $transactionDetailsQuery->where('client_id', optional($customer)->id ?: 0);
+            $customerAvailablePoints = (float) TransactionDetail::where('client_id', optional($customer)->id ?: 0)->sum('points_client')
+                - abs((float) RedeemedHistory::where('user_id', $user->id)->sum('points_amount'));
         }
-        if(auth()->user()->role == "Client")
-        {
-            $customer = Client::where('user_id',auth()->user()->id)->first();
-            $transactions_details = TransactionDetail::where('client_id',$customer->id)->orderBy('id','desc')->get();
-            $total_sales = TransactionDetail::where('client_id',$customer->id)->sum('price');
+        $transactions_details = $transactionDetailsQuery->limit(50)->get();
 
-            $totalEarnedPointsCustomer = $customer->transactions->sum('points_client');
-            $redeemedPointsCustomer = abs(RedeemedHistory::where('user_id', auth()->user()->id)->sum('points_amount'));
-            $customerAvailablePoints = $totalEarnedPointsCustomer - $redeemedPointsCustomer;
-        }
-
-        $total_sales = TransactionDetail::get()->sum(function($transaction) {
-            return $transaction->price * $transaction->qty;
-        });
+        $total_sales = (float) TransactionDetail::selectRaw('COALESCE(SUM(price * qty), 0) as total')->value('total');
+        $totalProductsSold = (float) TransactionDetail::sum('qty');
+        $customerCount = Client::whereHas('transactions')->count();
+        $totalDealers = Dealer::count();
 
         // Get chart data based on view type
         if ($viewType === 'monthly') {
@@ -106,14 +85,16 @@ class HomeController extends Controller
         $availableMonths = $this->getAvailableMonths($selectedYear);
 
         $dealers = TransactionDetail::select(
-            'dealer_id',
-            DB::raw('SUM(points_dealer) as total_points'),
-            DB::raw('MAX(date) as latest_transaction')
-        )
-        ->with('dealer')
-        ->groupBy('dealer_id')
-        ->orderByDesc('total_points')
-        ->get();
+                'dealer_id',
+                DB::raw('SUM(points_dealer) as total_points'),
+                DB::raw('MAX(date) as latest_transaction')
+            )
+            ->with('dealer')
+            ->whereNotNull('dealer_id')
+            ->groupBy('dealer_id')
+            ->orderByDesc('total_points')
+            ->limit(10)
+            ->get();
 
         $top_customers = TransactionDetail::select(
             'client_id',
@@ -130,39 +111,36 @@ class HomeController extends Controller
         $salesTrend = $this->calculateSalesTrend();
         $qtyTrend = $this->calculateQtyTrend();
 
-        $threeDaysAgo = Carbon::now()->subDays(3)->toDateString();
-
-        $dealers_inactive = Dealer::whereDoesntHave('sales', function ($q) use ($threeDaysAgo) {
-            $q->where('created_at', '>=', $threeDaysAgo);
-        })
-        ->whereHas('sales')
-        ->get()
-        ->map(function($dealer) {
-            $lastTransaction = TransactionDetail::where('dealer_id', $dealer->user_id)
-                ->orderBy('created_at', 'desc')
-                ->first();
-            
-            $dealer->last_transaction_date = $lastTransaction ? $lastTransaction->created_at : null;
-            $dealer->days_since_transaction = $lastTransaction 
-                ? \Carbon\Carbon::parse($lastTransaction->created_at)->diffInDays(\Carbon\Carbon::now()) 
-                : null;
-            return $dealer;
-        })
-        ->sortByDesc('days_since_transaction');
+        $inactiveSince = Carbon::now()->subDays(3);
+        $latestDealerSales = TransactionDetail::select('dealer_id', DB::raw('MAX(created_at) as last_transaction_date'))
+            ->whereNotNull('dealer_id')
+            ->groupBy('dealer_id');
+        $dealers_inactive = Dealer::query()
+            ->joinSub($latestDealerSales, 'latest_dealer_sales', function ($join) {
+                $join->on('latest_dealer_sales.dealer_id', '=', 'dealers.user_id');
+            })
+            ->where('latest_dealer_sales.last_transaction_date', '<', $inactiveSince)
+            ->select('dealers.*', 'latest_dealer_sales.last_transaction_date')
+            ->orderBy('latest_dealer_sales.last_transaction_date')
+            ->limit(50)
+            ->get()
+            ->each(function ($inactiveDealer) {
+                $inactiveDealer->days_since_transaction = Carbon::parse($inactiveDealer->last_transaction_date)->diffInDays(now());
+            });
 
         $mapData = $this->getPhilippineMapData();
 
         return view('home',
             array(
-                'transactions' => $transactions,
                 'transactions_details' => $transactions_details,
                 'dealers' => $dealers,
                 'categories' =>  $categories,
                 'qty' =>  $qty,
-                'customers' =>  $customers,
                 'dealer' =>  $dealer,
                 'customer' =>  $customer,
-                'customers_less' =>  $customers_less,
+                'customerCount' => $customerCount,
+                'totalDealers' => $totalDealers,
+                'total_products_sold' => $totalProductsSold,
                 'total_sales' => $total_sales,
                 'top_customers' => $top_customers,
                 'sales_trend' => $salesTrend,

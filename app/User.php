@@ -36,6 +36,11 @@ class User extends Authenticatable implements Auditable
         return $this->hasOne(Client::class, 'user_id');
     }
 
+    public function centerChief()
+    {
+        return $this->hasOne(CenterChief::class);
+    }
+
     // public function ad()
     // {
     //     return $this->belongsTo(AreaDistributor::class, 'id', 'user_id');

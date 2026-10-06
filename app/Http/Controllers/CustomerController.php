@@ -11,6 +11,7 @@ use App\DmsArea;
 use App\DmsAreaGeographicCoverage;
 use RealRashid\SweetAlert\Facades\Alert;
 use GuzzleHttp\Client as GuzzleClient;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 class CustomerController extends Controller
@@ -24,38 +25,77 @@ class CustomerController extends Controller
         $centers = Center::get();
         $areas = $this->salesTerritoryOptions();
         $stoves = Stove::where('client_id',null)->get();
-        $perPage = (int) $request->input('per_page', 15);
-        $perPage = in_array($perPage, [10, 15, 25, 50]) ? $perPage : 15;
-
-        $customersQuery = Client::with(['transactions', 'serial'])->orderBy('name');
-
-        if ($request->filled('search')) {
-            $search = trim($request->input('search'));
-            $customersQuery->where(function ($query) use ($search) {
-                $query->where('client_reference', 'like', '%' . $search . '%')
-                    ->orWhere('name', 'like', '%' . $search . '%')
-                    ->orWhere('number', 'like', '%' . $search . '%')
-                    ->orWhere('email_address', 'like', '%' . $search . '%')
-                    ->orWhere('center', 'like', '%' . $search . '%')
-                    ->orWhere('spo', 'like', '%' . $search . '%');
-            });
-        }
-
-        if (in_array($request->input('status'), ['Active', 'Inactive'])) {
-            $customersQuery->where('status', $request->input('status'));
-        }
-
-        $customers = $customersQuery->paginate($perPage)->appends($request->except('page'));
         return view('customers',
             array(
                 'stoves' => $stoves,
-                'customers' => $customers,
                 'centers' => $centers,
                 'areas' => $areas,
                 'activeCustomers' => $activeCustomers,
                 'inactiveCustomers' => $inactiveCustomers
             )
         );
+    }
+
+    public function datatable(Request $request)
+    {
+        $pointTotals = DB::table('transaction_details')
+            ->select('client_id', DB::raw('COALESCE(SUM(points_client), 0) as total_points'))
+            ->whereNotNull('client_id')
+            ->groupBy('client_id');
+
+        $query = Client::query()
+            ->with('serial')
+            ->leftJoinSub($pointTotals, 'customer_point_totals', function ($join) {
+                $join->on('customer_point_totals.client_id', '=', 'clients.id');
+            })
+            ->select('clients.*', 'customer_point_totals.total_points');
+
+        if (in_array($request->input('status'), ['Active', 'Inactive'], true)) {
+            $query->where('clients.status', $request->input('status'));
+        }
+
+        return \Yajra\DataTables\Facades\DataTables::eloquent($query)
+            ->addColumn('reference', function ($customer) {
+                return '<span class="font-weight-bold">' . e($customer->client_reference ?: '—') . '</span>';
+            })
+            ->addColumn('customer_name', function ($customer) {
+                return '<a class="customer-name" href="' . route('client.view', $customer->id) . '">' . e(strtoupper($customer->name)) . '</a>';
+            })
+            ->addColumn('serial_number', function ($customer) {
+                return e(optional($customer->serial)->serial_number ?: '—');
+            })
+            ->editColumn('number', function ($customer) {
+                return e($customer->number ?: '—');
+            })
+            ->editColumn('email_address', function ($customer) {
+                return e(strtoupper($customer->email_address ?: '—'));
+            })
+            ->addColumn('address', function ($customer) {
+                $address = implode(', ', array_filter([
+                    $customer->street_address,
+                    $customer->location_barangay,
+                    $customer->location_city,
+                    $customer->location_province,
+                ]));
+
+                return e(strtoupper(trim($address . ' ' . $customer->postal_code) ?: '—'));
+            })
+            ->addColumn('points', function ($customer) {
+                return number_format((float) $customer->total_points, 0);
+            })
+            ->editColumn('center', function ($customer) {
+                return e(strtoupper($customer->center ?: '—'));
+            })
+            ->editColumn('spo', function ($customer) {
+                return e(strtoupper($customer->spo ?: '—'));
+            })
+            ->addColumn('status_badge', function ($customer) {
+                $class = $customer->status === 'Active' ? 'badge-success' : 'badge-danger';
+
+                return '<span class="badge ' . $class . ' px-2 py-1">' . e($customer->status) . '</span>';
+            })
+            ->rawColumns(['reference', 'customer_name', 'status_badge'])
+            ->toJson();
     }
     public function view(Request $request,$id)
     {

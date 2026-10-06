@@ -6,7 +6,9 @@ use App\DealerStockRequest;
 use App\Client;
 use Carbon\Carbon;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\Cache;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -31,26 +33,40 @@ class AppServiceProvider extends ServiceProvider
             $user = auth()->user();
             $pendingStockRequestsCount = 0;
             $customersLessForAlert = collect();
+            $customerAlertCount = 0;
 
             if ($user && strcasecmp(trim((string) $user->role), 'Admin') === 0) {
-                $pendingStockRequestsCount = DealerStockRequest::where('status', 'Pending')->count();
-                $inactiveSince = Carbon::now()->subDays(7)->toDateString();
-                $customersLessForAlert = Client::with('latestTransaction')
-                    ->where('status', 'Active')
-                    ->whereDoesntHave('latestTransaction', function ($query) use ($inactiveSince) {
-                        $query->where('date', '>=', $inactiveSince);
-                    })
-                    ->whereHas('latestTransaction')
-                    ->orderBy(
-                        \DB::raw('(SELECT date FROM transaction_details WHERE transaction_details.client_id = clients.id ORDER BY date DESC LIMIT 1)'),
-                        'desc'
-                    )
-                    ->get();
+                $headerData = Cache::remember('admin-header-alerts-v1', now()->addSeconds(45), function () {
+                    $inactiveSince = Carbon::now()->subDays(7)->toDateString();
+                    $latestPurchases = DB::table('transaction_details')
+                        ->select('client_id', DB::raw('MAX(date) as last_transaction_date'))
+                        ->whereNotNull('client_id')
+                        ->groupBy('client_id');
+                    $inactiveCustomers = Client::query()
+                        ->joinSub($latestPurchases, 'latest_purchases', function ($join) {
+                            $join->on('latest_purchases.client_id', '=', 'clients.id');
+                        })
+                        ->where('status', 'Active')
+                        ->where('latest_purchases.last_transaction_date', '<', $inactiveSince);
+
+                    return [
+                        'pendingStockRequestsCount' => DealerStockRequest::where('status', 'Pending')->count(),
+                        'customerAlertCount' => (clone $inactiveCustomers)->count(),
+                        'customersLessForAlert' => $inactiveCustomers->select([
+                            'clients.id', 'clients.name', 'clients.location_barangay', 'clients.location_city',
+                            'clients.spo', 'clients.center', 'latest_purchases.last_transaction_date',
+                        ])->orderByDesc('latest_purchases.last_transaction_date')->limit(50)->get(),
+                    ];
+                });
+                $pendingStockRequestsCount = $headerData['pendingStockRequestsCount'];
+                $customerAlertCount = $headerData['customerAlertCount'];
+                $customersLessForAlert = $headerData['customersLessForAlert'];
             }
 
             $view->with([
                 'pendingStockRequestsCount' => $pendingStockRequestsCount,
                 'customersLessForAlert' => $customersLessForAlert,
+                'customerAlertCount' => $customerAlertCount,
             ]);
         });
     }
