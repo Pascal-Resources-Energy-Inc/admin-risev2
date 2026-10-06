@@ -229,6 +229,16 @@
                                 @endforeach
                             </select>
                         </div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label" for="editDealerMfi">MFI <span class="text-danger">*</span></label>
+                            <select class="form-control select2" id="editDealerMfi" name="mfi" required data-placeholder="Select MFI">
+                                <option value="">Select MFI</option>
+                                @foreach($mfis ?? [] as $mfi)
+                                    <option value="{{ $mfi }}" {{ old('mfi', $dealer->mfi) === $mfi ? 'selected' : '' }}>{{ $mfi }}</option>
+                                @endforeach
+                            </select>
+                            <small class="text-muted">MFI options are managed in DMS.</small>
+                        </div>
                         <div class="fs-6 fw-bold col-md-12 mb-3"><i class="bi bi-geo-alt"></i> Location Details</div>
                         <div class="col-md-6 mb-2">
                             <label>Street Name, Building, House No.</label>

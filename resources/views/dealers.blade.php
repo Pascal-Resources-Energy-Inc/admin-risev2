@@ -347,10 +347,10 @@
 @php
     $dealerPageTitle = $dealerPageTitle ?? 'Dealers';
     $dealerSingularTitle = $dealerSingularTitle ?? 'Dealer';
-    $projectDealerCount = $dealers->filter(function ($dealer) {
+    $projectDealerCount = $projectDealerCount ?? $dealers->filter(function ($dealer) {
         return strcasecmp((string) ($dealer->dealer_type ?: 'Project'), 'Regular') !== 0;
     })->count();
-    $regularDealerCount = $dealers->filter(function ($dealer) {
+    $regularDealerCount = $regularDealerCount ?? $dealers->filter(function ($dealer) {
         return strcasecmp((string) $dealer->dealer_type, 'Regular') === 0;
     })->count();
 @endphp
@@ -432,7 +432,7 @@
                 <div class="card-body">
                     <div class="table-responsive">
                         @if(auth()->user()->role == 'Admin')
-                            <table class="table dealer-table transaction-table" style="width:100%">
+                            <table id="dealerTable" class="table dealer-table transaction-table" style="width:100%">
                                 <thead>
                                     <tr>
                                         <th>{{ $dealerSingularTitle }} Reference</th>
@@ -581,6 +581,35 @@
 <script>
     $(document).ready(function () {
         let activeDealerType = 'Project';
+
+        if ($('#dealerTable').length) {
+            const dealerTable = $('#dealerTable').DataTable({
+                processing: true,
+                serverSide: true,
+                pageLength: 25,
+                autoWidth: false,
+                ajax: { url: "{{ route('dealers.data') }}", data: function (data) { data.dealer_type = activeDealerType; } },
+                columns: [
+                    { data: 'reference', name: 'dealer_reference' }, { data: 'name', name: 'name' },
+                    { data: 'store_name', name: 'store_name' }, { data: 'store_type', name: 'store_type' },
+                    { data: 'number', name: 'number' }, { data: 'stock', orderable: false, searchable: false },
+                    { data: 'sold', orderable: false, searchable: false }, { data: 'address', name: 'address' },
+                    { data: 'area', name: 'area' }, { data: 'status_badge', name: 'status' }
+                ],
+                language: { search: 'Search dealers:', lengthMenu: 'Show _MENU_ records', emptyTable: 'No dealers found.', processing: 'Loading dealers…' }
+            });
+            $('.dealer-tab').on('click', function () {
+                const $tab = $(this), count = Number($tab.data('count') || 0);
+                activeDealerType = $tab.data('dealer-tab');
+                $('.dealer-tab').removeClass('active').attr('aria-selected', 'false');
+                $tab.addClass('active').attr('aria-selected', 'true');
+                $('#dealerTableTitle').text(activeDealerType + ' Dealers');
+                $('#dealerTableCount').text(count.toLocaleString() + ' record' + (count === 1 ? '' : 's') + ' listed');
+                dealerTable.search('').ajax.reload();
+            });
+            initSelect2();
+            return;
+        }
         const $dealerTable = $('.transaction-table');
         const dealerTableNode = $dealerTable.get(0);
 

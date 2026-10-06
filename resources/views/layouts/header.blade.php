@@ -1503,6 +1503,18 @@
                         </a>
                     </div>
                     <div class="nav-item">
+                        <a href="{{ route('center-chiefs.index') }}" class="nav-link @if(Route::currentRouteName() == 'center-chiefs.index') active @endif">
+                            <div class="nav-icon"><i class="bi bi-person-workspace"></i></div>
+                            <span class="nav-text">Center Chiefs</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
+                        <a href="{{ route('centers.index') }}" class="nav-link @if(Route::currentRouteName() == 'centers.index') active @endif">
+                            <div class="nav-icon"><i class="bi bi-buildings"></i></div>
+                            <span class="nav-text">Centers</span>
+                        </a>
+                    </div>
+                    <div class="nav-item">
                         <a href="{{ route('admin.stock.requests') }}" class="nav-link @if(Route::currentRouteName() == 'admin.stock.requests') active @endif position-relative">
                             <div class="nav-icon position-relative">
                                 <i class="bi bi-patch-check-fill"></i>
@@ -1897,8 +1909,8 @@
                 @if(auth()->user()->role === 'Admin')
                     <button type="button" class="followup-alert-btn" id="customerAlertToggle" aria-expanded="false" aria-controls="customerAlertDrawer" title="Customer follow-up alerts">
                         <i class="bi bi-person-exclamation fs-6" aria-hidden="true"></i>
-                        <span class="followup-alert-badge" @if($customersLessForAlert->isEmpty()) hidden @endif>{{ $customersLessForAlert->count() > 99 ? '99+' : $customersLessForAlert->count() }}</span>
-                        <span class="visually-hidden">{{ $customersLessForAlert->count() }} customer follow-up alerts</span>
+                        <span class="followup-alert-badge" @if(($customerAlertCount ?? 0) === 0) hidden @endif>{{ ($customerAlertCount ?? 0) > 99 ? '99+' : ($customerAlertCount ?? 0) }}</span>
+                        <span class="visually-hidden">{{ $customerAlertCount ?? 0 }} customer follow-up alerts</span>
                     </button>
                 @endif
                 @endif
@@ -2049,6 +2061,39 @@
         config(['sweetalert.neverLoadJS' => true]);
     @endphp
     @include('sweetalert::alert')
+
+    <style>
+        .dataTables_wrapper .dataTables_processing {
+            align-items: center;
+            background: #fff;
+            border: 1px solid #dbeafe;
+            border-radius: 10px;
+            box-shadow: 0 12px 28px rgba(15, 23, 42, .14);
+            color: #1d4ed8;
+            font-size: 13px;
+            font-weight: 700;
+            left: 50%;
+            margin-left: 0;
+            padding: 11px 16px;
+            transform: translateX(-50%);
+            width: auto;
+        }
+
+        .dataTables_wrapper .dataTables_processing::before {
+            animation: app-table-loader-spin .7s linear infinite;
+            border: 2px solid #bfdbfe;
+            border-radius: 50%;
+            border-top-color: #2563eb;
+            content: '';
+            display: inline-block;
+            height: 15px;
+            margin-right: 8px;
+            vertical-align: -2px;
+            width: 15px;
+        }
+
+        @keyframes app-table-loader-spin { to { transform: rotate(360deg); } }
+    </style>
 
     @yield('javascript')
 

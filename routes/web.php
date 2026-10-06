@@ -121,18 +121,21 @@ Route::patch('/ad-purchase-orders/{id}/status', 'AdPurchaseOrderController@updat
 Route::delete('/ad-purchase-orders/{id}', 'AdPurchaseOrderController@destroy')->name('ad-purchase-orders.destroy');
 
 Route::get('/dealers','DealerController@index')->name('dealers');
+Route::get('/dealers/data', 'DealerController@datatable')->name('dealers.data');
 Route::get('/mds','AreaDistributorController@megaDealers')->name('mds');
 Route::post('/new-dealer','DealerController@newDealer');
 Route::post('/check-dealer-duplicate', 'DealerController@checkDuplicate')->name('check.dealer.duplicate');
 Route::get('view-dealer/{id}', 'DealerController@view')->name('dealer.view');
-Route::post('/change-avatar-dealer/{id}', 'DealerController@changeAvatar')->name('dealer.view');
-Route::post('valid-id-dealer/{id}', 'DealerController@uploadValidId')->name('dealer.view');
+Route::post('/change-avatar-dealer/{id}', 'DealerController@changeAvatar')->name('changeAvatar.dealer');
+Route::get('valid-id-dealer/{id}', 'DealerController@showValidId')->where('id', '[0-9]+')->name('dealer.valid-id.show');
+Route::post('valid-id-dealer/{id}', 'DealerController@uploadValidId')->where('id', '[0-9]+')->name('dealer.valid-id.store');
 Route::post('/submit-contract-dealer/{id}','DealerController@contractSign')->name('sign');
 Route::get('/dashboard-dealer','DealerController@show')->name('Dealer');
 Route::post('/dealer/update/{id}', 'DealerController@update')->name('dealer.update');
 Route::get('/get-zipcode1', [DealerController::class, 'getZipCode1']);
 
 Route::get('/customers','CustomerController@index')->name('customers');
+Route::get('/customers/data', 'CustomerController@datatable')->name('customers.data');
 Route::get('/customers/territories-for-location', 'CustomerController@territoriesForLocation')->name('customers.territories-for-location');
 Route::get('/customer','CustomerController@view')->name('customer');
 Route::get('/dashboard-customer','CustomerController@show')->name('customer');
@@ -208,6 +211,17 @@ Route::get('/stock-requests', 'DealerStockRequestController@adminIndex')->name('
 Route::get('/stock-requests/{id}/attachments/{index}', 'DealerStockRequestController@viewAttachment')->name('admin.stock.requests.attachments.view');
 Route::post('/stock-requests/{id}/approve', 'DealerStockRequestController@approve')->name('admin.stock.requests.approve');
 Route::post('/stock-requests/{id}/reject', 'DealerStockRequestController@reject')->name('admin.stock.requests.reject');
+
+Route::get('/center-chiefs', 'CenterChiefController@index')->name('center-chiefs.index');
+Route::post('/center-chiefs', 'CenterChiefController@store')->name('center-chiefs.store');
+Route::put('/center-chiefs/{centerChief}', 'CenterChiefController@update')->name('center-chiefs.update');
+Route::delete('/center-chiefs/{centerChief}', 'CenterChiefController@destroy')->name('center-chiefs.destroy');
+
+Route::get('/centers', 'CenterController@index')->name('centers.index');
+Route::get('/centers/data', 'CenterController@datatable')->name('centers.data');
+Route::post('/centers', 'CenterController@store')->name('centers.store');
+Route::put('/centers/{center}', 'CenterController@update')->name('centers.update');
+Route::delete('/centers/{center}', 'CenterController@destroy')->name('centers.destroy');
 
 // Serial Number Management
 Route::get('/serial-numbers', 'SerialNumberController@index')->name('serial-numbers.index');

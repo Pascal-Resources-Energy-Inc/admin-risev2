@@ -3,16 +3,16 @@
     <div class="followup-drawer__heading"><span class="followup-drawer__icon"><i class="bi bi-person-exclamation" aria-hidden="true"></i></span><div><p>Follow-up queue</p><h2 id="customerAlertTitle">Customers needing attention</h2></div></div>
     <button class="followup-drawer__close" type="button" id="customerAlertClose" aria-label="Close follow-up list"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
   </div>
-  <div class="followup-drawer__meta"><span><strong>{{ $customersLessForAlert->count() }}</strong> active customer{{ $customersLessForAlert->count() === 1 ? '' : 's' }} without a purchase in 7+ days</span></div>
+  <div class="followup-drawer__meta"><span><strong>{{ $customerAlertCount ?? $customersLessForAlert->count() }}</strong> active customer{{ ($customerAlertCount ?? $customersLessForAlert->count()) === 1 ? '' : 's' }} without a purchase in 7+ days</span></div>
   <div class="followup-drawer__tools">
     <label for="alertSearchInput"><i class="bi bi-search" aria-hidden="true"></i><span class="visually-hidden">Search customers needing follow-up</span><input type="search" id="alertSearchInput" placeholder="Search customer, location, or center" autocomplete="off"><button type="button" id="alertSearchClear" aria-label="Clear search" hidden><i class="bi bi-x-lg" aria-hidden="true"></i></button></label>
-    <p id="alertVisibleSummary" aria-live="polite">{{ $customersLessForAlert->count() }} customer{{ $customersLessForAlert->count() === 1 ? '' : 's' }}</p>
+    <p id="alertVisibleSummary" aria-live="polite">{{ $customersLessForAlert->count() }} shown{{ ($customerAlertCount ?? $customersLessForAlert->count()) > $customersLessForAlert->count() ? ' of ' . $customerAlertCount : '' }}</p>
   </div>
   <div class="followup-drawer__list">
     @forelse($customersLessForAlert as $cus)
       <article class="followup-drawer__row">
         <div class="followup-drawer__row-copy"><strong>{{ strtoupper($cus->name) }}</strong><span>{{ $cus->location_barangay }}, {{ $cus->location_city }}</span><small>{{ $cus->spo ?: 'No SPO' }} · {{ $cus->center ?: 'No center assigned' }}</small></div>
-        <div class="followup-drawer__row-action"><time datetime="{{ date('Y-m-d', strtotime($cus->latestTransaction->date)) }}">{{ date('M d', strtotime($cus->latestTransaction->date)) }}</time><a href="{{ route('client.view', $cus->id) }}">View <i class="bi bi-arrow-right" aria-hidden="true"></i></a></div>
+        <div class="followup-drawer__row-action"><time datetime="{{ date('Y-m-d', strtotime($cus->last_transaction_date)) }}">{{ date('M d', strtotime($cus->last_transaction_date)) }}</time><a href="{{ route('client.view', $cus->id) }}">View <i class="bi bi-arrow-right" aria-hidden="true"></i></a></div>
       </article>
     @empty
       <div class="followup-drawer__empty"><i class="bi bi-check-circle-fill" aria-hidden="true"></i><strong>All caught up</strong><span>No active customers need follow-up today.</span></div>

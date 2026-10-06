@@ -30,7 +30,7 @@
   .dashboard-table { margin: 0; }
   .dashboard-table th { padding: 10px 12px; color: var(--dashboard-muted); font-size: 9px; font-weight: 900; letter-spacing: .05em; text-transform: uppercase; background: var(--dashboard-soft); border-color: var(--dashboard-line); }
   .dashboard-table td { padding: 10px 12px; color: #344054; font-size: 11px; border-color: #eef1f5; vertical-align: middle; }
-  .dashboard-list { display: grid; gap: 8px; max-height: 500px; overflow-y: auto; padding-right: 3px; }
+  .dashboard-list { display: grid; gap: 8px; max-height: 500px; overflow-x: hidden; overflow-y: auto; padding-right: 3px; }
   .dashboard-list-item { padding: 12px 14px; background: #fff; border: 1px solid #edf0f4; border-radius: 11px; transition: .18s ease; }
   .dashboard-list-item:hover { background: #fbfdff; border-color: #cfeaf1; transform: translateY(-1px); }
   .dashboard-avatar { width: 42px; height: 42px; flex: 0 0 auto; overflow: hidden; background: #eef2f6; border-radius: 50%; }
@@ -403,7 +403,7 @@
                         <i class="ti ti-map-pin"></i>
                     </div>
                     <div class="stats-number">
-                        {{ number_format($total_dealers ?? count($dealers)) }} 
+                        {{ number_format($total_dealers ?? $totalDealers) }} 
                     </div>
                     <div class="stats-label">Dealer</div>
                 </div>
@@ -415,7 +415,7 @@
                         <i class="ti ti-users"></i>
                     </div>
                     <div class="stats-number">
-                        {{$customers->count()}} 
+                        {{ $customerCount }} 
                     </div>
                     <div class="stats-label">Customers</div>
                 </div>
@@ -1095,7 +1095,7 @@
                 </small>
                 
                 <nav aria-label="Transaction pagination">
-                  <ul class="pagination pagination-sm mb-0">
+                  <ul id="transactionPagination" class="pagination pagination-sm mb-0">
                     <li class="page-item" id="prevPage">
                       <a class="page-link" href="javascript:void(0)" onclick="changePage('prev')">
                         <i class="fas fa-chevron-left"></i> Previous
@@ -2429,7 +2429,9 @@ let totalEntries = {{ $transactions_details->count() }};
 let totalPages = Math.ceil(totalEntries / entriesPerPage);
 
 function updateTableEntries() {
-    entriesPerPage = parseInt(document.getElementById('entriesPerPage').value);
+    const entriesSelector = document.getElementById('entriesPerPage');
+    if (!entriesSelector) return;
+    entriesPerPage = parseInt(entriesSelector.value);
     totalPages = Math.ceil(totalEntries / entriesPerPage);
     currentPage = 1;
     showPage(currentPage);
@@ -2472,7 +2474,8 @@ function goToPage(page) {
 }
 
 function updatePagination() {
-    const pageNumbers = document.querySelector('.pagination');
+    const pageNumbers = document.getElementById('transactionPagination');
+    if (!pageNumbers) return;
     const pageItems = pageNumbers.querySelectorAll('.page-item:not(#prevPage):not(#nextPage)');
     pageItems.forEach(item => item.remove());
     
@@ -2523,6 +2526,12 @@ function updatePagination() {
 }
 
 function updateEntriesInfo() {
+    if (!totalEntries) {
+        document.getElementById('currentStart').textContent = '0';
+        document.getElementById('currentEnd').textContent = '0';
+        document.getElementById('totalEntries').textContent = '0';
+        return;
+    }
     const startEntry = (currentPage - 1) * entriesPerPage + 1;
     const endEntry = Math.min(currentPage * entriesPerPage, totalEntries);
     

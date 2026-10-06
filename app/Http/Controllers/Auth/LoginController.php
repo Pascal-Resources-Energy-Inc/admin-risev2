@@ -66,6 +66,8 @@ class LoginController extends Controller
             return $this->errorResponse($request, 'Your account is inactive.');
         }
 
+        $request->session()->regenerate();
+
         return $this->successResponse($request, $user);
     }
 
