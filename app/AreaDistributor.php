@@ -27,6 +27,7 @@ class AreaDistributor extends Model implements Auditable
         'location_province',
         'location_city',
         'location_barangay',
+        'area',
         'zipcode',
         'business_name',
         'business_type',

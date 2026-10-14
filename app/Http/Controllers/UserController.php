@@ -348,13 +348,29 @@ class UserController extends Controller
     public function generatePartnerCode(Request $request)
     {
         $role = $request->role;
+
+        if ($role === 'Mega Dealer') {
+            $lastCode = AreaDistributor::where('store_code', 'like', 'PRMD%')
+                ->orderByRaw('CAST(SUBSTRING(store_code, 5) AS UNSIGNED) DESC')
+                ->value('store_code');
+            $lastNumber = 0;
+
+            if ($lastCode && preg_match('/^PRMD(\d{5,})$/', $lastCode, $matches)) {
+                $lastNumber = (int) $matches[1];
+            }
+
+            return response()->json([
+                'success' => true,
+                'code' => 'PRMD' . str_pad($lastNumber + 1, 5, '0', STR_PAD_LEFT),
+            ]);
+        }
+
         $year = date('Y');
 
         // Role Prefix Mapping
         $prefixMap = [
             'Provincial Distributor' => 'PD',
             'Area Distributor' => 'AD',
-            'Mega Dealer' => 'MD',
         ];
 
         if (!isset($prefixMap[$role])) {

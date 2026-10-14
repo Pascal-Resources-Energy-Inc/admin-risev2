@@ -8,6 +8,7 @@ use App\Center;
 use App\Dealer;
 use App\User;
 use App\Area;
+use App\DmsArea;
 use App\Item;
 use App\Product;
 use App\OrderDetail;
@@ -21,6 +22,7 @@ class AreaDistributorController extends Controller
     {
         $centers = Center::orderBy('name')->get();
         $areas = Area::orderBy('name')->get();
+        $territories = $this->salesTerritoryOptions();
 
         $baseQuery = AreaDistributor::whereHas('userAds', function ($query) {
             $query->where('role', 'Area Distributor');
@@ -100,7 +102,8 @@ class AreaDistributorController extends Controller
             'regions' => $regions,
             'projectTypes' => $projectTypes,
             'centers' => $centers,
-            'areas' => $areas
+            'areas' => $areas,
+            'territories' => $territories,
         ]);
     }
 
@@ -122,6 +125,10 @@ class AreaDistributorController extends Controller
      */
     public function store(Request $request)
     {
+        $role = $request->input('role', 'Area Distributor');
+        abort_unless(in_array($role, ['Provincial Distributor', 'Area Distributor', 'Mega Dealer'], true), 422);
+
+        return DB::transaction(function () use ($request, $role) {
         $imagePath = null;
 
         if ($request->hasFile('avatar')) {
@@ -136,7 +143,7 @@ class AreaDistributorController extends Controller
         $user = new User;
         $user->name = $request->name;
         $user->email = $request->email_address;
-        $user->role = 'Area Distributor';
+        $user->role = $role;
         $user->password = bcrypt('12345678');
 
         if ($imagePath) {
@@ -158,7 +165,11 @@ class AreaDistributorController extends Controller
         $areaDistributor->user_id = $user->id;
         $areaDistributor->ad_reference = $ad_reference;
         $areaDistributor->name = $request->name;
-        $areaDistributor->store_code = $request->store_code;
+        // Mega Dealer codes are assigned by the server so the sequence cannot
+        // be altered in the browser or accidentally reused.
+        $areaDistributor->store_code = $role === 'Mega Dealer'
+            ? $this->nextMegaDealerPartnerCode()
+            : $request->store_code;
         $areaDistributor->email_address = $request->email_address;
         $areaDistributor->contact_number = $request->contact_number;
         $areaDistributor->facebook = $request->facebook;
@@ -167,6 +178,7 @@ class AreaDistributorController extends Controller
         $areaDistributor->business_type = $request->business_type;
         $areaDistributor->latitude = $request->latitude;
         $areaDistributor->longitude = $request->longitude;
+        $areaDistributor->area = $request->area;
         $areaDistributor->status = "Active";
 
         if ($imagePath) {
@@ -175,7 +187,7 @@ class AreaDistributorController extends Controller
 
         $areaDistributor->save();
 
-        foreach ($request->area_name as $area) {
+        foreach ((array) $request->input('area_name', []) as $area) {
             AreaAd::create([
                 'ad_id' => $areaDistributor->id,
                 'area_name' => $area
@@ -183,7 +195,32 @@ class AreaDistributorController extends Controller
             ]);
         }
 
-        return redirect()->route('ads')->with('success', 'Successfully encoded');
+        return redirect()->route($role === 'Mega Dealer' ? 'mds' : 'ads')
+            ->with('success', 'Successfully encoded');
+        });
+    }
+
+    private function nextMegaDealerPartnerCode()
+    {
+        $lastCode = AreaDistributor::where('store_code', 'like', 'PRMD%')
+            ->orderByRaw('CAST(SUBSTRING(store_code, 5) AS UNSIGNED) DESC')
+            ->lockForUpdate()
+            ->value('store_code');
+
+        $lastNumber = 0;
+        if ($lastCode && preg_match('/^PRMD(\d{5,})$/', $lastCode, $matches)) {
+            $lastNumber = (int) $matches[1];
+        }
+
+        return 'PRMD' . str_pad($lastNumber + 1, 5, '0', STR_PAD_LEFT);
+    }
+
+    private function salesTerritoryOptions()
+    {
+        return DmsArea::with('areaAd.distributor')
+            ->whereNotNull('name')
+            ->orderBy('name')
+            ->get();
     }
 
     /**
@@ -306,6 +343,7 @@ class AreaDistributorController extends Controller
                 'location_province' => $request->location_province,
                 'location_city' => $request->location_city,
                 'location_barangay' => $request->location_barangay,
+                'area' => $request->area,
                 'zipcode' => $request->zipcode,
                 'business_name' => $request->business_name,
                 'business_type' => $request->business_type,
@@ -589,6 +627,7 @@ class AreaDistributorController extends Controller
     {
         $centers = Center::get();
         $areas = Area::get();
+        $territories = $this->salesTerritoryOptions();
 
         $activeAds = AreaDistributor::whereHas('userAds', function ($q) {
             $q->where('role', 'Mega Dealer')
@@ -606,12 +645,20 @@ class AreaDistributorController extends Controller
             })
             ->get();
 
+        $totalAds = $ads->count();
+        $totalAwardedAreas = $ads->sum(function ($ad) {
+            return $ad->areas->count();
+        });
+
         return view('mds.index', [
             'ads' => $ads,
+            'totalAds' => $totalAds,
             'activeAds' => $activeAds,
             'inactiveAds' => $inactiveAds,
+            'totalAwardedAreas' => $totalAwardedAreas,
             'centers' => $centers,
-            'areas' => $areas
+            'areas' => $areas,
+            'territories' => $territories,
         ]);
     }
 
