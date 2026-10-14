@@ -121,6 +121,7 @@ Route::patch('/ad-purchase-orders/{id}/status', 'AdPurchaseOrderController@updat
 Route::delete('/ad-purchase-orders/{id}', 'AdPurchaseOrderController@destroy')->name('ad-purchase-orders.destroy');
 
 Route::get('/dealers','DealerController@index')->name('dealers');
+Route::get('/dealers/centers-for-mfi', 'DealerController@centersForMfi')->name('dealers.centers-for-mfi');
 Route::get('/dealers/data', 'DealerController@datatable')->name('dealers.data');
 Route::get('/mds','AreaDistributorController@megaDealers')->name('mds');
 Route::post('/new-dealer','DealerController@newDealer');

@@ -191,21 +191,32 @@
                             <label>Store Type</label>
                             <input type="text" name="store_type" class="form-control" placeholder="Enter Store Type" value="{{ old('store_type', $dealer->store_type) }}" data-uppercase>
                         </div>
-                        <div class="col-md-6 mb-2" id="editDealerSpoWrap">
-                            <label>SPO</label>
-                            <input type="text" id="editDealerSpo" name="spo" class="form-control" placeholder="Enter SPO" value="{{ old('spo', $dealer->spo) }}" data-uppercase>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label" for="editDealerMfi">MFI <span class="text-danger">*</span></label>
+                            <select class="form-control select2" id="editDealerMfi" name="mfi" required data-placeholder="Select MFI">
+                                <option value="">Select MFI</option>
+                                @foreach($mfis ?? [] as $mfi)
+                                    <option value="{{ $mfi }}" {{ old('mfi', $dealer->mfi) === $mfi ? 'selected' : '' }}>{{ $mfi }}</option>
+                                @endforeach
+                            </select>
+                            <small class="text-muted">MFI options are managed in DMS.</small>
                         </div>
                         <div class="col-md-6 mb-2" id="editDealerCenterWrap">
                             <label class="form-label" for="center">Center</label>
-                            <select class="form-control select2" id="editDealerCenter" name="center" required>
-                                <option value="">Select Center</option>
+                            <select class="form-control select2" id="editDealerCenter" name="center" required data-placeholder="Select Center" disabled>
+                                <option value="">Select MFI first</option>
                                 @foreach($centers as $center)
-                                    <option value="{{ $center->name }}"
+                                    <option value="{{ $center->name }}" data-mfi="{{ strtolower(trim((string) $center->mfi)) }}"
                                         {{ old('center', $dealer->center) == $center->name ? 'selected' : '' }}>
                                         {{ $center->name }}
                                     </option>
                                 @endforeach
                             </select>
+                            <small class="form-text text-muted">Centers are loaded after you select an MFI.</small>
+                        </div>
+                        <div class="col-md-6 mb-2" id="editDealerSpoWrap">
+                            <label>SPO</label>
+                            <input type="text" id="editDealerSpo" name="spo" class="form-control" placeholder="Enter SPO" value="{{ old('spo', $dealer->spo) }}" data-uppercase>
                         </div>
                         <div class="col-md-6 mb-2">
                             <label class="form-label" for="center">Sales Territory</label>
@@ -228,16 +239,6 @@
                                     </option>
                                 @endforeach
                             </select>
-                        </div>
-                        <div class="col-md-6 mb-2">
-                            <label class="form-label" for="editDealerMfi">MFI <span class="text-danger">*</span></label>
-                            <select class="form-control select2" id="editDealerMfi" name="mfi" required data-placeholder="Select MFI">
-                                <option value="">Select MFI</option>
-                                @foreach($mfis ?? [] as $mfi)
-                                    <option value="{{ $mfi }}" {{ old('mfi', $dealer->mfi) === $mfi ? 'selected' : '' }}>{{ $mfi }}</option>
-                                @endforeach
-                            </select>
-                            <small class="text-muted">MFI options are managed in DMS.</small>
                         </div>
                         <div class="fs-6 fw-bold col-md-12 mb-3"><i class="bi bi-geo-alt"></i> Location Details</div>
                         <div class="col-md-6 mb-2">
@@ -333,6 +334,7 @@
         const $editDealerCenterWrap = $('#editDealerCenterWrap');
         const $editDealerSpo = $('#editDealerSpo');
         const $editDealerCenter = $('#editDealerCenter');
+        const $editDealerMfi = $('#editDealerMfi');
 
         function updateEditDealerTypeFields() {
             const selectedType = $editDealerType.filter(':checked').val() || $editDealerType.val() || 'Project';
@@ -341,7 +343,7 @@
             $editDealerSpoWrap.toggleClass('d-none', isRegular);
             $editDealerCenterWrap.toggleClass('d-none', isRegular);
             $editDealerSpo.prop('disabled', isRegular).prop('required', !isRegular);
-            $editDealerCenter.prop('disabled', isRegular).prop('required', !isRegular);
+            $editDealerCenter.prop('disabled', isRegular || !$editDealerMfi.val()).prop('required', !isRegular);
 
             if (isRegular) {
                 $editDealerSpo.val('');
@@ -858,4 +860,59 @@
 
         $('#map').css('opacity', '1');
     }
+</script>
+<script>
+(function initialiseEditDealerCenterFilter() {
+  function boot() {
+    var mfi = document.getElementById('editDealerMfi');
+    var center = document.getElementById('editDealerCenter');
+    if (!mfi || !center || center.dataset.mfiFilterReady === '1') return;
+
+    center.dataset.mfiFilterReady = '1';
+    var selectedCenter = center.value;
+    var allCenters = Array.prototype.slice.call(center.options).slice(1).map(function (option) {
+      return { name: option.value, mfi: String(option.dataset.mfi || '').trim().toUpperCase() };
+    });
+
+    function refreshCenters(keepSelection) {
+      var selectedMfi = String(mfi.value || '').trim().toUpperCase();
+      var $center = window.jQuery ? jQuery(center) : null;
+      var previousCenter = keepSelection ? selectedCenter : '';
+
+      if ($center && $center.hasClass('select2-hidden-accessible')) $center.select2('destroy');
+      center.replaceChildren();
+
+      if (!selectedMfi) {
+        center.disabled = true;
+        center.appendChild(new Option('Select MFI first', ''));
+      } else {
+        center.appendChild(new Option('Select Center', ''));
+        allCenters.filter(function (item) { return item.mfi === selectedMfi; }).forEach(function (item) {
+          center.appendChild(new Option(item.name, item.name, false, item.name === previousCenter));
+        });
+        center.disabled = false;
+      }
+
+      if ($center && jQuery.fn.select2) {
+        $center.select2({
+          width: '100%',
+          dropdownParent: $center.closest('.modal').length ? $center.closest('.modal') : jQuery(document.body),
+          placeholder: center.disabled ? 'Select MFI first' : 'Select Center',
+          allowClear: true
+        });
+        $center.trigger('change.select2');
+      }
+    }
+
+    if (window.jQuery) jQuery(mfi).off('.editDealerCenterFilter').on('change.editDealerCenterFilter', function () {
+      selectedCenter = '';
+      refreshCenters(false);
+    });
+    else mfi.addEventListener('change', function () { selectedCenter = ''; refreshCenters(false); });
+
+    refreshCenters(true);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+}());
 </script>

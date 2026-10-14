@@ -93,6 +93,18 @@
                           @endif
                         </div>
                       </div>
+                      <div class="col-md-6">
+                        <div class="mb-3">
+                          <label class="form-label" for="new_customer_mfi">MFI <span class="text-danger">*</span></label>
+                          <select class="form-control select2" id="new_customer_mfi" name="mfi" required data-placeholder="Select MFI">
+                            <option value="">Select MFI</option>
+                            @foreach($mfis ?? [] as $mfi)
+                              <option value="{{ $mfi }}" {{ old('mfi') === $mfi ? 'selected' : '' }}>{{ $mfi }}</option>
+                            @endforeach
+                          </select>
+                          <small class="form-text text-muted">MFI options are managed in DMS.</small>
+                        </div>
+                      </div>
                     </div>
                   </section>
                   <!-- Step 2 -->

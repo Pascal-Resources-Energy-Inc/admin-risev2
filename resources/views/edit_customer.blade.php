@@ -60,11 +60,21 @@
                             <input type="text" name="spo" class="form-control" value="{{ old('spo', $customer->spo) }}" data-uppercase>
                         </div>
                         <div class="col-md-3 mb-2">
+                            <label>MFI <span class="text-danger">*</span></label>
+                            <select class="form-control select2" id="edit_customer_mfi" name="mfi" required data-placeholder="Select MFI">
+                                <option value="">Select MFI</option>
+                                @foreach($mfis ?? [] as $mfi)
+                                    <option value="{{ $mfi }}" {{ old('mfi', $customer->mfi) === $mfi ? 'selected' : '' }}>{{ $mfi }}</option>
+                                @endforeach
+                            </select>
+                            <small class="form-text text-muted">MFI options are managed in DMS.</small>
+                        </div>
+                        <div class="col-md-3 mb-2">
                             <label>Center</label>
-                            <select class="form-control select2" name="center">
-                                <option value="">Select Center</option>
+                            <select class="form-control select2" id="edit_customer_center" name="center" data-placeholder="Select Center" disabled>
+                                <option value="">Select MFI first</option>
                                 @foreach($centers as $center)
-                                    <option value="{{ $center->name }}" {{ $customer->center === $center->name ? 'selected' : '' }}>
+                                    <option value="{{ $center->name }}" data-mfi="{{ strtolower(trim((string) $center->mfi)) }}" {{ $customer->center === $center->name ? 'selected' : '' }}>
                                         {{ $center->name }}
                                     </option>
                                 @endforeach
@@ -345,4 +355,57 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .on('keyup change', generateAddress);
 });
+</script>
+<script>
+(function initialiseEditCustomerCenterFilter() {
+  function boot() {
+    var mfi = document.getElementById('edit_customer_mfi');
+    var center = document.getElementById('edit_customer_center');
+    if (!mfi || !center || center.dataset.mfiFilterReady === '1') return;
+
+    center.dataset.mfiFilterReady = '1';
+    var selectedCenter = center.value;
+    var allCenters = Array.prototype.slice.call(center.options).slice(1).map(function (option) {
+      return { name: option.value, mfi: String(option.dataset.mfi || '').trim().toUpperCase() };
+    });
+
+    function refreshCenters(preserveCenter) {
+      var selectedMfi = String(mfi.value || '').trim().toUpperCase();
+      var $center = window.jQuery ? jQuery(center) : null;
+      var previousCenter = preserveCenter ? selectedCenter : '';
+      if ($center && $center.hasClass('select2-hidden-accessible')) $center.select2('destroy');
+
+      center.replaceChildren();
+      if (!selectedMfi) {
+        center.disabled = true;
+        center.appendChild(new Option('Select MFI first', ''));
+      } else {
+        center.disabled = false;
+        center.appendChild(new Option('Select Center', ''));
+        allCenters.filter(function (item) { return item.mfi === selectedMfi; }).forEach(function (item) {
+          center.appendChild(new Option(item.name, item.name, false, item.name === previousCenter));
+        });
+      }
+
+      if ($center && jQuery.fn.select2) {
+        $center.select2({
+          width: '100%',
+          dropdownParent: $center.closest('.modal').length ? $center.closest('.modal') : jQuery(document.body),
+          placeholder: center.disabled ? 'Select MFI first' : 'Select Center',
+          allowClear: true
+        });
+      }
+    }
+
+    if (window.jQuery) jQuery(mfi).off('.editCustomerCenterFilter').on('change.editCustomerCenterFilter', function () {
+      selectedCenter = '';
+      refreshCenters(false);
+    });
+    else mfi.addEventListener('change', function () { selectedCenter = ''; refreshCenters(false); });
+    refreshCenters(true);
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+}());
 </script>
