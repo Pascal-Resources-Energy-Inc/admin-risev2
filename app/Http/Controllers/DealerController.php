@@ -170,14 +170,20 @@ class DealerController extends Controller
 
         $user = new User;
         $user->name = $fullName;
-        $user->first_name = $request->first_name;
-        $user->middle_name = $request->middle_name;
-        $user->last_name = $request->last_name;
-        $user->mothers_name = $request->mothers_name;
+        foreach ([
+            'first_name' => $request->first_name,
+            'middle_name' => $request->middle_name,
+            'last_name' => $request->last_name,
+            'mothers_name' => $request->mothers_name,
+            'birthdate' => $request->birthdate,
+            'age' => $request->age,
+        ] as $column => $value) {
+            if (Schema::hasColumn('users', $column)) {
+                $user->{$column} = $value;
+            }
+        }
         $user->email = $request->email_address;
         $user->role = 'Dealer';
-        $user->birthdate = $request->birthdate;
-        $user->age = $request->age;
         $user->password = bcrypt('12345678');
         $user->save();
 
@@ -244,6 +250,14 @@ class DealerController extends Controller
 
         if (!$firstName || !$lastName || !$mothersName) {
             return false;
+        }
+
+        // Older installations may only store a full name. A first/last/mother
+        // comparison is valid only when all three dedicated user fields exist.
+        foreach (['first_name', 'last_name', 'mothers_name'] as $column) {
+            if (!Schema::hasColumn('users', $column)) {
+                return false;
+            }
         }
 
         return User::where('role', 'Dealer')
