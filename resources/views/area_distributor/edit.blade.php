@@ -180,6 +180,15 @@
                                         <label class="form-label">Zip Code&nbsp;<span class="text-danger">*</span></label>
                                         <input type="text" class="form-control" id="location_zipcode_{{ $ad->id }}" name="zipcode" value="{{ old('zipcode', $ad->zipcode ?? '') }}" readonly required>
                                     </div>
+                                    <div class="col-md-6 mb-2">
+                                        <label class="form-label" for="area_{{ $ad->id }}">Sales Territory <span class="text-danger">*</span></label>
+                                        <select class="form-select select2 select2-area" id="area_{{ $ad->id }}" name="area" required data-placeholder="Select Area">
+                                            <option value="">Select Area</option>
+                                            @foreach($territories ?? $areas ?? collect() as $territory)
+                                                <option value="{{ $territory->name }}" data-user="{{ $territory->areaAd->distributor->name ?? 'No User' }}" {{ old('area', $ad->area ?? '') === $territory->name ? 'selected' : '' }}>{{ $territory->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -261,6 +270,7 @@
                                 <option value="Inactive" @if($ad->status == 'Inactive') selected @endif>Inactive</option>
                             </select>
                         </div>
+                        @if(Route::currentRouteName() !== 'mds')
                         <input type="hidden" name="sync_project_areas" value="1">
                         <div id="dynamic-area-wrapper-{{ $ad->id }}" class="col-md-12 business-fields ad-awarded-area-wrapper">
                             <div class="ad-awarded-area-card">
@@ -336,6 +346,7 @@
                                 @endif
                             </div>
                         </div>
+                        @endif
 
                         {{-- <template id="project-row-template">
                             <div class="row align-items-end project-row mb-3 border rounded-3 p-3 bg-white">

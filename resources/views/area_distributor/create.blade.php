@@ -15,17 +15,17 @@
                     <div class="row">
                         <div class="col-md-4">
                             <label class="form-label">Role Type&nbsp;<span class="text-danger">*</span></label>
-                            <select id="roleFilter" class="form-control select2" required>
+                            <select id="roleFilter" name="role" class="form-control select2" required>
                                 <option value="">Select Role</option>
                                 <option value="Admin">Admin</option>
                                 <option value="Provincial Distributor">Provincial Distributor</option>
                                 <option value="Area Distributor">Area Distributor</option>
-                                <option value="Mega Dealer">Mega Dealer</option>
+                                <option value="Mega Dealer" {{ Route::currentRouteName() === 'mds' ? 'selected' : '' }}>Mega Dealer</option>
                             </select>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Partner Code&nbsp;<span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="store_code" name="store_code" placeholder="Enter Store Code" required>
+                            <input type="text" class="form-control" id="store_code" name="store_code" placeholder="Auto-generated after selecting a role" required readonly>
                         </div>
                         <!-- Avatar Upload -->
                         <div class="col-md-4 text-center">
@@ -101,6 +101,16 @@
                             <small class="form-text text-muted">Select barangay from the list</small>
                         </div>
                         <div class="col-md-6 mb-2">
+                            <label class="form-label" for="sales_territory">Sales Territory <span class="text-danger">*</span></label>
+                            <select class="form-control select2 select2-area" id="sales_territory" name="area" required data-placeholder="Select Area">
+                                <option value="">Select Area</option>
+                                @foreach($territories ?? $areas ?? collect() as $territory)
+                                    <option value="{{ $territory->name }}" data-user="{{ $territory->areaAd->distributor->name ?? 'No User' }}">{{ $territory->name }}</option>
+                                @endforeach
+                            </select>
+                            <small class="form-text text-muted">Select the sales territory responsible for this Mega Dealer.</small>
+                        </div>
+                        <div class="col-md-6 mb-2">
                             <label class="form-label" for="business_name">Business Name<span class="text-danger">*</span></label>
                             <input type="text" class="form-control required" id="business_name" name="business_name" placeholder="Enter Business Name" required/>
                         </div>
@@ -117,6 +127,7 @@
                                 @endforeach
                             </select>
                         </div> --}}
+                        @if(Route::currentRouteName() !== 'mds')
                         <div class="col-md-6 mb-2">
                             <label class="form-label">Area <span class="text-danger">*</span></label>
                             <select class="form-control area_name" 
@@ -129,6 +140,7 @@
                                 @endforeach
                             </select>
                         </div>
+                        @endif
                         <div class="col-md-12">
                             <div class="form-group">
                             <label>Pin Exact Location</span></label>
@@ -724,5 +736,50 @@
         }, 300); // delay is important
     });
 
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var roleField = document.getElementById('roleFilter');
+    var codeField = document.getElementById('store_code');
+    var form = document.querySelector('#new_area_distributor form');
+    if (!roleField || !codeField || !form) return;
+
+    function refreshPartnerCode() {
+        if (roleField.value !== 'Mega Dealer') {
+            codeField.readOnly = false;
+            if (codeField.dataset.generated === 'true') codeField.value = '';
+            codeField.dataset.generated = '';
+            codeField.placeholder = 'Enter Partner Code';
+            return;
+        }
+
+        codeField.readOnly = true;
+        codeField.required = true;
+        codeField.value = 'Generating…';
+        codeField.placeholder = 'Auto-generated Mega Dealer code';
+
+        fetch('{{ route('generate.partner.code') }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': form.querySelector('input[name="_token"]').value
+            },
+            body: JSON.stringify({role: 'Mega Dealer'})
+        }).then(function (response) {
+            return response.json();
+        }).then(function (data) {
+            codeField.value = data.success ? data.code : '';
+            codeField.dataset.generated = data.success ? 'true' : '';
+        }).catch(function () {
+            codeField.value = '';
+            codeField.dataset.generated = '';
+            codeField.placeholder = 'Code will be generated when saved';
+        });
+    }
+
+    roleField.addEventListener('change', refreshPartnerCode);
+    refreshPartnerCode();
 });
 </script>
