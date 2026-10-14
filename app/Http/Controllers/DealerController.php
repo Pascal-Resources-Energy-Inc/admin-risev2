@@ -115,6 +115,19 @@ class DealerController extends Controller
             'dealerRouteName' => 'mds',
         ]);
     }
+
+    public function centersForMfi(Request $request)
+    {
+        abort_unless(auth()->check(), 403);
+        $mfi = trim((string) $request->query('mfi'));
+
+        return response()->json([
+            'centers' => $mfi === '' ? [] : Center::whereRaw('LOWER(TRIM(mfi)) = ?', [mb_strtolower($mfi)])
+                ->orderBy('name')
+                ->get(['id', 'name'])
+                ->values(),
+        ]);
+    }
     
     public function show(Request $request)
     {

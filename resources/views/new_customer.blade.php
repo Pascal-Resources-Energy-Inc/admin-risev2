@@ -132,13 +132,24 @@
               </div>
             </div>
             <div class="col-md-6 mb-2">
-              <label class="form-label" for="center">Center&nbsp;<span class="text-danger">*</span></label>
-              <select class="form-control select2" id="center" name="center" required data-placeholder="Select Center">
-                <option value="">Select Center</option>
-                @foreach($centers ?? [] as $center)
-                  <option value="{{ $center->name }}">{{ $center->name }}</option>
+              <label class="form-label" for="customer_mfi">MFI&nbsp;<span class="text-danger">*</span></label>
+              <select class="form-control select2" id="customer_mfi" name="mfi" required data-placeholder="Select MFI">
+                <option value="">Select MFI</option>
+                @foreach($mfis ?? [] as $mfi)
+                  <option value="{{ $mfi }}" {{ old('mfi') === $mfi ? 'selected' : '' }}>{{ $mfi }}</option>
                 @endforeach
               </select>
+              <small class="form-text text-muted">MFI options are managed in DMS.</small>
+            </div>
+            <div class="col-md-6 mb-2">
+              <label class="form-label" for="center">Center&nbsp;<span class="text-danger">*</span></label>
+              <select class="form-control select2" id="customer_center" name="center" required data-placeholder="Select Center" disabled>
+                <option value="">Select MFI first</option>
+                @foreach($centers ?? [] as $center)
+                  <option value="{{ $center->name }}" data-mfi="{{ strtolower(trim((string) $center->mfi)) }}">{{ $center->name }}</option>
+                @endforeach
+              </select>
+              <small class="form-text text-muted">Select an MFI to load its centers.</small>
             </div>
             <div class="col-md-6 mb-2">
               <label class="form-label" for="area">Sales Territory&nbsp;<span class="text-danger">*</span></label>
@@ -460,6 +471,54 @@ $(document).ready(function() {
         .on('keyup change', generateFullAddress);
 
 });
+</script>
+<script>
+(function initialiseNewCustomerCenterFilter() {
+  function boot() {
+    var mfi = document.getElementById('customer_mfi');
+    var center = document.getElementById('customer_center');
+    if (!mfi || !center || center.dataset.mfiFilterReady === '1') return;
+
+    center.dataset.mfiFilterReady = '1';
+    var allCenters = Array.prototype.slice.call(center.options).slice(1).map(function (option) {
+      return { name: option.value, mfi: String(option.dataset.mfi || '').trim().toUpperCase() };
+    });
+
+    function refreshCenters() {
+      var selectedMfi = String(mfi.value || '').trim().toUpperCase();
+      var $center = window.jQuery ? jQuery(center) : null;
+      if ($center && $center.hasClass('select2-hidden-accessible')) $center.select2('destroy');
+
+      center.replaceChildren();
+      if (!selectedMfi) {
+        center.disabled = true;
+        center.appendChild(new Option('Select MFI first', ''));
+      } else {
+        center.disabled = false;
+        center.appendChild(new Option('Select Center', ''));
+        allCenters.filter(function (item) { return item.mfi === selectedMfi; }).forEach(function (item) {
+          center.appendChild(new Option(item.name, item.name));
+        });
+      }
+
+      if ($center && jQuery.fn.select2) {
+        $center.select2({
+          width: '100%',
+          dropdownParent: $center.closest('.modal').length ? $center.closest('.modal') : jQuery(document.body),
+          placeholder: center.disabled ? 'Select MFI first' : 'Select Center',
+          allowClear: true
+        });
+      }
+    }
+
+    if (window.jQuery) jQuery(mfi).off('.newCustomerCenterFilter').on('change.newCustomerCenterFilter', refreshCenters);
+    else mfi.addEventListener('change', refreshCenters);
+    refreshCenters();
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+}());
 </script>
 
 <script>

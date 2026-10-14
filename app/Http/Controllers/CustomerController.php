@@ -24,12 +24,14 @@ class CustomerController extends Controller
 
         $centers = Center::get();
         $areas = $this->salesTerritoryOptions();
+        $mfis = $this->mfiOptions();
         $stoves = Stove::where('client_id',null)->get();
         return view('customers',
             array(
                 'stoves' => $stoves,
                 'centers' => $centers,
                 'areas' => $areas,
+                'mfis' => $mfis,
                 'activeCustomers' => $activeCustomers,
                 'inactiveCustomers' => $inactiveCustomers
             )
@@ -103,6 +105,7 @@ class CustomerController extends Controller
         $customer = Client::with(['user', 'serial'])->findOrfail($id);
         $centers = Center::get();
         $areas = $this->salesTerritoryOptions();
+        $mfis = $this->mfiOptions();
         $stoves = Stove::whereNull('client_id')
             ->orWhere('client_id', $customer->id)
             ->get();
@@ -113,6 +116,7 @@ class CustomerController extends Controller
                 'transactions' => $transactions,
                 'centers' => $centers,
                 'areas' => $areas,
+                'mfis' => $mfis,
                 'stoves' => $stoves,
                 
             )
@@ -167,10 +171,12 @@ class CustomerController extends Controller
     {
         $stoves = Stove::where('client_id',null)->get();
         $areas = $this->salesTerritoryOptions();
+        $mfis = $this->mfiOptions();
         return view('new-customer',
             array(
                 'stoves' => $stoves,
-                'areas' => $areas
+                'areas' => $areas,
+                'mfis' => $mfis
             )
         );
     }
@@ -179,6 +185,7 @@ class CustomerController extends Controller
     {
         $request->validate([
             'area' => 'required|string|max:255',
+            'mfi' => 'required|string|max:100|exists:dms.mfis,name',
         ]);
 
         $fullName = trim(collect([
@@ -227,6 +234,7 @@ class CustomerController extends Controller
         $customer->street_address = $request->street_address;
         $customer->spo = $request->spo;
         $customer->center = $request->center;
+        $customer->mfi = $request->mfi;
         $customer->area = $request->area;
         $customer->status = $request->status;
         if (Schema::hasColumn('clients', 'latitude')) {
@@ -250,6 +258,7 @@ class CustomerController extends Controller
     {
         $request->validate([
             'area' => 'required|string|max:255',
+            'mfi' => 'required|string|max:100|exists:dms.mfis,name',
         ]);
 
         $customer = Client::findOrFail($id);
@@ -301,6 +310,7 @@ class CustomerController extends Controller
         $customer->street_address = $request->street_address;
         $customer->spo = $request->spo;
         $customer->center = $request->center;
+        $customer->mfi = $request->mfi;
         $customer->area = $request->area;
         $customer->status = $request->status;
         if (Schema::hasColumn('clients', 'latitude')) {
@@ -529,6 +539,18 @@ class CustomerController extends Controller
             ->whereNotNull('name')
             ->orderBy('name')
             ->get();
+    }
+
+    private function mfiOptions()
+    {
+        if (!Schema::connection('dms')->hasTable('mfis')) {
+            return collect();
+        }
+
+        return DB::connection('dms')->table('mfis')
+            ->whereNotNull('name')
+            ->orderBy('name')
+            ->pluck('name');
     }
 
     private function sameLocation($first, $second)

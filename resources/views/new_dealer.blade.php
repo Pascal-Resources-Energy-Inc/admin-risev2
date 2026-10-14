@@ -223,19 +223,31 @@
                 <option value="Grocery">Grocery</option>
               </select>
             </div>
+             <div class="col-md-6 mb-2">
+              <label class="form-label" for="mfi">MFI <span class="text-danger">*</span></label>
+              <select class="form-control select2" id="mfi" name="mfi" required data-placeholder="Select MFI">
+                <option value="">Select MFI</option>
+                @foreach($mfis ?? [] as $mfi)
+                  <option value="{{ $mfi }}" {{ old('mfi') === $mfi ? 'selected' : '' }}>{{ $mfi }}</option>
+                @endforeach
+              </select>
+              <small class="text-muted">MFI options are managed in DMS.</small>
+            </div>
+            <div class="col-md-6 mb-2" id="dealerCenterWrap">
+              <label class="form-label" for="center">Center&nbsp;<span class="text-danger">*</span></label>
+              <select class="form-control select2" id="center" name="center" required data-placeholder="Select Center" disabled>
+                <option value="">Select MFI first</option>
+                @foreach($centers ?? [] as $center)
+                    <option value="{{ $center->name }}" data-mfi="{{ strtolower(trim((string) $center->mfi)) }}" {{ old('center') === $center->name ? 'selected' : '' }}>{{ $center->name }}</option>
+                @endforeach
+              </select>
+              <small class="form-text text-muted">Centers are loaded after you select an MFI.</small>
+            </div>
             <div class="col-md-6 mb-2" id="dealerSpoWrap">
               <label class="form-label" for="spo">SPO&nbsp;<span class="text-danger">*</span></label>
               <input type="text" class="form-control required" id="spo" name="spo" value="{{ old('spo') }}" placeholder="Enter SPO" data-uppercase required/>
             </div>
-            <div class="col-md-6 mb-2" id="dealerCenterWrap">
-              <label class="form-label" for="center">Center&nbsp;<span class="text-danger">*</span></label>
-              <select class="form-control select2" id="center" name="center" required data-placeholder="Select Center">
-                <option value="">Select Center</option>
-                @foreach($centers ?? [] as $center)
-                    <option value="{{ $center->name }}" {{ old('center') === $center->name ? 'selected' : '' }}>{{ $center->name }}</option>
-                @endforeach
-              </select>
-            </div>
+
             <div class="col-md-6 mb-2">
               <label class="form-label" for="center">Sales Territory&nbsp;<span class="text-danger">*</span></label>
               {{-- <select class="form-control select2" id="area" name="area" required data-placeholder="Select Area">
@@ -255,16 +267,7 @@
                 @endforeach
               </select>
             </div>
-            <div class="col-md-6 mb-2">
-              <label class="form-label" for="mfi">MFI <span class="text-danger">*</span></label>
-              <select class="form-control select2" id="mfi" name="mfi" required data-placeholder="Select MFI">
-                <option value="">Select MFI</option>
-                @foreach($mfis ?? [] as $mfi)
-                  <option value="{{ $mfi }}" {{ old('mfi') === $mfi ? 'selected' : '' }}>{{ $mfi }}</option>
-                @endforeach
-              </select>
-              <small class="text-muted">MFI options are managed in DMS.</small>
-            </div>
+
             <div class="fs-6 fw-bold col-md-12 mb-3"><i class="bi bi-geo-alt"></i> Location Details</div>
             <div class="col-md-6 mb-2">
               <label>Street Name, Building, House No. <span class="text-danger">*</span></label>
@@ -388,6 +391,7 @@
     const $dealerCenterWrap = $('#dealerCenterWrap');
     const $spo = $('#new_dealer #spo');
     const $center = $('#new_dealer #center');
+    const $mfi = $('#new_dealer #mfi');
     const $firstName = $('#new_dealer #first_name');
     const $lastName = $('#new_dealer #last_name');
     const $mothersName = $('#new_dealer #mothers_name');
@@ -405,7 +409,7 @@
       $dealerSpoWrap.toggleClass('d-none', isRegular);
       $dealerCenterWrap.toggleClass('d-none', isRegular);
       $spo.prop('disabled', isRegular).prop('required', !isRegular);
-      $center.prop('disabled', isRegular).prop('required', !isRegular);
+      $center.prop('disabled', isRegular || !$mfi.val()).prop('required', !isRegular);
 
       if (isRegular) {
         $spo.val('');
@@ -842,4 +846,59 @@
 
     $('#map').css('opacity', '1');
   }
+</script>
+<script>
+(function initialiseDealerCenterFilter() {
+  function boot() {
+    var mfi = document.getElementById('mfi');
+    var center = document.getElementById('center');
+    if (!mfi || !center || center.dataset.mfiFilterReady === '1') return;
+
+    center.dataset.mfiFilterReady = '1';
+    var selectedCenter = center.value;
+    var allCenters = Array.prototype.slice.call(center.options).slice(1).map(function (option) {
+      return { name: option.value, mfi: String(option.dataset.mfi || '').trim().toUpperCase() };
+    });
+
+    function refreshCenters(keepSelection) {
+      var selectedMfi = String(mfi.value || '').trim().toUpperCase();
+      var $center = window.jQuery ? jQuery(center) : null;
+      var previousCenter = keepSelection ? selectedCenter : '';
+
+      if ($center && $center.hasClass('select2-hidden-accessible')) $center.select2('destroy');
+      center.replaceChildren();
+
+      if (!selectedMfi) {
+        center.disabled = true;
+        center.appendChild(new Option('Select MFI first', ''));
+      } else {
+        center.appendChild(new Option('Select Center', ''));
+        allCenters.filter(function (item) { return item.mfi === selectedMfi; }).forEach(function (item) {
+          center.appendChild(new Option(item.name, item.name, false, item.name === previousCenter));
+        });
+        center.disabled = false;
+      }
+
+      if ($center && jQuery.fn.select2) {
+        $center.select2({
+          width: '100%',
+          dropdownParent: $center.closest('.modal').length ? $center.closest('.modal') : jQuery(document.body),
+          placeholder: center.disabled ? 'Select MFI first' : 'Select Center',
+          allowClear: true
+        });
+        $center.trigger('change.select2');
+      }
+    }
+
+    if (window.jQuery) jQuery(mfi).off('.dealerCenterFilter').on('change.dealerCenterFilter', function () {
+      selectedCenter = '';
+      refreshCenters(false);
+    });
+    else mfi.addEventListener('change', function () { selectedCenter = ''; refreshCenters(false); });
+
+    refreshCenters(true);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+}());
 </script>
