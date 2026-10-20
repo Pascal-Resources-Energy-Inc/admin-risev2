@@ -210,9 +210,7 @@ Route::get('/reports/voucher-history/export', 'ReportController@exportVoucherHis
 
 Route::get('/stock-requests', 'DealerStockRequestController@adminIndex')->name('admin.stock.requests');
 Route::get('/stock-requests/{id}/attachments/{index}', 'DealerStockRequestController@viewAttachment')->name('admin.stock.requests.attachments.view');
-Route::post('/stock-requests/{id}/approve', 'DealerStockRequestController@approve')
-    ->where('id', '[0-9]+')
-    ->name('admin.stock.requests.approve');
+Route::post('/stock-requests/{id}/approve', 'DealerStockRequestController@approve')->name('admin.stock.requests.approve');
 Route::post('/stock-requests/{id}/reject', 'DealerStockRequestController@reject')->name('admin.stock.requests.reject');
 
 Route::get('/center-chiefs', 'CenterChiefController@index')->name('center-chiefs.index');
