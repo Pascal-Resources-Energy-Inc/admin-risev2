@@ -692,10 +692,10 @@ class UserController extends Controller
 
                     $query->where(function ($q) use ($search) {
 
-                        $q->whereRaw(
-                            "CONCAT(users.first_name, ' ', users.last_name) LIKE ?",
-                            ["%{$search}%"]
-                        )
+                        // This installation stores the display name in
+                        // users.name; first_name and last_name are not
+                        // available in every database schema.
+                        $q->where('users.name', 'LIKE', "%{$search}%")
                         ->orWhere('users.email', 'LIKE', "%{$search}%")
                         ->orWhere('users.role', 'LIKE', "%{$search}%")
                         ->orWhere('users.address', 'LIKE', "%{$search}%");
