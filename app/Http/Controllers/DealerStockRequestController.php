@@ -82,18 +82,10 @@ class DealerStockRequestController extends Controller
         ]);
     }
 
-    public function approve(Request $request, $id = null)
+    public function approve(Request $request, $id)
     {
         $admin = $this->authenticatedAdmin();
-        if ($id !== null) {
-            $request->merge(['stock_request_id' => $id]);
-        }
-
-        $request->validate([
-            'stock_request_id' => 'required|integer|exists:dealer_stock_requests,id',
-            'quantity' => 'required|integer|min:1|max:100000',
-        ]);
-        $id = (int) $request->stock_request_id;
+        $request->validate(['quantity' => 'required|integer|min:1|max:100000']);
         $approvedQuantity = (int) $request->quantity;
 
         $error = DB::transaction(function () use ($id, $admin, $approvedQuantity) {
