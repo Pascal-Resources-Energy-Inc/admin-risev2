@@ -2,10 +2,11 @@
 
 @section('content')
 @php
-    $pendingCount = $requests->where('status', 'Pending')->count();
-    $approvedCount = $requests->where('status', 'Approved')->count();
-    $rejectedCount = $requests->where('status', 'Rejected')->count();
-    $cancelledCount = $requests->where('status', 'Cancelled')->count();
+    $totalCount = (int) ($counts->total_count ?? 0);
+    $pendingCount = (int) ($counts->pending_count ?? 0);
+    $approvedCount = (int) ($counts->approved_count ?? 0);
+    $rejectedCount = (int) ($counts->rejected_count ?? 0);
+    $cancelledCount = (int) ($counts->cancelled_count ?? 0);
 @endphp
 
 <div class="stock-approval-page">
@@ -41,54 +42,28 @@
         <div class="request-tools">
             <label class="search-box"><i class="bi bi-search"></i><input id="requestSearch" type="search" placeholder="Search dealer or product" autocomplete="off" aria-label="Search requests"></label>
             <div class="filter-tabs" role="tablist" aria-label="Filter requests">
-                <button type="button" class="filter-tab active" data-filter="all" role="tab" aria-selected="true">All <span>{{ $requests->count() }}</span></button>
+                <button type="button" class="filter-tab active" data-filter="" role="tab" aria-selected="true">All <span>{{ $totalCount }}</span></button>
                 <button type="button" class="filter-tab" data-filter="pending" role="tab" aria-selected="false">Pending <span>{{ $pendingCount }}</span></button>
                 <button type="button" class="filter-tab" data-filter="approved" role="tab" aria-selected="false">Approved <span>{{ $approvedCount }}</span></button>
                 <button type="button" class="filter-tab" data-filter="rejected" role="tab" aria-selected="false">Rejected <span>{{ $rejectedCount }}</span></button>
                 <button type="button" class="filter-tab" data-filter="cancelled" role="tab" aria-selected="false">Cancelled <span>{{ $cancelledCount }}</span></button>
             </div>
         </div>
-        <p class="request-results" id="requestResults" aria-live="polite">Showing {{ $requests->count() }} request{{ $requests->count() === 1 ? '' : 's' }}</p>
-
-        <div class="request-list" id="requestList">
-            @forelse($requests as $request)
-                @php
-                    $dealer = $request->dealer;
-                    $dealerProfile = optional($dealer)->dealer;
-                    $dealerName = optional($dealer)->name ?? 'Dealer #' . $request->dealer_id;
-                    $storeName = optional($dealerProfile)->store_name ?: 'Dealer account';
-                    $dealerArea = trim((string) optional($dealerProfile)->area) ?: 'Area not assigned';
-                    $requestAttachments = $request->attachment_links;
-                    $productName = optional($products->get($request->product_id))->product_name ?? 'Product #' . $request->product_id;
-                    $status = strtolower($request->status);
-                @endphp
-                <article class="request-item" data-status="{{ $status }}" data-search="{{ strtolower($dealerName . ' ' . $storeName . ' ' . $dealerArea . ' ' . $productName) }}">
-                    <div class="dealer-avatar" aria-hidden="true">{{ strtoupper(substr($dealerName, 0, 1)) }}</div>
-                    <div class="request-details">
-                        <div class="request-primary"><div><h3>{{ $dealerName }}</h3><p class="store-name"><i class="bi bi-shop"></i>{{ $storeName }}</p><p class="dealer-area"><i class="bi bi-geo-alt"></i><span>Area:</span>{{ $dealerArea }}</p></div><span class="status-pill {{ $status }}"><i class="bi {{ $status === 'pending' ? 'bi-clock' : ($status === 'approved' ? 'bi-check-lg' : 'bi-x-lg') }}"></i>{{ $request->status }}</span></div>
-                        <div class="request-meta"><span><i class="bi bi-box-seam"></i>{{ $productName }}</span><span><i class="bi bi-layers"></i><b>{{ number_format($request->quantity) }}</b> units requested</span><span><i class="bi bi-calendar3"></i>{{ optional($request->created_at)->format('M d, Y · g:i A') }}</span></div>
-                        @if($requestAttachments->isNotEmpty())
-                            <div class="request-attachments" aria-label="Stock request attachments">
-                                <span class="attachment-label"><i class="bi bi-paperclip"></i>Request attachments</span>
-                                @foreach($requestAttachments as $index => $path)
-                                    <a href="{{ route('admin.stock.requests.attachments.view', ['id' => $request->id, 'index' => $index]) }}" class="attachment-link" target="_blank" rel="noopener"><i class="bi bi-paperclip"></i>Attachment {{ $index + 1 }}<i class="bi bi-box-arrow-up-right"></i></a>
-                                @endforeach
-                            </div>
-                        @endif
-                        @if($request->remarks)<p class="request-note"><i class="bi bi-chat-left-text"></i><span><b>{{ $request->status === 'Rejected' ? 'Rejection reason:' : 'Note:' }}</b> {{ $request->remarks }}</span></p>@endif
-                        @if($request->status !== 'Pending' && $request->reviewer)<p class="reviewed-by">Reviewed by {{ $request->reviewer->name }}{{ $request->reviewed_at ? ' on ' . $request->reviewed_at->format('M d, Y') : '' }}</p>@endif
-                    </div>
-                    @if($request->status === 'Pending')
-                        <div class="request-actions">
-                            <button class="button button-approve" type="button" data-approve-url="{{ route('admin.stock.requests.approve', ['id' => $request->id]) }}" data-dealer="{{ $dealerName }}" data-product="{{ $productName }}" data-quantity="{{ $request->quantity }}"><i class="bi bi-check-lg"></i>Approve</button>
-                            <button class="button button-reject" type="button" data-reject-url="{{ route('admin.stock.requests.reject', ['id' => $request->id]) }}" data-dealer="{{ $dealerName }}" data-product="{{ $productName }}"><i class="bi bi-x-lg"></i>Reject</button>
-                        </div>
-                    @endif
-                </article>
-            @empty
-                <div class="empty-state"><span><i class="bi bi-inboxes"></i></span><h3>No dealer stock requests yet</h3><p>Requests from dealers will appear here when submitted.</p></div>
-            @endforelse
-            <div id="noResults" class="empty-state compact" hidden><span><i class="bi bi-search"></i></span><h3>No matching requests</h3><p>Try a different search or filter.</p></div>
+        <div class="stock-table-shell">
+            <table id="stockRequestsTable" class="table stock-requests-table" style="width:100%">
+                <thead>
+                    <tr>
+                        <th class="control-column" aria-label="Details"></th>
+                        <th>Dealer</th>
+                        <th>Product</th>
+                        <th>Quantity</th>
+                        <th>Submitted</th>
+                        <th>Attachments</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+            </table>
         </div>
     </section>
 
@@ -120,6 +95,8 @@
 @endsection
 
 @section('css')
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
 <style>
     /* Match the shared dashboard cards, type scale, and aqua accent used elsewhere. */
     .stock-approval-page { display: grid; gap: 16px; }
@@ -201,19 +178,163 @@ body.main-layout{background:#f4f7fb!important}.page-heading{align-items:flex-sta
         .summary-card small { display: none; }
         .request-actions { grid-template-columns: 1fr; }
     }
+
+    .stock-table-shell { min-height: 340px; position: relative; }
+    .stock-requests-table { border-collapse: separate !important; border-spacing: 0; margin: 0 !important; }
+    .stock-requests-table thead th { background: #f7fafc; border-bottom: 1px solid #dfe8f1 !important; color: #68788a; font-size: 10px; font-weight: 800; letter-spacing: .06em; padding: 13px 12px !important; text-transform: uppercase; white-space: nowrap; }
+    .stock-requests-table tbody td { border-bottom: 1px solid #edf2f6 !important; color: #344b63; font-size: 12px; padding: 14px 12px !important; vertical-align: middle; }
+    .stock-requests-table tbody tr:hover td { background: #f8fcfe; }
+    .stock-requests-table .control-column { padding-left: 8px !important; width: 20px !important; }
+    .dealer-cell, .product-cell { align-items: center; display: flex; gap: 10px; min-width: 180px; }
+    .dealer-cell .dealer-avatar { flex: 0 0 38px; height: 38px; width: 38px; }
+    .dealer-cell strong, .product-cell strong { color: #162d4a; display: block; font-size: 12px; font-weight: 800; }
+    .dealer-cell small, .product-cell small { align-items: center; color: #7d8b99; display: flex; font-size: 10px; gap: 4px; margin-top: 3px; }
+    .dealer-cell small i, .product-cell > i { color: #3c9fc4; }
+    .product-cell > i { background: #e9f7fc; border-radius: 9px; display: grid; flex: 0 0 34px; font-size: 15px; height: 34px; place-items: center; width: 34px; }
+    .quantity-cell { color: #173a55; display: inline-flex; font-size: 15px; font-weight: 900; gap: 4px; }
+    .quantity-cell small { align-self: end; color: #8492a2; font-size: 9px; font-weight: 700; margin-bottom: 2px; }
+    .date-cell, .status-cell { display: grid; gap: 3px; white-space: nowrap; }
+    .date-cell strong { color: #38516a; font-size: 11px; }
+    .date-cell small, .status-cell small { color: #8b98a5; font-size: 9px; }
+    .status-pill.cancelled { background: #f1f3f5; color: #657383; }
+    .attachment-link { margin: 2px; }
+    .empty-value, .action-complete { align-items: center; color: #93a0ad; display: inline-flex; font-size: 10px; font-weight: 700; gap: 4px; white-space: nowrap; }
+    .action-complete { color: #60806e; }
+    .stock-table-footer { align-items: center; background: #fff; display: flex; justify-content: space-between; min-height: 62px; padding: 12px 16px; }
+    .stock-meta { align-items: center; color: #7b8795; display: flex; font-size: 11px; gap: 14px; }
+    .stock-meta .dataTables_length label { align-items: center; display: flex; gap: 6px; margin: 0; }
+    .stock-meta select { border: 1px solid #d8e3ec; border-radius: 7px; min-width: 64px; padding: 5px 22px 5px 7px; }
+    .stock-pages .pagination { gap: 3px; margin: 0; }
+    .stock-pages .page-link { border-color: #dce5ed; border-radius: 7px !important; color: #547086; font-size: 11px; min-width: 32px; padding: 7px 9px; text-align: center; }
+    .stock-pages .page-item.active .page-link { background: #2499c6; border-color: #2499c6; color: #fff; }
+    div.dataTables_wrapper div.dataTables_processing { background: #fff; border: 1px solid #cce8f3; border-radius: 12px; box-shadow: 0 14px 36px rgba(18, 54, 79, .16); color: #167aa8; font-size: 12px; font-weight: 800; height: auto; left: 50%; margin: 0; padding: 14px 18px; position: absolute; top: 74px; transform: translateX(-50%); width: auto; z-index: 20; }
+    table.dataTable.dtr-inline.collapsed > tbody > tr > td.dtr-control::before { background: #2499c6; border: 0; box-shadow: none; line-height: 15px; }
+    table.dataTable > tbody > tr.child ul.dtr-details { width: 100%; }
+    table.dataTable > tbody > tr.child span.dtr-title { color: #6d7c8c; font-size: 10px; min-width: 105px; text-transform: uppercase; }
+
+    @media (max-width: 760px) {
+        .request-tools { gap: 10px; }
+        .filter-tabs { width: 100%; }
+        .stock-table-footer { align-items: stretch; flex-direction: column; gap: 12px; }
+        .stock-meta { justify-content: space-between; width: 100%; }
+        .stock-pages { overflow-x: auto; width: 100%; }
+        .stock-pages .pagination { justify-content: center; }
+        .stock-requests-table tbody td { padding: 12px 9px !important; }
+    }
+
+    @media (max-width: 420px) {
+        .stock-meta { align-items: flex-start; flex-direction: column; gap: 7px; }
+        .search-box { min-width: 0; }
+        .filter-tab { padding: 8px 7px; }
+    }
 </style>
 @endsection
 
 @section('js')
+<script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    var list = document.getElementById('requestList'), search = document.getElementById('requestSearch'), noResults = document.getElementById('noResults'), results = document.getElementById('requestResults');
-    var activeFilter = 'all', modal = document.getElementById('rejectModal'), form = document.getElementById('rejectForm'), textarea = document.getElementById('rejectionRemarks'), approveModal = document.getElementById('approveModal'), approveForm = document.getElementById('approveForm');
-    function filterRequests() { var term = search.value.toLowerCase().trim(), visible = 0; list.querySelectorAll('.request-item').forEach(function (item) { var show = (activeFilter === 'all' || item.dataset.status === activeFilter) && item.dataset.search.indexOf(term) !== -1; item.hidden = !show; if (show) visible++; }); noResults.hidden = visible > 0 || !list.querySelector('.request-item'); if (results) results.textContent = 'Showing ' + visible + ' request' + (visible === 1 ? '' : 's') + (activeFilter === 'all' ? '' : ' · ' + activeFilter); }
-    search.addEventListener('input', filterRequests);
-    document.querySelectorAll('.filter-tab').forEach(function (tab) { tab.addEventListener('click', function () { activeFilter = tab.dataset.filter; document.querySelectorAll('.filter-tab').forEach(function (button) { button.classList.toggle('active', button === tab); button.setAttribute('aria-selected', button === tab ? 'true' : 'false'); }); filterRequests(); }); });
-    document.querySelectorAll('[data-approve-url]').forEach(function (button) { button.addEventListener('click', function () { var quantityInput = document.getElementById('approveQuantity'), action = button.dataset.approveUrl; if (!action) return; approveForm.action = action; document.getElementById('approveDescription').textContent = 'Review up to ' + button.dataset.quantity + ' requested units of ' + button.dataset.product + ' for ' + button.dataset.dealer + '.'; quantityInput.value = button.dataset.quantity; quantityInput.max = button.dataset.quantity; approveModal.hidden = false; approveModal.setAttribute('aria-hidden', 'false'); quantityInput.focus(); }); });
-    document.querySelectorAll('[data-reject-url]').forEach(function (button) { button.addEventListener('click', function () { var action = button.dataset.rejectUrl; if (!action) return; form.action = action; document.getElementById('rejectDescription').textContent = 'Reject the request for ' + button.dataset.product + ' from ' + button.dataset.dealer + '? Tell them why.'; textarea.value = ''; document.getElementById('characterCount').textContent = '0'; modal.hidden = false; modal.setAttribute('aria-hidden', 'false'); textarea.focus(); }); });
+    var search = document.getElementById('requestSearch');
+    var modal = document.getElementById('rejectModal');
+    var form = document.getElementById('rejectForm');
+    var textarea = document.getElementById('rejectionRemarks');
+    var approveModal = document.getElementById('approveModal');
+    var approveForm = document.getElementById('approveForm');
+    var activeStatus = '';
+    var searchTimer;
+
+    var table = jQuery('#stockRequestsTable').DataTable({
+        processing: true,
+        serverSide: true,
+        responsive: {
+            details: {
+                type: 'column',
+                target: 0
+            }
+        },
+        ajax: {
+            url: @json(route('admin.stock.requests.data')),
+            data: function (payload) {
+                payload.status = activeStatus;
+            }
+        },
+        pageLength: 15,
+        lengthMenu: [[10, 15, 25, 50], [10, 15, 25, 50]],
+        order: [[4, 'desc']],
+        searchDelay: 350,
+        dom: "rt<'stock-table-footer'<'stock-meta'il><'stock-pages'p>>",
+        columns: [
+            { data: null, defaultContent: '', className: 'dtr-control control-column', orderable: false, searchable: false },
+            { data: 'dealer_info', name: 'dealer_id', orderable: false, searchable: false, responsivePriority: 1 },
+            { data: 'product_info', name: 'product_id', orderable: false, searchable: false, responsivePriority: 2 },
+            { data: 'quantity', name: 'quantity', searchable: false, responsivePriority: 4 },
+            { data: 'submitted_at', name: 'created_at', searchable: false, responsivePriority: 3 },
+            { data: 'attachments_display', orderable: false, searchable: false, responsivePriority: 6 },
+            { data: 'status_badge', name: 'status', searchable: false, responsivePriority: 2 },
+            { data: 'actions', orderable: false, searchable: false, responsivePriority: 1 }
+        ],
+        language: {
+            processing: '<i class="bi bi-arrow-repeat"></i> Processing requests...',
+            emptyTable: 'No stock requests found.',
+            zeroRecords: 'No requests match your search or filter.',
+            info: 'Showing _START_ to _END_ of _TOTAL_ requests',
+            infoEmpty: 'Showing 0 requests',
+            lengthMenu: 'Show _MENU_',
+            paginate: {
+                previous: '<i class="bi bi-chevron-left"></i>',
+                next: '<i class="bi bi-chevron-right"></i>'
+            }
+        }
+    });
+
+    search.addEventListener('input', function () {
+        window.clearTimeout(searchTimer);
+        searchTimer = window.setTimeout(function () {
+            table.search(search.value.trim()).draw();
+        }, 300);
+    });
+
+    document.querySelectorAll('.filter-tab').forEach(function (tab) {
+        tab.addEventListener('click', function () {
+            var filter = String(tab.dataset.filter || '').toLowerCase();
+            activeStatus = filter ? filter.charAt(0).toUpperCase() + filter.slice(1) : '';
+            document.querySelectorAll('.filter-tab').forEach(function (button) {
+                button.classList.toggle('active', button === tab);
+                button.setAttribute('aria-selected', button === tab ? 'true' : 'false');
+            });
+            table.ajax.reload(null, true);
+        });
+    });
+
+    document.addEventListener('click', function (event) {
+        var approveButton = event.target.closest('[data-approve-url]');
+        if (approveButton) {
+            var quantityInput = document.getElementById('approveQuantity');
+            approveForm.action = approveButton.dataset.approveUrl;
+            document.getElementById('approveDescription').textContent = 'Review up to ' + approveButton.dataset.quantity + ' requested units of ' + approveButton.dataset.product + ' for ' + approveButton.dataset.dealer + '.';
+            quantityInput.value = approveButton.dataset.quantity;
+            quantityInput.max = approveButton.dataset.quantity;
+            approveModal.hidden = false;
+            approveModal.setAttribute('aria-hidden', 'false');
+            quantityInput.focus();
+            return;
+        }
+
+        var rejectButton = event.target.closest('[data-reject-url]');
+        if (rejectButton) {
+            form.action = rejectButton.dataset.rejectUrl;
+            document.getElementById('rejectDescription').textContent = 'Reject the request for ' + rejectButton.dataset.product + ' from ' + rejectButton.dataset.dealer + '? Tell them why.';
+            textarea.value = '';
+            document.getElementById('characterCount').textContent = '0';
+            modal.hidden = false;
+            modal.setAttribute('aria-hidden', 'false');
+            textarea.focus();
+        }
+    });
+
     function closeModal() { [modal, approveModal].forEach(function (dialog) { dialog.hidden = true; dialog.setAttribute('aria-hidden', 'true'); }); }
     document.querySelectorAll('[data-close-dialog]').forEach(function (button) { button.addEventListener('click', closeModal); });
     modal.addEventListener('click', function (event) { if (event.target === modal) closeModal(); });

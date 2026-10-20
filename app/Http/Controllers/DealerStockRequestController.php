@@ -51,13 +51,119 @@ class DealerStockRequestController extends Controller
     {
         $this->authenticatedAdmin();
 
-        $requests = DealerStockRequest::with(['dealer.dealer', 'reviewer'])->latest()->get();
-        $products = Product::on('dms')
-            ->whereIn('id', $requests->pluck('product_id')->unique())
-            ->get()
-            ->keyBy('id');
+        $counts = DealerStockRequest::selectRaw(
+            "COUNT(*) as total_count,
+             SUM(CASE WHEN status = 'Pending' THEN 1 ELSE 0 END) as pending_count,
+             SUM(CASE WHEN status = 'Approved' THEN 1 ELSE 0 END) as approved_count,
+             SUM(CASE WHEN status = 'Rejected' THEN 1 ELSE 0 END) as rejected_count,
+             SUM(CASE WHEN status = 'Cancelled' THEN 1 ELSE 0 END) as cancelled_count"
+        )->first();
 
-        return view('admin_stock_requests', compact('requests', 'products'));
+        return view('admin_stock_requests', compact('counts'));
+    }
+
+    public function datatable(Request $request)
+    {
+        $this->authenticatedAdmin();
+
+        $query = DealerStockRequest::with(['dealer.dealer', 'reviewer'])
+            ->select('dealer_stock_requests.*');
+
+        $status = trim((string) $request->input('status'));
+        if (in_array($status, ['Pending', 'Approved', 'Rejected', 'Cancelled'], true)) {
+            $query->where('dealer_stock_requests.status', $status);
+        }
+
+        $productNames = Product::on('dms')
+            ->select('id', 'product_name')
+            ->get()
+            ->pluck('product_name', 'id');
+
+        return \Yajra\DataTables\Facades\DataTables::eloquent($query)
+            ->filter(function ($builder) use ($request, $productNames) {
+                $search = trim((string) $request->input('search.value'));
+                if ($search === '') {
+                    return;
+                }
+
+                $matchingProductIds = $productNames
+                    ->filter(function ($name) use ($search) {
+                        return stripos((string) $name, $search) !== false;
+                    })
+                    ->keys()
+                    ->all();
+
+                $builder->where(function ($filtered) use ($search, $matchingProductIds) {
+                    $filtered->where('dealer_stock_requests.id', 'like', '%' . $search . '%')
+                        ->orWhere('dealer_stock_requests.status', 'like', '%' . $search . '%')
+                        ->orWhereHas('dealer', function ($dealer) use ($search) {
+                            $dealer->where('name', 'like', '%' . $search . '%')
+                                ->orWhere('email', 'like', '%' . $search . '%');
+                        })
+                        ->orWhereHas('dealer.dealer', function ($profile) use ($search) {
+                            $profile->where('store_name', 'like', '%' . $search . '%')
+                                ->orWhere('area', 'like', '%' . $search . '%');
+                        });
+
+                    if (!empty($matchingProductIds)) {
+                        $filtered->orWhereIn('dealer_stock_requests.product_id', $matchingProductIds);
+                    }
+                });
+            })
+            ->addColumn('dealer_info', function ($stockRequest) {
+                $dealer = $stockRequest->dealer;
+                $profile = optional($dealer)->dealer;
+                $name = optional($dealer)->name ?: 'Dealer #' . $stockRequest->dealer_id;
+                $store = optional($profile)->store_name ?: 'Dealer account';
+                $area = trim((string) optional($profile)->area) ?: 'Area not assigned';
+                $initial = mb_strtoupper(mb_substr($name, 0, 1));
+
+                return '<div class="dealer-cell"><span class="dealer-avatar">' . e($initial) . '</span><div><strong>' . e($name) . '</strong><small><i class="bi bi-shop"></i>' . e($store) . '</small><small><i class="bi bi-geo-alt"></i>' . e($area) . '</small></div></div>';
+            })
+            ->addColumn('product_info', function ($stockRequest) use ($productNames) {
+                $name = $productNames->get($stockRequest->product_id) ?: 'Product #' . $stockRequest->product_id;
+                return '<div class="product-cell"><i class="bi bi-box-seam"></i><div><strong>' . e($name) . '</strong><small>Request #' . e($stockRequest->id) . '</small></div></div>';
+            })
+            ->editColumn('quantity', function ($stockRequest) {
+                return '<span class="quantity-cell">' . number_format((int) $stockRequest->quantity) . '<small>units</small></span>';
+            })
+            ->addColumn('submitted_at', function ($stockRequest) {
+                return '<time class="date-cell" datetime="' . e(optional($stockRequest->created_at)->toIso8601String()) . '"><strong>' . e(optional($stockRequest->created_at)->format('M d, Y')) . '</strong><small>' . e(optional($stockRequest->created_at)->format('g:i A')) . '</small></time>';
+            })
+            ->addColumn('attachments_display', function ($stockRequest) {
+                if ($stockRequest->attachment_links->isEmpty()) {
+                    return '<span class="empty-value"><i class="bi bi-dash"></i>None</span>';
+                }
+
+                return $stockRequest->attachment_links->map(function ($path, $index) use ($stockRequest) {
+                    $url = route('admin.stock.requests.attachments.view', ['id' => $stockRequest->id, 'index' => $index]);
+                    return '<a class="attachment-link" href="' . e($url) . '" target="_blank" rel="noopener"><i class="bi bi-paperclip"></i>File ' . ($index + 1) . '</a>';
+                })->implode('');
+            })
+            ->addColumn('status_badge', function ($stockRequest) {
+                $status = strtolower((string) $stockRequest->status);
+                $icons = ['pending' => 'bi-clock', 'approved' => 'bi-check-lg', 'rejected' => 'bi-x-lg', 'cancelled' => 'bi-slash-circle'];
+                $review = '';
+                if ($stockRequest->status !== 'Pending' && $stockRequest->reviewer) {
+                    $review = '<small>by ' . e($stockRequest->reviewer->name) . '</small>';
+                }
+
+                return '<div class="status-cell"><span class="status-pill ' . e($status) . '"><i class="bi ' . ($icons[$status] ?? 'bi-circle') . '"></i>' . e($stockRequest->status) . '</span>' . $review . '</div>';
+            })
+            ->addColumn('actions', function ($stockRequest) use ($productNames) {
+                if ($stockRequest->status !== 'Pending') {
+                    return '<span class="action-complete"><i class="bi bi-check2-circle"></i>Reviewed</span>';
+                }
+
+                $dealerName = optional($stockRequest->dealer)->name ?: 'Dealer #' . $stockRequest->dealer_id;
+                $productName = $productNames->get($stockRequest->product_id) ?: 'Product #' . $stockRequest->product_id;
+                $approveUrl = route('admin.stock.requests.approve', ['id' => $stockRequest->id]);
+                $rejectUrl = route('admin.stock.requests.reject', ['id' => $stockRequest->id]);
+
+                return '<div class="request-actions"><button class="button button-approve" type="button" data-approve-url="' . e($approveUrl) . '" data-dealer="' . e($dealerName) . '" data-product="' . e($productName) . '" data-quantity="' . e($stockRequest->quantity) . '"><i class="bi bi-check-lg"></i>Approve</button><button class="button button-reject" type="button" data-reject-url="' . e($rejectUrl) . '" data-dealer="' . e($dealerName) . '" data-product="' . e($productName) . '"><i class="bi bi-x-lg"></i>Reject</button></div>';
+            })
+            ->rawColumns(['dealer_info', 'product_info', 'quantity', 'submitted_at', 'attachments_display', 'status_badge', 'actions'])
+            ->toJson();
     }
 
     public function viewAttachment($id, $index)
