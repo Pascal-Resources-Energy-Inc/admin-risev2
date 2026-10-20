@@ -80,7 +80,7 @@
                     </div>
                     @if($request->status === 'Pending')
                         <div class="request-actions">
-                            <button class="button button-approve" type="button" data-approve-id="{{ $request->getKey() }}" data-dealer="{{ $dealerName }}" data-product="{{ $productName }}" data-quantity="{{ $request->quantity }}"><i class="bi bi-check-lg"></i>Approve</button>
+                            <button class="button button-approve" type="button" data-approve-url="{{ route('admin.stock.requests.approve', ['id' => $request->id]) }}" data-dealer="{{ $dealerName }}" data-product="{{ $productName }}" data-quantity="{{ $request->quantity }}"><i class="bi bi-check-lg"></i>Approve</button>
                             <button class="button button-reject" type="button" data-reject-url="{{ route('admin.stock.requests.reject', ['id' => $request->id]) }}" data-dealer="{{ $dealerName }}" data-product="{{ $productName }}"><i class="bi bi-x-lg"></i>Reject</button>
                         </div>
                     @endif
@@ -107,8 +107,7 @@
 </div>
 
 <div class="dialog-backdrop" id="approveModal" hidden aria-hidden="true">
-    <form id="approveForm" method="POST" action="{{ route('admin.stock.requests.approve.submit') }}" class="decision-dialog" aria-labelledby="approveTitle">@csrf
-        <input id="approveRequestId" name="stock_request_id" type="hidden">
+    <form id="approveForm" method="POST" class="decision-dialog" aria-labelledby="approveTitle">@csrf
         <button type="button" class="dialog-close" data-close-dialog aria-label="Close"><i class="bi bi-x-lg"></i></button>
         <span class="dialog-icon approve-icon"><i class="bi bi-check-lg"></i></span>
         <h2 id="approveTitle">Approve stock request?</h2>
@@ -213,7 +212,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function filterRequests() { var term = search.value.toLowerCase().trim(), visible = 0; list.querySelectorAll('.request-item').forEach(function (item) { var show = (activeFilter === 'all' || item.dataset.status === activeFilter) && item.dataset.search.indexOf(term) !== -1; item.hidden = !show; if (show) visible++; }); noResults.hidden = visible > 0 || !list.querySelector('.request-item'); if (results) results.textContent = 'Showing ' + visible + ' request' + (visible === 1 ? '' : 's') + (activeFilter === 'all' ? '' : ' · ' + activeFilter); }
     search.addEventListener('input', filterRequests);
     document.querySelectorAll('.filter-tab').forEach(function (tab) { tab.addEventListener('click', function () { activeFilter = tab.dataset.filter; document.querySelectorAll('.filter-tab').forEach(function (button) { button.classList.toggle('active', button === tab); button.setAttribute('aria-selected', button === tab ? 'true' : 'false'); }); filterRequests(); }); });
-    document.querySelectorAll('[data-approve-id]').forEach(function (button) { button.addEventListener('click', function () { var quantityInput = document.getElementById('approveQuantity'), requestIdInput = document.getElementById('approveRequestId'), requestId = button.dataset.approveId; if (!requestId) return; requestIdInput.value = requestId; document.getElementById('approveDescription').textContent = 'Review up to ' + button.dataset.quantity + ' requested units of ' + button.dataset.product + ' for ' + button.dataset.dealer + '.'; quantityInput.value = button.dataset.quantity; quantityInput.max = button.dataset.quantity; approveModal.hidden = false; approveModal.setAttribute('aria-hidden', 'false'); quantityInput.focus(); }); });
+    document.querySelectorAll('[data-approve-url]').forEach(function (button) { button.addEventListener('click', function () { var quantityInput = document.getElementById('approveQuantity'), action = button.dataset.approveUrl; if (!action) return; approveForm.action = action; document.getElementById('approveDescription').textContent = 'Review up to ' + button.dataset.quantity + ' requested units of ' + button.dataset.product + ' for ' + button.dataset.dealer + '.'; quantityInput.value = button.dataset.quantity; quantityInput.max = button.dataset.quantity; approveModal.hidden = false; approveModal.setAttribute('aria-hidden', 'false'); quantityInput.focus(); }); });
     document.querySelectorAll('[data-reject-url]').forEach(function (button) { button.addEventListener('click', function () { var action = button.dataset.rejectUrl; if (!action) return; form.action = action; document.getElementById('rejectDescription').textContent = 'Reject the request for ' + button.dataset.product + ' from ' + button.dataset.dealer + '? Tell them why.'; textarea.value = ''; document.getElementById('characterCount').textContent = '0'; modal.hidden = false; modal.setAttribute('aria-hidden', 'false'); textarea.focus(); }); });
     function closeModal() { [modal, approveModal].forEach(function (dialog) { dialog.hidden = true; dialog.setAttribute('aria-hidden', 'true'); }); }
     document.querySelectorAll('[data-close-dialog]').forEach(function (button) { button.addEventListener('click', closeModal); });
