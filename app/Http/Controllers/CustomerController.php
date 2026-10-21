@@ -194,15 +194,14 @@ class CustomerController extends Controller
             $request->last_name,
         ])->filter()->implode(' '));
 
+        // The current users table keeps a single name column. The standalone
+        // customer form submits `name`, while the modal submits split fields.
+        $fullName = $fullName ?: trim((string) $request->name);
+
         $user = new User;
-        // $user->name = $fullName;
-        $user->first_name = $request->first_name;
-        $user->middle_name = $request->middle_name;
-        $user->last_name = $request->last_name;
+        $user->name = $fullName;
         $user->email = $request->email_address;
         $user->role = 'Client';
-        $user->birthdate = $request->birthdate;
-        $user->age = $request->age;
         $user->password = bcrypt('12345678');
         $user->save();
 
@@ -268,16 +267,12 @@ class CustomerController extends Controller
             $request->middle_name,
             $request->last_name,
         ])->filter()->implode(' '));
+        $fullName = $fullName ?: trim((string) $request->name);
 
         if ($customer->user_id) {
             User::where('id', $customer->user_id)->update([
                 'name' => $fullName ?: $customer->name,
-                'first_name' => $request->first_name,
-                'middle_name' => $request->middle_name,
-                'last_name' => $request->last_name,
                 'email' => $request->email_address,
-                'birthdate' => $request->birthdate,
-                'age' => $request->age,
             ]);
         }
 
