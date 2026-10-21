@@ -76,7 +76,8 @@
                     <div class='text-center'>
                         {{-- <img src="{{$customer->avatar ? asset($customer->avatar) : asset('design/assets/images/profile/user-1.png')}}" alt="Avatar Image" class="img-fluid rounded-circle" style="width: 100px; height: 100px;"> --}}
                         <img src="{{$customer->avatar ? asset($customer->avatar) : asset('design/assets/images/profile/user-1.png')}}" class="profile-avatar mx-auto">
-                        <div class="profile-name">{{ trim(strtoupper($customer->user->first_name ?? '')) . ' ' . strtoupper(($customer->user->last_name ?? '')) ?: ( strtoupper($customer->name ?? '')) }}</div>
+                        {{-- <div class="profile-name">{{ trim(strtoupper($customer->user->first_name ?? '')) . ' ' . strtoupper(($customer->user->last_name ?? '')) ?: ( strtoupper($customer->name ?? '')) }}</div> --}}
+                        <div class="profile-name">{{ strtoupper($customer->name) }}</div>
                         <div class="text-muted small">{{ strtoupper($customer->client_reference) }}</div>
                     </div>  
                     <br>

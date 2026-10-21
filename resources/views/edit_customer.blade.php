@@ -1,3 +1,12 @@
+@php
+    $customerNameParts = preg_split('/\s+/', trim((string) $customer->name), -1, PREG_SPLIT_NO_EMPTY);
+    $customerFirstName = $customerNameParts[0] ?? '';
+    $customerLastName = count($customerNameParts) > 1 ? $customerNameParts[count($customerNameParts) - 1] : '';
+    $customerMiddleName = count($customerNameParts) > 2
+        ? implode(' ', array_slice($customerNameParts, 1, -1))
+        : '';
+@endphp
+
 <div class="modal fade modal-select2" id="editCustomerModal" tabindex="-1">
     <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content">
@@ -25,15 +34,15 @@
                         </div>
                         <div class="col-md-4 mb-2">
                             <label>First Name</label>
-                            <input type="text" name="first_name" class="form-control" value="{{ old('first_name', $customer->user->first_name ?? '') }}" data-uppercase required>
+                            <input type="text" name="first_name" class="form-control" value="{{ old('first_name', $customerFirstName) }}" data-uppercase required>
                         </div>
                         <div class="col-md-4 mb-2">
                             <label>Middle Name</label>
-                            <input type="text" name="middle_name" class="form-control" value="{{ old('middle_name', $customer->user->middle_name ?? '') }}" data-uppercase>
+                            <input type="text" name="middle_name" class="form-control" value="{{ old('middle_name', $customerMiddleName) }}" data-uppercase>
                         </div>
                         <div class="col-md-4 mb-2">
                             <label>Last Name</label>
-                            <input type="text" name="last_name" class="form-control" value="{{ old('last_name', $customer->user->last_name ?? '') }}" data-uppercase required>
+                            <input type="text" name="last_name" class="form-control" value="{{ old('last_name', $customerLastName) }}" data-uppercase required>
                         </div>
                         <div class="col-md-6 mb-2">
                             <label>Email Address</label>
