@@ -5,7 +5,7 @@
         <h4 class="modal-title" id="myModalLabel">Change Avatar</h4>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <form method='POST' action='{{url('change-avatar-dealer/'.$dealer->id)}}' onsubmit='show()' enctype="multipart/form-data" class="validation-wizard wizard-circle mt-5">
+      <form method='POST' action='{{ ($isMegaDealer ?? false) ? route('mega-dealers.avatar', $dealer->id) : url('change-avatar-dealer/'.$dealer->id) }}' onsubmit='show()' enctype="multipart/form-data" class="validation-wizard wizard-circle mt-5">
         @csrf
         <div class="modal-body text-center">
           <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleFileUpload(event)">

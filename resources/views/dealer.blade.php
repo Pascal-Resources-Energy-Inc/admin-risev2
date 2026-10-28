@@ -1,4 +1,8 @@
 @extends('layouts.header')
+@php
+  $isMegaDealer = $isMegaDealer ?? false;
+  $profileLabel = $isMegaDealer ? 'Mega Dealer' : 'Dealer';
+@endphp
 @section('css')
 {{-- <style>
     /* Custom styling */
@@ -122,7 +126,7 @@
     <div class="col-md-4">
       <div class="card">
         <div class="card-header" style="padding-bottom: 0px">
-          <h5>Dealer Information</h5>
+          <h5>{{ $profileLabel }} Information</h5>
         </div>
         <div class="card-body">
           <div class='text-center'>
@@ -145,6 +149,7 @@
           <hr>
           <!-- Customer Personal Details -->
           <div class="profile-info text-start">
+            @if($isMegaDealer)<p><i class="bi bi-upc-scan"></i> {{ strtoupper($dealer->partner_code ?: '-') }}</p>@endif
             <p><i class="bi bi-telephone"></i> {{ strtoupper($dealer->number) }}</p>
             <p><i class="bi bi-geo-alt"></i> {{ strtoupper($dealer->address) }}</p>
             <p><i class="bi bi-shop"></i> {{ strtoupper($dealer->store_type) }}</p>

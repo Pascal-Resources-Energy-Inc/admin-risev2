@@ -1,6 +1,6 @@
 <div class="modal fade" id="contractModal" tabindex="-1" aria-labelledby="contractModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
-   <form method='POST' action='{{url('submit-contract-dealer/'.$dealer->id)}}' onsubmit='show()' enctype="multipart/form-data" class="validation-wizard wizard-circle mt-5">
+   <form method='POST' action='{{ ($isMegaDealer ?? false) ? route('mega-dealers.contract', $dealer->id) : url('submit-contract-dealer/'.$dealer->id) }}' onsubmit='show()' enctype="multipart/form-data" class="validation-wizard wizard-circle mt-5">
       @csrf
       <div class="modal-content">
         <div class="modal-header">
@@ -124,7 +124,7 @@
 
           <!-- Signature Pad -->
           <div class="mb-3 text-center">
-             <a href='{{url("/signature-dealer/".$dealer->id)}}' ><button id="signHereBtn" class="btn btn-success btn-lg" type='button'>
+             <a href='{{ ($isMegaDealer ?? false) ? route('mega-dealers.signature', $dealer->id) : url("/signature-dealer/".$dealer->id) }}' ><button id="signHereBtn" class="btn btn-success btn-lg" type='button'>
               ✍️ Sign Here
             </button>
              </a>

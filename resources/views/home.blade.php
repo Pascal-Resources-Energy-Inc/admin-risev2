@@ -191,6 +191,53 @@
     .refill-filter .form-select, .refill-filter.month .form-select { min-width: 0; width: 100%; }
   }
 
+  .refill-monitoring { display: grid; gap: 16px; color: #12324a; }
+  .refill-report-toolbar { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; padding: 4px 2px 2px; }
+  .refill-report-eyebrow { color: #119ab5; font-size: 10px; font-weight: 800; letter-spacing: .13em; }
+  .refill-report-toolbar h2 { margin: 5px 0 4px; color: #12324a; font-size: clamp(22px, 2.5vw, 30px); font-weight: 800; letter-spacing: -.03em; }
+  .refill-report-toolbar p, .refill-report-panel header p { margin: 0; color: #8392a2; font-size: 12px; }
+  .refill-report-filters { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; }
+  .refill-report-filter { display: grid; gap: 5px; }
+  .refill-report-filter label { margin: 0; color: #718397; font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+  .refill-report-filter .form-select { min-width: 118px; min-height: 40px; border-color: #dce6ed; border-radius: 9px; font-size: 12px; }
+  .refill-apply-button { min-height: 40px; padding: 0 15px; border: 0; border-radius: 9px; background: #0b5488; color: #fff; font-size: 12px; font-weight: 700; }
+  .refill-apply-button:hover { background: #083e68; }
+  .refill-apply-button:disabled { cursor: wait; opacity: .7; }
+  .refill-report-loading { display: none; align-items: center; justify-content: center; gap: 9px; min-height: 44px; color: #718397; font-size: 12px; }
+  .refill-report-loading.is-visible { display: flex; }
+  .refill-report-charts { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); gap: 16px; }
+  .refill-report-details { display: grid; grid-template-columns: minmax(0, 1.9fr) minmax(280px, .95fr); gap: 16px; }
+  .refill-report-panel { min-width: 0; overflow: hidden; border: 1px solid #e3eaf0; border-radius: 14px; background: #fff; box-shadow: 0 6px 20px rgba(18, 50, 74, .05); }
+  .refill-report-panel > header { min-height: 48px; display: flex; align-items: center; padding: 11px 15px; background: #084b7d; color: #fff; }
+  .refill-report-panel > header h3 { margin: 0; color: #fff; font-size: 13px; font-weight: 750; line-height: 1.4; }
+  .refill-report-panel > header p { margin-top: 2px; color: rgba(255,255,255,.72); font-size: 10px; }
+  .refill-chart-canvas { width: 100%; min-height: 285px; padding: 6px 10px 2px; }
+  .refill-table-scroll { max-width: 100%; overflow-x: auto; overscroll-behavior-inline: contain; }
+  .refill-report-table { width: 100%; min-width: 790px; border-collapse: collapse; font-size: 11px; }
+  .refill-report-table th, .refill-report-table td { min-width: 68px; padding: 11px 9px; border: 1px solid #e2e8ee; color: #30475b; text-align: center; white-space: nowrap; }
+  .refill-report-table thead th { background: #f4f8fb; color: #425a6d; font-weight: 750; }
+  .refill-report-table th:first-child { position: sticky; left: 0; z-index: 1; min-width: 190px; background: #f4f8fb; text-align: left; }
+  .refill-report-table tbody th { background: #fff; color: #163b56; }
+  .refill-report-table tbody tr:first-child td { color: #0799b5; font-weight: 700; }
+  .refill-report-table tbody tr:last-child td { font-weight: 700; }
+  .refill-takeaway-list { display: grid; gap: 10px; padding: 10px 16px; }
+  .refill-takeaway { display: flex; align-items: flex-start; gap: 12px; }
+  .refill-takeaway > span { width: 30px; height: 30px; display: grid; flex: 0 0 30px; place-items: center; border-radius: 50%; background: #10a1b8; color: #fff; font-size: 12px; font-weight: 800; }
+  .refill-takeaway strong { display: block; margin: 1px 0 3px; color: #124b7b; font-size: 12px; }
+  .refill-takeaway p { margin: 0; color: #8392a2; font-size: 11px; line-height: 1.5; }
+  @media (max-width: 1000px) {
+    .refill-report-charts { grid-template-columns: 1fr; }
+    .refill-report-details { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 1000px) {
+    .refill-report-toolbar { align-items: stretch; flex-direction: column; }
+    .refill-report-filters { display: grid; grid-template-columns: 1fr 1fr; }
+    .refill-apply-button { grid-column: 1 / -1; }
+    .refill-chart-canvas { min-height: 255px; padding-inline: 2px; }
+    .refill-report-panel > header { padding-inline: 12px; }
+    .refill-report-table th:first-child { min-width: 165px; }
+  }
+
   .sa-command { display: grid; gap: 18px; margin-bottom: 22px; color: #172033; }
   .sa-hero { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 24px; overflow: hidden; padding: 26px 28px; color: #fff; background: linear-gradient(120deg, #101828 0%, #173f58 55%, #0c708a 100%); border-radius: 20px; box-shadow: 0 18px 45px rgba(15, 23, 42, .18); }
   .sa-hero::after { content: ""; position: absolute; width: 330px; height: 330px; right: -110px; top: -170px; border: 58px solid rgba(255,255,255,.07); border-radius: 50%; }
@@ -199,6 +246,18 @@
   .sa-title { margin: 0; color: #fff; font-size: clamp(24px, 3vw, 34px); font-weight: 900; letter-spacing: -.03em; }
   .sa-subtitle { max-width: 650px; margin: 7px 0 0; color: rgba(255,255,255,.72); font-size: 13px; }
   .sa-hero-actions { display: flex; align-items: center; gap: 10px; }
+  .sa-dashboard-filters { display: flex; align-items: end; gap: 12px; flex-wrap: wrap; padding: 14px 16px; background: #fff; border: 1px solid #e5e9f0; border-radius: 15px; box-shadow: 0 8px 24px rgba(15,23,42,.045); }
+  .sa-filter-copy { display: grid; gap: 3px; margin-right: auto; }
+  .sa-filter-copy strong { color: #172033; font-size: 13px; }
+  .sa-filter-copy span { color: #98a2b3; font-size: 11px; }
+  .sa-filter-field { display: grid; gap: 4px; min-width: 145px; margin: 0; }
+  .sa-filter-field > span { color: #667085; font-size: 9px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; }
+  .sa-filter-field .form-select { min-height: 38px; border-color: #dbe3ec; border-radius: 9px; font-size: 12px; }
+  .sa-filter-apply, .sa-filter-reset { min-height: 38px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 0 14px; border-radius: 9px; font-size: 11px; font-weight: 800; text-decoration: none; }
+  .sa-filter-apply { color: #fff; background: #087f9f; border: 1px solid #087f9f; }
+  .sa-filter-apply:hover { color: #fff; background: #066b86; }
+  .sa-filter-reset { color: #475467; background: #f8fafc; border: 1px solid #e4e7ec; }
+  .sa-filter-reset:hover { color: #172033; background: #eef2f6; }
   .sa-live-pill { display: inline-flex; align-items: center; gap: 8px; padding: 9px 13px; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.16); border-radius: 999px; font-size: 11px; font-weight: 800; white-space: nowrap; }
   .sa-live-dot { width: 8px; height: 8px; background: #4ade80; border-radius: 50%; box-shadow: 0 0 0 5px rgba(74,222,128,.14); animation: saPulse 1.8s infinite; }
   .sa-refresh { width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; color: #fff; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.16); border-radius: 11px; }
@@ -249,8 +308,84 @@
   @media (max-width: 700px) {
     .sa-hero { align-items: flex-start; flex-direction: column; padding: 22px; }
     .sa-panel-head { align-items: flex-start; flex-direction: column; }
+    .sa-filter-copy { flex: 1 0 100%; }
   }
   @media (max-width: 430px) { .sa-kpis { grid-template-columns: 1fr; } }
+
+  /* Dashboard layout safeguards for narrow content areas and touch screens. */
+  .sa-command,
+  .dashboard-section,
+  .refill-monitoring,
+  .sa-grid,
+  .sa-kpis,
+  .sa-panel,
+  .dashboard-card { min-width: 0; }
+  .dashboard-section > .row > [class*="col-"] { min-width: 0; }
+  .sa-chart .apexcharts-canvas,
+  .refill-chart-canvas .apexcharts-canvas { max-width: 100%; }
+  .dashboard-table-wrap,
+  .table-responsive { max-width: 100%; }
+
+  @media (max-width: 900px) {
+    .sa-hero { align-items: flex-start; flex-direction: column; }
+    .sa-hero-actions { width: 100%; justify-content: space-between; flex-wrap: wrap; }
+    .sa-live-pill { white-space: normal; }
+    .sa-chart { min-height: 270px; padding-inline: 4px; }
+    .sa-panel-head { align-items: flex-start; flex-direction: column; }
+    .dashboard-section > .row { --bs-gutter-x: 12px; --bs-gutter-y: 12px; }
+  }
+
+  @media (max-width: 575.98px) {
+    .sa-dashboard-filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; padding: 12px; }
+    .sa-filter-copy { grid-column: 1 / -1; }
+    .sa-filter-field { min-width: 0; }
+    .sa-filter-apply, .sa-filter-reset { width: 100%; }
+    .sa-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+    .sa-kpi { min-height: 118px; padding: 13px; }
+    .sa-kpi-label { font-size: 9px; }
+    .sa-kpi-value { font-size: clamp(17px, 5vw, 22px); }
+    .sa-kpi-note { font-size: 9px; }
+    .sa-hero { padding: 18px; border-radius: 15px; }
+    .sa-title { font-size: clamp(22px, 7vw, 29px); }
+    .sa-subtitle { font-size: 12px; line-height: 1.55; }
+    .sa-panel-head { padding: 14px; }
+    .sa-chart { min-height: 245px; }
+    .sa-pulse-item { align-items: flex-start; padding: 11px 13px; }
+    .sa-pulse-copy strong { white-space: normal; line-height: 1.45; }
+    .sa-pulse-copy small { display: block; margin-top: 3px; }
+    .refill-report-filters { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+    .refill-report-filter .form-select { min-width: 0; width: 100%; }
+    .refill-report-panel > header h3 { font-size: 12px; }
+    .refill-report-table { min-width: 740px; }
+    .dashboard-card .card-body { padding: 14px; }
+    .dashboard-pagination { align-items: flex-start; flex-direction: column; }
+    .dashboard-pagination nav { width: 100%; overflow-x: auto; }
+    .dashboard-pagination .pagination { width: max-content; flex-wrap: nowrap; }
+    .dashboard-pagination .page-link { white-space: nowrap; }
+    .transaction-item .row.align-items-center.dashboard-list-item {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px 10px;
+    }
+    .transaction-item .row.align-items-center.dashboard-list-item > [class*="col-"] {
+      width: auto;
+      max-width: none;
+      flex: initial;
+    }
+    .transaction-item .row.align-items-center.dashboard-list-item > :first-child { grid-column: 1 / -1; }
+    .transaction-item .row.align-items-center.dashboard-list-item > :nth-child(2) { text-align: left !important; }
+    .transaction-item .row.align-items-center.dashboard-list-item > :nth-child(3) { text-align: right !important; }
+    .dashboard-avatar { width: 36px; height: 36px; }
+    .customer-link { max-width: min(62vw, 280px); font-size: 12px !important; }
+    .map-container-dashboard svg { height: 420px !important; }
+  }
+
+  @media (max-width: 360px) {
+    .sa-kpis { grid-template-columns: 1fr; }
+    .refill-report-filters { grid-template-columns: 1fr; }
+    .refill-apply-button { grid-column: 1; }
+    .sa-hero-actions { align-items: stretch; }
+  }
 </style>
 @endsection
 @section('content')
@@ -271,7 +406,7 @@
     <div class="sa-hero">
       <div class="sa-hero-copy">
         <span class="sa-eyebrow"><i class="ti ti-shield-check"></i> Super Admin Command Center</span>
-        <h1 class="sa-title">Good {{ now()->hour < 12 ? 'morning' : (now()->hour < 18 ? 'afternoon' : 'evening') }}, {{ auth()->user()->name }}</h1>
+        <h1 class="sa-title">Good {{ now()->hour >= 18 ? 'evening' : (now()->hour >= 12 ? 'afternoon' : 'morning') }}, {{ auth()->user()->name }}</h1>
         <p class="sa-subtitle">A live view of sales, fulfillment, partner activity, and the transactions moving through Gaz Lite.</p>
       </div>
       <div class="sa-hero-actions">
@@ -282,54 +417,80 @@
       </div>
     </div>
 
+    <form class="sa-dashboard-filters" method="GET" action="{{ route('home') }}" aria-label="Filter all dashboard data">
+      <div class="sa-filter-copy">
+        <strong>Dashboard filters</strong>
+        <span>Apply a reporting period to all dashboard data.</span>
+      </div>
+      <label class="sa-filter-field">
+        <span>Year</span>
+        <select name="year" class="form-select">
+          @foreach($available_years as $year)
+            <option value="{{ $year }}" {{ (int) $year === (int) $selected_year ? 'selected' : '' }}>{{ $year }}</option>
+          @endforeach
+        </select>
+      </label>
+      <label class="sa-filter-field">
+        <span>Month</span>
+        <select name="month" class="form-select">
+          <option value="">All months</option>
+          @foreach(range(1, 12) as $monthNumber)
+            <option value="{{ $monthNumber }}" {{ (int) $monthNumber === (int) $selected_month ? 'selected' : '' }}>{{ date('F', mktime(0, 0, 0, $monthNumber, 1)) }}</option>
+          @endforeach
+        </select>
+      </label>
+      <button class="sa-filter-apply" type="submit"><i class="ti ti-filter"></i> Apply to all</button>
+      <a class="sa-filter-reset" href="{{ route('home') }}">Reset</a>
+    </form>
+
     <div class="sa-kpis">
       <article class="sa-kpi sales">
         <div class="sa-kpi-top"><span class="sa-kpi-icon"><i class="ti ti-currency-peso"></i></span></div>
-        <span class="sa-kpi-label">Sales Today</span>
+        <span class="sa-kpi-label">Sales in Period</span>
         <strong class="sa-kpi-value" id="saTodaySales">PHP 0</strong>
-        <span class="sa-kpi-note">Live transaction revenue</span>
+        <span class="sa-kpi-note">Filtered transaction revenue</span>
       </article>
       <article class="sa-kpi transactions">
         <div class="sa-kpi-top"><span class="sa-kpi-icon"><i class="ti ti-receipt"></i></span></div>
-        <span class="sa-kpi-label">Transactions Today</span>
+        <span class="sa-kpi-label">Transactions in Period</span>
         <strong class="sa-kpi-value" id="saTodayTransactions">0</strong>
-        <span class="sa-kpi-note">Recorded sales activity</span>
+        <span class="sa-kpi-note">Recorded in selected period</span>
       </article>
       <article class="sa-kpi month">
         <div class="sa-kpi-top"><span class="sa-kpi-icon"><i class="ti ti-chart-line"></i></span></div>
-        <span class="sa-kpi-label">Month-to-date</span>
+        <span class="sa-kpi-label">Refill Sales in Period</span>
         <strong class="sa-kpi-value" id="saMonthSales">PHP 0</strong>
-        <span class="sa-kpi-note">Current calendar month</span>
+        <span class="sa-kpi-note">Refill item revenue</span>
       </article>
       <article class="sa-kpi units">
         <div class="sa-kpi-top"><span class="sa-kpi-icon"><i class="ti ti-flame"></i></span></div>
-        <span class="sa-kpi-label">Units This Month</span>
+        <span class="sa-kpi-label">Refill Units in Period</span>
         <strong class="sa-kpi-value" id="saMonthUnits">0</strong>
-        <span class="sa-kpi-note">Products moved</span>
+        <span class="sa-kpi-note">Refill quantities sold</span>
       </article>
       <article class="sa-kpi total-sales">
         <div class="sa-kpi-top"><span class="sa-kpi-icon"><i class="ti ti-report-money"></i></span></div>
-        <span class="sa-kpi-label">Total Sales</span>
+        <span class="sa-kpi-label">Average Transaction</span>
         <strong class="sa-kpi-value" id="saTotalSales">PHP 0</strong>
-        <span class="sa-kpi-note">All-time transaction revenue</span>
+        <span class="sa-kpi-note">Average value in period</span>
       </article>
       <article class="sa-kpi total-products">
         <div class="sa-kpi-top"><span class="sa-kpi-icon"><i class="ti ti-package"></i></span></div>
-        <span class="sa-kpi-label">Total Products Sold</span>
+        <span class="sa-kpi-label">Total Units in Period</span>
         <strong class="sa-kpi-value" id="saTotalProductsSold">0</strong>
-        <span class="sa-kpi-note">All-time product quantity</span>
+        <span class="sa-kpi-note">All recorded item quantities</span>
       </article>
       <article class="sa-kpi dealers">
         <div class="sa-kpi-top"><span class="sa-kpi-icon"><i class="ti ti-building-store"></i></span></div>
-        <span class="sa-kpi-label">Active Dealers</span>
+        <span class="sa-kpi-label">Dealers with Sales</span>
         <strong class="sa-kpi-value" id="saActiveDealers">0</strong>
-        <span class="sa-kpi-note">With sales in 30 days</span>
+        <span class="sa-kpi-note">In selected period</span>
       </article>
       <article class="sa-kpi orders">
         <div class="sa-kpi-top"><span class="sa-kpi-icon"><i class="ti ti-users"></i></span></div>
-        <span class="sa-kpi-label">Active Customers</span>
+        <span class="sa-kpi-label">Beneficiaries</span>
         <strong class="sa-kpi-value" id="saActiveCustomers">0</strong>
-        <span class="sa-kpi-note">Currently active accounts</span>
+        <span class="sa-kpi-note">Distinct customers in period</span>
       </article>
     </div>
 
@@ -338,7 +499,7 @@
         <div class="sa-panel-head">
           <div>
             <h5>Revenue &amp; Volume</h5>
-            <p>Rolling 30-day operating performance</p>
+            <p>Operating performance for the selected period</p>
           </div>
           <div class="sa-chart-legend">
             <span><i style="background:#0f8ca8"></i> Sales</span>
@@ -351,7 +512,7 @@
       <div class="sa-side-stack">
         <article class="sa-panel">
           <div class="sa-panel-head">
-            <div><h5>Live Transaction Pulse</h5><p>Most recent recorded sales</p></div>
+            <div><h5>Live Transaction Pulse</h5><p>Most recent sales in the selected period</p></div>
             <span class="sa-updated">Auto-refresh: 30s</span>
           </div>
           <div class="sa-pulse-list" id="saRecentTransactions">
@@ -366,7 +527,7 @@
   @if(!$isSuperAdminDashboard)
   <section class="welcome">
     <div class="row">
-    <div class="col-lg-12 col-xl-12">
+      <div class="col-lg-12 col-xl-12">
         <div class="row custom-width-card">
             <div class="col-sm-3 d-flex align-items-stretch">
                 <div class="card stats-card w-100 border-0">
@@ -421,64 +582,63 @@
                 </div>
             </div>
         </div>
+      </div>
     </div>
-  </div>
   </section>
   @endif
   <section class="dashboard-section">
     <div class="row">
-      
-      <div class="col-lg-8 col-xl-8 d-flex align-items-stretch">
-        <div class="card refill-chart-card w-100">
-            <div class="card-body">
-              <div class="refill-chart-header">
-                <div>
-                  <h5 class="refill-chart-title">Refill Sold Quantity</h5>
-                  <p class="refill-chart-subtitle">Compare LPG refill volume by month or day.</p>
-                </div>
+      <div class="col-12 ">
+        <section class="refill-monitoring">
 
-                <div class="refill-chart-filters">
-                  <div class="refill-filter">
-                    <label for="yearSelect">Year</label>
-                    <select id="yearSelect" class="form-select form-select-sm">
-                      @foreach($available_years as $year)
-                        <option value="{{ $year }}" {{ $year == $selected_year ? 'selected' : '' }}>
-                          {{ $year }}
-                        </option>
-                      @endforeach
-                    </select>
-                  </div>
-                  
-                  <div class="refill-filter month">
-                    <label for="monthSelect">Month</label>
-                    <select id="monthSelect" class="form-select form-select-sm">
-                      <option value="">All Months</option>
-                      @foreach($available_months as $month)
-                        <option value="{{ $month['number'] }}" {{ $month['number'] == $selected_month ? 'selected' : '' }}>
-                          {{ $month['name'] }}
-                        </option>
-                      @endforeach
-                    </select>
-                  </div>
-                  
-                  <span id="viewModeIndicator" class="badge bg-info refill-view-badge">
-                    {{ $view_type === 'monthly' ? 'Daily View' : 'Monthly View' }}
-                  </span>
-                </div>
+          @if(!$isSuperAdminDashboard)
+          <form class="sa-dashboard-filters" method="GET" action="{{ route('home') }}" aria-label="Filter dashboard data">
+            <div class="sa-filter-copy"><strong>Dashboard filters</strong><span>Apply a reporting period to all dashboard data.</span></div>
+            <label class="sa-filter-field"><span>Year</span><select name="year" class="form-select">
+              @foreach($available_years as $year)<option value="{{ $year }}" {{ (int) $year === (int) $selected_year ? 'selected' : '' }}>{{ $year }}</option>@endforeach
+            </select></label>
+            <label class="sa-filter-field"><span>Month</span><select name="month" class="form-select">
+              <option value="">All months</option>
+              @foreach(range(1, 12) as $monthNumber)<option value="{{ $monthNumber }}" {{ (int) $monthNumber === (int) $selected_month ? 'selected' : '' }}>{{ date('F', mktime(0, 0, 0, $monthNumber, 1)) }}</option>@endforeach
+            </select></label>
+            <button class="sa-filter-apply" type="submit"><i class="ti ti-filter"></i> Apply to all</button>
+            <a class="sa-filter-reset" href="{{ route('home') }}">Reset</a>
+          </form>
+          @endif
+
+          <div class="refill-report-charts">
+            <article class="refill-report-panel refill-primary-chart">
+              <header><div><h3 id="refillPrimaryTitle">Monthly Refills and Average Refills per Beneficiary</h3><p>Volume and average activity by period</p></div></header>
+              <div id="refillVolumeChart" class="refill-chart-canvas"></div>
+            </article>
+            <article class="refill-report-panel refill-average-chart-panel">
+              <header><div><h3>Average Refills per Beneficiary</h3><p>Average refill quantity for each beneficiary</p></div></header>
+              <div id="refillAverageChart" class="refill-chart-canvas"></div>
+            </article>
+          </div>
+
+          <div class="refill-report-details">
+            <article class="refill-report-panel refill-table-panel">
+              <header><div><h3 id="refillTableTitle">Project RISE – Monthly Refill Monitoring Data</h3><p id="refillTableCaption">Refill totals for the selected period</p></div></header>
+              <div class="refill-table-scroll">
+                <table class="refill-report-table">
+                  <thead><tr id="refillSummaryHead"><th>Monitoring metric</th></tr></thead>
+                  <tbody id="refillSummaryRows"><tr><th>No. of Refills</th></tr><tr><th>No. of Beneficiaries</th></tr><tr><th>Average Refills per Beneficiary</th></tr></tbody>
+                </table>
               </div>
-              
-              <div id="chartLoading" class="refill-chart-loading">
-                <div class="spinner-border text-primary" role="status">
-                  <span class="visually-hidden">Loading...</span>
-                </div>
+            </article>
+            <article class="refill-report-panel refill-takeaways">
+              <header><div><h3>Key Takeaways</h3><p>Highlights from the selected period</p></div></header>
+              <div class="refill-takeaway-list">
+                <div class="refill-takeaway"><span>1</span><div><strong>Latest Activity</strong><p id="refillLatestTakeaway">Waiting for report data…</p></div></div>
+                <div class="refill-takeaway"><span>2</span><div><strong>Highest Refill Activity</strong><p id="refillHighestTakeaway">Waiting for report data…</p></div></div>
+                <div class="refill-takeaway"><span>3</span><div><strong>Live Monitoring</strong><p id="refillPeriodTakeaway">Select a year or month to view refill trends.</p></div></div>
               </div>
-              
-              <div id="chart-bar-stacked"></div>
-            </div>
-        </div>
+            </article>
+          </div>
+        </section>
       </div>
-
-      <div class="col-lg-4 col-xl-4 d-flex align-items-stretch">
+      <div class="col-lg-4 col-xl-4 col-md-4 col-sm-12 d-flex align-items-stretch">
         <div class="card w-100">
           <div class="card-body">
               <div class="mb-3 justify-content-between align-items-center">
@@ -1017,187 +1177,223 @@
           </div>
         </div>
       </div>
+      <div class="col-lg-4 col-xl-4 col-md-4 col-sm-12 d-flex align-items-stretch">
+        <div class="card dashboard-card">
+          <div class="card-body">
+            <div class="dashboard-panel-head">
+              <div>
+                <h5 class="dashboard-panel-title">Top Dealers</h5>
+                <p class="dashboard-panel-copy">Leaderboard based on earned points.</p>
+              </div>
+            </div>
+            <div class="dashboard-donut">
+              <div id="dealers-donut-chart"></div>
+              <div class="dashboard-donut-center">
+                <small>Highest points</small>
+                <strong>
+                    {{ $dealers->isNotEmpty() ? number_format($dealers->first()->total_points) : '0' }}
+                </strong>
+              </div>
+            </div>
+
+            <div class="dashboard-table-wrap dashboard-scroll">
+              <table class="table dashboard-table align-middle text-nowrap">
+                <thead>
+                  <tr>
+                    <th scope="col">Dealer</th>
+                    <th scope="col">Points</th>
+                    <th scope="col">Last transaction</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @foreach($dealers as $index => $dealer)
+                    <tr>
+                      <td>
+                        <span class="dashboard-rank-dot" style="background-color: {{ ['#02437B', '#0E5A8A', '#1A7199', '#2688A8', '#329FB7', '#3EB6C6', '#4ACDD5', '#56E4E4', '#62FBF3', '#6EFFFF'][$index % 10] }};"></span>
+                        {{strtoupper(substr($dealer->dealer->name ?? 'Unknown', 0, 12))}}
+                      </td>
+                      <td>{{number_format($dealer->total_points,0)}}</td>
+                      <td>{{date('M j, Y',strtotime($dealer->latest_transaction))}}</td>
+                    </tr>
+                  @endforeach
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-4 col-xl-4 col-md-4 col-sm-12 d-flex align-items-stretch">
+        <div class="card dashboard-card">
+          <div class="card-body">
+            <div class="dashboard-panel-head">
+              <div>
+                <h5 class="dashboard-panel-title">Top Customers</h5>
+                <p class="dashboard-panel-copy">Highest loyalty-point earners.</p>
+              </div>
+            </div>
+            <div class="dashboard-donut">
+              <div id="customers-donut-chart"></div>
+              <div class="dashboard-donut-center">
+                <small>Highest points</small>
+                <strong>
+                    {{ $top_customers->isNotEmpty() ? number_format($top_customers->first()->total_points) : '0' }}
+                </strong>
+              </div>
+            </div>
+
+            <div class="dashboard-table-wrap dashboard-scroll">
+              <table class="table dashboard-table align-middle text-nowrap">
+                <thead>
+                  <tr>
+                    <th scope="col">Customer</th>
+                    <th scope="col">Points</th>
+                    <th scope="col">Last transaction</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @foreach($top_customers as $index => $customer)
+                    <tr>
+                      <td>
+                        <span class="dashboard-rank-dot" style="background-color: {{ ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9', '#F8C471', '#82E0AA'][$index % 10] }};"></span>
+                        {{strtoupper(substr($customer->customer->name ?? 'Unknown', 0, 12))}}
+                      </td>
+                      <td>{{number_format($customer->total_points,0)}}</td>
+                      <td>{{date('M j, Y',strtotime($customer->latest_transaction))}}</td>
+                    </tr>
+                  @endforeach
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-  </section>
-  <section class="dashboard-section">
     <div class="row">
-      
-        <div class="col-lg-8 col-xl-8 d-flex align-items-stretch">
-          <div class="card dashboard-card">
-            <div class="card-body">
-              <div class="dashboard-panel-head">
-                <div>
-                  <h5 class="dashboard-panel-title">Latest Transactions</h5>
-                  <p class="dashboard-panel-copy">Most recent customer purchases and earned points.</p>
-                </div>
+      <div class="col-lg-6 col-xl-6 col-md-6 col-sm-12 d-flex align-items-stretch">
+        <div class="card dashboard-card">
+          <div class="card-body">
+            <div class="dashboard-panel-head">
+              <div>
+                <h5 class="dashboard-panel-title">Latest Transactions</h5>
+                <p class="dashboard-panel-copy">Most recent customer purchases and earned points.</p>
               </div>
+            </div>
 
-              <div class="row mb-2 px-3 text-uppercase text-muted fw-bold" style="font-size: 9px; letter-spacing: .05em;">
-                <div class="col-4">
-                  Customer
-                </div>
-                <div class="col-4 text-center">
-                  Date
-                </div>
-                <div class="col-4 text-end">
-                  Customer points
-                </div>
+            <div class="row mb-2 px-3 text-uppercase text-muted fw-bold" style="font-size: 9px; letter-spacing: .05em;">
+              <div class="col-4">
+                Customer
               </div>
+              <div class="col-4 text-center">
+                Date
+              </div>
+              <div class="col-4 text-end">
+                Customer points
+              </div>
+            </div>
 
-              <div class="transaction-list dashboard-list">
-                @foreach($transactions_details as $index => $transaction)
-                  <div class="transaction-item {{ $index >= 5 ? 'd-none' : '' }}" data-customer-id="{{$transaction->customer->id ?? 0}}">
-                    <div class="row align-items-center dashboard-list-item">
-                      
-                      <div class="col-4">
-                        <div class="d-flex align-items-center">
-                          <div class="flex-shrink-0 me-3">
-                            <div class="dashboard-avatar">
-                              <img src="{{ optional($transaction->customer)->avatar ? asset($transaction->customer->avatar) : asset('/design/assets/images/profile/user-1.png') }}" 
-                                  alt="{{ optional($transaction->customer)->name ?? 'Customer' }}"
-                                  loading="lazy">
-                            </div>
+            <div class="transaction-list dashboard-list">
+              @foreach($transactions_details as $index => $transaction)
+                <div class="transaction-item {{ $index >= 5 ? 'd-none' : '' }}" data-customer-id="{{$transaction->customer->id ?? 0}}">
+                  <div class="row align-items-center dashboard-list-item">
+
+                    <div class="col-4">
+                      <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0 me-3">
+                          <div class="dashboard-avatar">
+                            <img src="{{ optional($transaction->customer)->avatar ? asset($transaction->customer->avatar) : asset('/design/assets/images/profile/user-1.png') }}"
+                                alt="{{ optional($transaction->customer)->name ?? 'Customer' }}"
+                                loading="lazy">
                           </div>
-                          
-                          <div class="flex-grow-1">
-                            <h6 class="mb-0 fw-bold text-dark text-truncate">
-                                <a href="#" 
-                                    class="text-decoration-none text-dark customer-link text-truncate d-inline-block" 
-                                    data-bs-toggle="modal" 
-                                    data-bs-target="#transactionModal" 
-                                    onclick="showTransactionDetails('{{date('M d, Y',strtotime($transaction->created_at))}}', '{{number_format($transaction->qty,2)}}', '{{number_format($transaction->qty*$transaction->price,2)}}', '{{strtoupper($transaction->dealer->name ?? '')}}', '{{strtoupper($transaction->customer->name ?? '')}}', '{{$transaction->points_dealer}}', '{{$transaction->points_client}}', '{{$transaction->item}}')">
-                                    {{ strtoupper($transaction->customer->name ?? 'Unknown') }}
-                                </a>
-                            </h6>
                         </div>
-                        </div>
+
+                        <div class="flex-grow-1">
+                          <h6 class="mb-0 fw-bold text-dark text-truncate">
+                              <a href="#"
+                                  class="text-decoration-none text-dark customer-link text-truncate d-inline-block"
+                                  data-bs-toggle="modal"
+                                  data-bs-target="#transactionModal"
+                                  onclick="showTransactionDetails('{{date('M d, Y',strtotime($transaction->created_at))}}', '{{number_format($transaction->qty,2)}}', '{{number_format($transaction->qty*$transaction->price,2)}}', '{{strtoupper($transaction->dealer->name ?? '')}}', '{{strtoupper($transaction->customer->name ?? '')}}', '{{$transaction->points_dealer}}', '{{$transaction->points_client}}', '{{$transaction->item}}')">
+                                  {{ strtoupper($transaction->customer->name ?? 'Unknown') }}
+                              </a>
+                          </h6>
                       </div>
-                      
-                      <div class="col-4 text-center">
-                        <span class="text-dark fw-medium">
-                          {{ date('d.m.Y', strtotime($transaction->created_at)) }}
-                        </span>
-                      </div>
-                      
-                      <div class="col-3 text-end">
-                        <span class="fw-bold text-dark">
-                          {{ $transaction->points_client }}
-                        </span>
                       </div>
                     </div>
+
+                    <div class="col-4 text-center">
+                      <span class="text-dark fw-medium">
+                        {{ date('d.m.Y', strtotime($transaction->created_at)) }}
+                      </span>
+                    </div>
+
+                    <div class="col-3 text-end">
+                      <span class="fw-bold text-dark">
+                        {{ $transaction->points_client }}
+                      </span>
+                    </div>
                   </div>
-                @endforeach
-              </div>
+                </div>
+              @endforeach
+            </div>
 
-              <div class="dashboard-pagination">
-                <small class="text-muted" id="entriesInfo">
-                  Showing <span id="currentStart">1</span> to <span id="currentEnd">5</span> of <span id="totalEntries">{{ $transactions_details->count() }}</span> entries
-                </small>
-                
-                <nav aria-label="Transaction pagination">
-                  <ul id="transactionPagination" class="pagination pagination-sm mb-0">
-                    <li class="page-item" id="prevPage">
-                      <a class="page-link" href="javascript:void(0)" onclick="changePage('prev')">
-                        <i class="fas fa-chevron-left"></i> Previous
-                      </a>
-                    </li>
-                    <li class="page-item" id="nextPage">
-                      <a class="page-link" href="javascript:void(0)" onclick="changePage('next')">
-                        Next <i class="fas fa-chevron-right"></i>
-                      </a>
-                    </li>
-                  </ul>
-                </nav>
-              </div>
+            <div class="dashboard-pagination">
+              <small class="text-muted" id="entriesInfo">
+                Showing <span id="currentStart">1</span> to <span id="currentEnd">5</span> of <span id="totalEntries">{{ $transactions_details->count() }}</span> entries
+              </small>
+
+              <nav aria-label="Transaction pagination">
+                <ul id="transactionPagination" class="pagination pagination-sm mb-0">
+                  <li class="page-item" id="prevPage">
+                    <a class="page-link" href="javascript:void(0)" onclick="changePage('prev')">
+                      <i class="fas fa-chevron-left"></i> Previous
+                    </a>
+                  </li>
+                  <li class="page-item" id="nextPage">
+                    <a class="page-link" href="javascript:void(0)" onclick="changePage('next')">
+                      Next <i class="fas fa-chevron-right"></i>
+                    </a>
+                  </li>
+                </ul>
+              </nav>
             </div>
           </div>
         </div>
-
-        <div class="modal fade" id="transactionModal" tabindex="-1" aria-labelledby="transactionModalLabel" aria-hidden="true">
-          <div class="modal-dialog modal-xl">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title" id="transactionModalLabel">Transaction Details <span id="customerName" style="display:none"></span></h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-              </div>
-              <div class="modal-body">
-                <div class="table-responsive">
-                  <table class="table table-striped align-middle text-nowrap">
-                    <thead>
-                      <tr>
-                        <th scope="col">Date</th>
-                        <th scope="col">Quantity</th>
-                        <th scope="col">Amount</th>
-                        <th scope="col">Dealer</th>
-                        <th scope="col">Customer</th>
-                        <th scope="col">Dealer Points</th>
-                        <th scope="col">Customer Points</th>
-                        <th scope="col">Item</th>
-                      </tr>
-                    </thead>
-                    <tbody id="customerTransactions">
-                      <!-- Customer transactions will be here -->
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-              </div>
+      </div>
+      <div class="modal fade" id="transactionModal" tabindex="-1" aria-labelledby="transactionModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="transactionModalLabel">Transaction Details <span id="customerName" style="display:none"></span></h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-          </div>
-        </div>
-
-        <div class="col-lg-4 col-xl-4 d-flex align-items-stretch">
-          <div class="card dashboard-card">
-            <div class="card-body">
-              <div class="dashboard-panel-head">
-                <div>
-                  <h5 class="dashboard-panel-title">Top Dealers</h5>
-                  <p class="dashboard-panel-copy">Leaderboard based on earned points.</p>
-                </div>
-              </div>
-              <div class="dashboard-donut">
-                <div id="dealers-donut-chart"></div>
-                <div class="dashboard-donut-center">
-                  <small>Highest points</small>
-                  <strong>
-                      {{ $dealers->isNotEmpty() ? number_format($dealers->first()->total_points) : '0' }}
-                  </strong>
-                </div>
-              </div>
-              
-              <div class="dashboard-table-wrap dashboard-scroll">
-                <table class="table dashboard-table align-middle text-nowrap">
+            <div class="modal-body">
+              <div class="table-responsive">
+                <table class="table table-striped align-middle text-nowrap">
                   <thead>
                     <tr>
+                      <th scope="col">Date</th>
+                      <th scope="col">Quantity</th>
+                      <th scope="col">Amount</th>
                       <th scope="col">Dealer</th>
-                      <th scope="col">Points</th>
-                      <th scope="col">Last transaction</th>
+                      <th scope="col">Customer</th>
+                      <th scope="col">Dealer Points</th>
+                      <th scope="col">Customer Points</th>
+                      <th scope="col">Item</th>
                     </tr>
                   </thead>
-                  <tbody>
-                    @foreach($dealers as $index => $dealer)
-                      <tr>
-                        <td>
-                          <span class="dashboard-rank-dot" style="background-color: {{ ['#02437B', '#0E5A8A', '#1A7199', '#2688A8', '#329FB7', '#3EB6C6', '#4ACDD5', '#56E4E4', '#62FBF3', '#6EFFFF'][$index % 10] }};"></span>
-                          {{strtoupper(substr($dealer->dealer->name ?? 'Unknown', 0, 12))}}
-                        </td>
-                        <td>{{number_format($dealer->total_points,0)}}</td>
-                        <td>{{date('M j, Y',strtotime($dealer->latest_transaction))}}</td>
-                      </tr>
-                    @endforeach
+                  <tbody id="customerTransactions">
+                    <!-- Customer transactions will be here -->
                   </tbody>
                 </table>
               </div>
             </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
           </div>
         </div>
-    </div>
-  </section>
-  <section class="dashboard-section">
-    <div class="row">
-      <div class="col-lg-7 col-xl-8 d-flex align-items-stretch">
+      </div>
+      <div class="col-lg-6 col-xl-6 col-md-6 col-sm-12 d-flex align-items-stretch">
         <div class="card dashboard-card">
           <div class="card-body">
             <div class="dashboard-panel-head">
@@ -1296,55 +1492,8 @@
           </div>
         </div>
       </div>
-
-      <div class="col-lg-4 col-xl-4 d-flex align-items-stretch">
-        <div class="card dashboard-card">
-          <div class="card-body">
-            <div class="dashboard-panel-head">
-              <div>
-                <h5 class="dashboard-panel-title">Top Customers</h5>
-                <p class="dashboard-panel-copy">Highest loyalty-point earners.</p>
-              </div>
-            </div>
-            <div class="dashboard-donut">
-              <div id="customers-donut-chart"></div>
-              <div class="dashboard-donut-center">
-                <small>Highest points</small>
-                <strong>
-                    {{ $top_customers->isNotEmpty() ? number_format($top_customers->first()->total_points) : '0' }}
-                </strong>
-              </div>
-            </div>
-            
-            <div class="dashboard-table-wrap dashboard-scroll">
-              <table class="table dashboard-table align-middle text-nowrap">
-                <thead>
-                  <tr>
-                    <th scope="col">Customer</th>
-                    <th scope="col">Points</th>
-                    <th scope="col">Last transaction</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @foreach($top_customers as $index => $customer)
-                    <tr>
-                      <td>
-                        <span class="dashboard-rank-dot" style="background-color: {{ ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9', '#F8C471', '#82E0AA'][$index % 10] }};"></span>
-                        {{strtoupper(substr($customer->customer->name ?? 'Unknown', 0, 12))}}
-                      </td>
-                      <td>{{number_format($customer->total_points,0)}}</td>
-                      <td>{{date('M j, Y',strtotime($customer->latest_transaction))}}</td>
-                    </tr>
-                  @endforeach
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-
     </div>
-  </section>        
+  </section>
 @endsection
 @section('javascript')
  @if(auth()->user()->role == "Client")
@@ -1373,6 +1522,8 @@
 <script>
 (function () {
     var endpoint = @json(route('home.live-overview'));
+    var dashboardYear = @json($selected_year);
+    var dashboardMonth = @json($selected_month);
     var salesChart = null;
     var refreshButton = document.getElementById('saRefreshButton');
     var peso = new Intl.NumberFormat('en-PH', {
@@ -1394,12 +1545,12 @@
     }
 
     function renderKpis(kpis) {
-        setText('saTodaySales', peso.format(kpis.today_sales || 0));
-        setText('saMonthSales', peso.format(kpis.month_sales || 0));
-        setText('saTotalSales', peso.format(kpis.total_sales || 0));
-        setText('saTodayTransactions', wholeNumber.format(kpis.today_transactions || 0));
-        setText('saMonthUnits', wholeNumber.format(kpis.month_units || 0));
-        setText('saTotalProductsSold', wholeNumber.format(kpis.total_products_sold || 0));
+        setText('saTodaySales', peso.format(kpis.period_sales || 0));
+        setText('saMonthSales', peso.format(kpis.refill_sales || 0));
+        setText('saTotalSales', peso.format(kpis.average_transaction || 0));
+        setText('saTodayTransactions', wholeNumber.format(kpis.period_transactions || 0));
+        setText('saMonthUnits', wholeNumber.format(kpis.refill_units || 0));
+        setText('saTotalProductsSold', wholeNumber.format(kpis.total_units || 0));
         setText('saActiveDealers', wholeNumber.format(kpis.active_dealers || 0));
         setText('saActiveCustomers', wholeNumber.format(kpis.active_customers || 0));
     }
@@ -1502,7 +1653,8 @@
     function loadLiveOverview() {
         if (refreshButton) refreshButton.classList.add('is-loading');
 
-        fetch(endpoint, {
+        var query = new URLSearchParams({ year: dashboardYear, month: dashboardMonth || '' });
+        fetch(endpoint + '?' + query.toString(), {
             headers: {
                 'Accept': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest'
@@ -2206,223 +2358,145 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <script>
-let chartInstance = null;
-const initialCategories = @json($categories);
-const initialQty = @json($qty);
-const initialViewType = @json($view_type);
+let refillVolumeChart = null;
+let refillAverageChart = null;
 
-// Initialize chart on page load
 $(function () {
-  if (!document.querySelector('#chart-bar-stacked')) return;
-
-  renderChart(initialCategories, initialQty, {{ $selected_year }}, {{ $selected_month ?? 'null' }}, initialViewType);
-  
-  // Handle year selection change
-  $('#yearSelect').on('change', function() {
-    const selectedYear = $(this).val();
-    const selectedMonth = $('#monthSelect').val();
-    loadChartData(selectedYear, selectedMonth);
-  });
-  
-  // Handle month selection change
-  $('#monthSelect').on('change', function() {
-    const selectedYear = $('#yearSelect').val();
-    const selectedMonth = $(this).val();
-    loadChartData(selectedYear, selectedMonth);
-  });
+  const initialYear = @json($selected_year);
+  const initialMonth = @json($selected_month);
+  loadChartData(initialYear, initialMonth);
 });
 
-function loadChartData(year, month = null) {
-  // Disable dropdowns to prevent multiple requests
-  $('#yearSelect, #monthSelect').prop('disabled', true);
-  
-  // Show loading indicator
+function loadChartData(year, month) {
   $('#chartLoading').addClass('is-visible');
-  $('#chart-bar-stacked').hide();
-  
-  // Add a small delay to ensure UI updates are visible
-  setTimeout(() => {
-    $.ajax({
-      url: '{{ route("home.chart-data") }}',
-      method: 'GET',
-      data: { 
-        year: year, 
-        month: month || null 
-      },
-      cache: false,
-      success: function(response) {
-        // Update available months dropdown
-        updateMonthsDropdown(response.available_months, month);
-        
-        // Update view mode indicator
-        updateViewModeIndicator(response.view_type);
-        
-        // Hide loading and show chart
-        $('#chartLoading').removeClass('is-visible');
-        $('#chart-bar-stacked').show();
-        
-        // Re-enable dropdowns
-        $('#yearSelect, #monthSelect').prop('disabled', false);
-        
-        // Render chart with new data
-        renderChart(response.categories, response.qty, response.year, response.month, response.view_type);
-      },
-      error: function(xhr, status, error) {
-        $('#chartLoading').removeClass('is-visible');
-        $('#chart-bar-stacked').show();
-        $('#yearSelect, #monthSelect').prop('disabled', false);
-        console.error('Error loading chart data:', error);
-        alert('Error loading data. Please try again.');
-      }
-    });
-  }, 100);
-}
 
-function updateMonthsDropdown(availableMonths, selectedMonth) {
-  const monthSelect = $('#monthSelect');
-  
-  // Clear existing options except "All Months"
-  monthSelect.find('option:not([value=""])').remove();
-  
-  // Add available months
-  availableMonths.forEach(function(month) {
-    const isSelected = month.number == selectedMonth ? 'selected' : '';
-    monthSelect.append(`<option value="${month.number}" ${isSelected}>${month.name}</option>`);
+  $.ajax({
+    url: '{{ route("home.chart-data") }}',
+    method: 'GET',
+    data: { year: year, month: month || null },
+    cache: false,
+    dataType: 'json'
+  }).done(function (response) {
+    renderRefillMonitoring(response.periods || [], response.year, response.month, response.view_type);
+  }).fail(function (xhr, status, error) {
+    console.error('Error loading refill monitoring data:', error);
+    $('#refillLatestTakeaway').text('The refill report could not be loaded. Try applying the filters again.');
+  }).always(function () {
+    $('#chartLoading').removeClass('is-visible');
   });
 }
 
-function updateViewModeIndicator(viewType) {
-  const indicator = $('#viewModeIndicator');
-  if (viewType === 'monthly') {
-    indicator.text('Daily View').removeClass('bg-primary').addClass('bg-success');
-  } else {
-    indicator.text('Monthly View').removeClass('bg-success').addClass('bg-primary');
-  }
+function renderRefillMonitoring(periods, year, month, viewType) {
+  const categories = periods.map(function (period) { return period.label; });
+  const refills = periods.map(function (period) { return Number(period.refills) || 0; });
+  const beneficiaries = periods.map(function (period) { return Number(period.beneficiaries) || 0; });
+  const averages = periods.map(function (period) { return Number(period.average) || 0; });
+
+  renderRefillTable(periods);
+  renderRefillCharts(categories, refills, averages, viewType);
+  updateRefillTakeaways(periods, year, month);
 }
 
-function renderChart(categories, qty, year, month = null, viewType = 'yearly') {
+function renderRefillTable(periods) {
+  const head = document.getElementById('refillSummaryHead');
+  const rows = document.getElementById('refillSummaryRows');
+  if (!head || !rows) return;
+
+  head.innerHTML = '<th scope="col">Monitoring metric</th>' + periods.map(function (period) {
+    return '<th scope="col">' + period.label + '</th>';
+  }).join('');
+
+  const metrics = [
+    { label: 'No. of Refills', key: 'refills', format: formatRefillNumber },
+    { label: 'No. of Beneficiaries', key: 'beneficiaries', format: formatRefillNumber },
+    { label: 'Average Refills per Beneficiary', key: 'average', format: function (value) { return Number(value || 0).toLocaleString('en-PH', { maximumFractionDigits: 1 }); } }
+  ];
+  rows.innerHTML = metrics.map(function (metric) {
+    return '<tr><th scope="row">' + metric.label + '</th>' + periods.map(function (period) {
+      return '<td>' + metric.format(period[metric.key]) + '</td>';
+    }).join('') + '</tr>';
+  }).join('');
+}
+
+function renderRefillCharts(categories, refills, averages, viewType) {
   if (!window.ApexCharts) return;
+  if (refillVolumeChart) { refillVolumeChart.destroy(); refillVolumeChart = null; }
+  if (refillAverageChart) { refillAverageChart.destroy(); refillAverageChart = null; }
 
-  if (chartInstance) {
-    chartInstance.destroy();
-    chartInstance = null;
-  }
-
-  const chartElement = document.querySelector('#chart-bar-stacked');
-  if (!chartElement) return;
-
-  chartElement.innerHTML = '';
-
-  const options = {
-    series: [{
-      name: 'Refills Sold',
-      data: qty
-    }],
-    chart: {
-      type: 'bar',
-      height: 350,
-      fontFamily: 'inherit',
-      toolbar: { show: false },
-      animations: {
-        enabled: true,
-        easing: 'easeout',
-        speed: 550
-      }
-    },
-    plotOptions: {
-      bar: {
-        horizontal: false,
-        columnWidth: viewType === 'monthly' ? '62%' : '48%',
-        borderRadius: 5,
-        borderRadiusApplication: 'end',
-        dataLabels: { position: 'top' }
-      }
-    },
-    colors: ['#5BC2E7'],
-    fill: {
-      type: 'gradient',
-      gradient: {
-        type: 'vertical',
-        shadeIntensity: .15,
-        gradientToColors: ['#1687b2'],
-        opacityFrom: 1,
-        opacityTo: .88,
-        stops: [0, 100]
-      }
-    },
+  const compact = viewType === 'monthly';
+  const sharedChart = { toolbar: { show: false }, animations: { enabled: true, speed: 400 }, parentHeightOffset: 0 };
+  refillVolumeChart = new ApexCharts(document.querySelector('#refillVolumeChart'), {
+    series: [
+      { name: 'No. of Refills', type: 'column', data: refills },
+      { name: 'Average per Beneficiary', type: 'line', data: averages }
+    ],
+    chart: Object.assign({ type: 'line', height: 300, fontFamily: 'inherit' }, sharedChart),
+    colors: ['#18a5bc', '#07528a'],
+    stroke: { width: [0, 3], curve: 'straight' },
+    plotOptions: { bar: { columnWidth: compact ? '58%' : '48%', borderRadius: 3 } },
     dataLabels: { enabled: false },
-    stroke: { show: false },
-    grid: {
-      borderColor: '#edf0f5',
-      strokeDashArray: 4,
-      padding: { top: 8, right: 8, bottom: 0, left: 4 }
-    },
-    xaxis: {
-      categories: categories,
-      axisBorder: { show: false },
-      axisTicks: { show: false },
-      labels: {
-        style: {
-          colors: '#98a2b3',
-          fontSize: '10px'
-        },
-        rotate: viewType === 'monthly' && categories.length > 15 ? -45 : 0,
-        hideOverlappingLabels: true,
-        trim: true,
-        formatter: function (val) {
-          return viewType === 'monthly' ? val : String(val).substring(0, 3);
-        }
-      },
-      tickPlacement: 'on'
-    },
-    yaxis: {
-      labels: {
-        style: {
-          colors: '#98a2b3',
-          fontSize: '10px'
-        },
-        formatter: function (val) {
-          return Math.round(val);
-        }
-      }
-    },
-    tooltip: {
-      theme: 'light',
-      x: {
-        formatter: function (val) {
-          return viewType === 'monthly' ? 'Day ' + val : val + ' ' + year;
-        }
-      },
-      y: {
-        formatter: function (val) {
-          return Math.round(val).toLocaleString('en-PH') + ' units';
-        }
-      }
-    },
-    legend: { show: false },
-    noData: {
-      text: 'No refill sales found for this period.',
-      align: 'center',
-      verticalAlign: 'middle',
-      style: { color: '#98a2b3', fontSize: '12px' }
-    },
-    responsive: [{
-      breakpoint: 768,
-      options: {
-        chart: { height: 310 },
-        plotOptions: { bar: { columnWidth: '72%', borderRadius: 3 } },
-        xaxis: { labels: { rotate: -45 } }
-      }
-    }]
-  };
+    markers: { size: [0, 4], strokeWidth: 2, hover: { size: 6 } },
+    xaxis: { categories: categories, labels: { rotate: compact && categories.length > 15 ? -45 : 0, hideOverlappingLabels: true, style: { colors: '#526579', fontSize: '10px' } }, axisBorder: { show: false }, axisTicks: { show: false } },
+    yaxis: [
+      { title: { text: 'Number of Refills', style: { color: '#34495e', fontSize: '10px' } }, labels: { formatter: formatRefillNumber, style: { colors: '#66788a', fontSize: '10px' } } },
+      { opposite: true, min: 0, title: { text: 'Average Refills per Beneficiary', style: { color: '#34495e', fontSize: '10px' } }, labels: { formatter: function (value) { return Number(value).toFixed(1); }, style: { colors: '#66788a', fontSize: '10px' } } }
+    ],
+    grid: { borderColor: '#e5edf3', strokeDashArray: 3 },
+    legend: { position: 'top', horizontalAlign: 'center', fontSize: '11px' },
+    tooltip: { shared: true, intersect: false, y: [{ formatter: function (value) { return formatRefillNumber(value) + ' refills'; } }, { formatter: function (value) { return Number(value || 0).toFixed(1) + ' per beneficiary'; } }] },
+    noData: { text: 'No refill activity for this period.' },
+    responsive: [{ breakpoint: 600, options: { chart: { height: 270 }, yaxis: [{ show: true, title: { text: '' } }, { show: false }], legend: { position: 'bottom' } } }]
+  });
+  refillVolumeChart.render();
 
-  setTimeout(function () {
-    chartInstance = new ApexCharts(chartElement, options);
-    chartInstance.render();
-  }, 50);
+  refillAverageChart = new ApexCharts(document.querySelector('#refillAverageChart'), {
+    series: [{ name: 'Average Refills per Beneficiary', data: averages }],
+    chart: Object.assign({ type: 'line', height: 300, fontFamily: 'inherit' }, sharedChart),
+    colors: ['#21a9c1'],
+    stroke: { width: 3, curve: 'straight' },
+    markers: { size: compact && categories.length > 20 ? 2 : 4, strokeWidth: 2, hover: { size: 6 } },
+    dataLabels: { enabled: !compact, offsetY: -8, background: { enabled: true, foreColor: '#fff', borderRadius: 2, padding: 4, opacity: .95 }, style: { fontSize: '10px', fontWeight: 700 } },
+    xaxis: { categories: categories, labels: { rotate: compact && categories.length > 15 ? -45 : 0, hideOverlappingLabels: true, style: { colors: '#526579', fontSize: '10px' } }, axisBorder: { show: false }, axisTicks: { show: false } },
+    yaxis: { min: 0, forceNiceScale: true, labels: { formatter: function (value) { return Number(value).toFixed(1); }, style: { colors: '#66788a', fontSize: '10px' } } },
+    grid: { borderColor: '#e5edf3', strokeDashArray: 3 },
+    tooltip: { y: { formatter: function (value) { return Number(value || 0).toFixed(1) + ' refills per beneficiary'; } } },
+    noData: { text: 'No refill activity for this period.' },
+    responsive: [{ breakpoint: 600, options: { chart: { height: 270 } } }]
+  });
+  refillAverageChart.render();
 }
-</script>
-<script>
+
+function updateRefillTakeaways(periods, year, month) {
+  const activePeriods = periods.filter(function (period) { return Number(period.refills) > 0; });
+  const latest = activePeriods.length ? activePeriods[activePeriods.length - 1] : null;
+  const highest = activePeriods.reduce(function (best, period) {
+    return !best || Number(period.refills) > Number(best.refills) ? period : best;
+  }, null);
+
+  document.getElementById('refillLatestTakeaway').textContent = latest
+    ? latest.label + ' recorded ' + formatRefillNumber(latest.refills) + ' refills among ' + formatRefillNumber(latest.beneficiaries) + ' beneficiaries.'
+    : 'No refill activity was recorded for the selected period.';
+  document.getElementById('refillHighestTakeaway').textContent = highest
+    ? highest.label + ' had the highest activity with ' + formatRefillNumber(highest.refills) + ' refills.'
+    : 'No refill activity was recorded for the selected period.';
+  document.getElementById('refillPeriodTakeaway').textContent = month
+    ? 'Daily refill activity for ' + new Date(Number(year), Number(month) - 1, 1).toLocaleString('en-PH', { month: 'long', year: 'numeric' }) + '.'
+    : 'Monthly refill activity for ' + year + '.';
+  document.getElementById('refillPrimaryTitle').textContent = month
+    ? 'Daily Refills and Average Refills per Beneficiary'
+    : 'Monthly Refills and Average Refills per Beneficiary';
+  document.getElementById('refillTableTitle').textContent = month
+    ? 'Project RISE – Daily Refill Monitoring Data'
+    : 'Project RISE – Monthly Refill Monitoring Data';
+  document.getElementById('refillTableCaption').textContent = month
+    ? 'Daily refill totals for ' + new Date(Number(year), Number(month) - 1, 1).toLocaleString('en-PH', { month: 'long', year: 'numeric' })
+    : 'Monthly refill totals for ' + year;
+}
+
+function formatRefillNumber(value) {
+  return Number(value || 0).toLocaleString('en-PH', { maximumFractionDigits: 0 });
+}
+</script><script>
 let currentPage = 1;
 let entriesPerPage = 5;
 let totalEntries = {{ $transactions_details->count() }};

@@ -1,708 +1,442 @@
 @extends('layouts.app')
 @section('content')
-<?php
-$hasErrors = $errors->any();
-$hasSelectedRole = old('selected_role');
-$showLoginDirectly = $hasErrors && $hasSelectedRole;
-
-$isDirect = request('direct') === 'true';
-$showRoleSelection = $isDirect && !$showLoginDirectly;
-?>
-
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-<div class="landing-page" id="landingPage" style="display: {{ $showLoginDirectly || $showRoleSelection ? 'none' : 'flex' }};">
-    <div class="landing-content">
-        <div class="landing-wrapper">
-            <div class="logo-section">
-                <img src="{{asset('images/logo_sa_labas.png')}}" alt="GazLite Logo" class="main-logo-img">
+<div class="login-page auth-screen" id="loginFormPage">
+    <div class="auth-card login-card">
+        <section class="auth-brand-panel login-brand-panel">
+            <div class="brand-glow brand-glow-one"></div>
+            <div class="brand-glow brand-glow-two"></div>
+            <div class="brand-image-wrap">
+                <img src="{{ asset('images/admin-login.png') }}" alt="" class="auth-illustration">
+            </div>
+            <p class="brand-caption">Keep your business moving with one connected workspace.</p>
+        </section>
+
+        <section class="auth-form-panel">
+            <div class="form-topbar form-topbar-single">
+                <img src="{{ asset('images/logo_nya.png') }}" alt="GazLite" class="form-logo">
             </div>
 
-            <div class="illustration-section">
-                <img src="{{asset('images/human.png')}}" alt="Easy Management Illustration" class="human-illustration">
+            <div class="form-heading">
+                <p class="auth-eyebrow">ADMIN PORTAL</p>
+                <h1>Sign in to your account</h1>
+                <p class="auth-description">Enter your credentials to continue.</p>
             </div>
 
-            <div class="tagline">
-                <p>Easy Management for your Store.</p>
-            </div>
-
-            <div class="progress-dots">
-                <span class="dot active"></span>
-                <span class="dot"></span>
-                <span class="dot"></span>
-            </div>
-
-            <button class="landing-signin-button" onclick="showRoleSelection()">
-                Sign in
-            </button>
-        </div>
-    </div>
-</div>
-
-<div class="role-selection-page" id="roleSelectionPage" style="display: {{ $showRoleSelection ? 'flex' : 'none' }};">
-    <div class="role-header">
-        <div class="header-left">
-        </div>
-    </div>
-
-    <div class="role-content">
-        <div class="role-wrapper">
-            <div class="welcome-section">
-                <h1 class="welcome-title">Welcome to Gaz Lite !</h1>
-                <p class="welcome-subtitle">Select 'Admin' or 'Employee' to get started.</p>
-            </div>
-
-            <div class="context-image-section">
-                <img src="{{asset('images/context.png')}}" alt="Role Selection Context" class="context-image">
-            </div>
-
-            <div class="progress-dots">
-                <span class="dot"></span>
-                <span class="dot active"></span>
-                <span class="dot"></span>
-            </div>
-
-            <div class="role-buttons">
-                <button class="role-button dealer-btn" onclick="selectRole('admin')">
-                    {{-- <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="role-icon">
-                        <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg> --}}
-                    <svg width="22" height="22" fill="currentColor" class="bi bi-person-fill-gear" viewBox="0 0 16 16">
-                        <path d="M11 5a3 3 0 1 1-6 0 3 3 0 0 1 6 0m-9 8c0 1 1 1 1 1h5.256A4.5 4.5 0 0 1 8 12.5a4.5 4.5 0 0 1 1.544-3.393Q8.844 9.002 8 9c-5 0-6 3-6 4m9.886-3.54c.18-.613 1.048-.613 1.229 0l.043.148a.64.64 0 0 0 .921.382l.136-.074c.561-.306 1.175.308.87.869l-.075.136a.64.64 0 0 0 .382.92l.149.045c.612.18.612 1.048 0 1.229l-.15.043a.64.64 0 0 0-.38.921l.074.136c.305.561-.309 1.175-.87.87l-.136-.075a.64.64 0 0 0-.92.382l-.045.149c-.18.612-1.048.612-1.229 0l-.043-.15a.64.64 0 0 0-.921-.38l-.136.074c-.561.305-1.175-.309-.87-.87l.075-.136a.64.64 0 0 0-.382-.92l-.148-.045c-.613-.18-.613-1.048 0-1.229l.148-.043a.64.64 0 0 0 .382-.921l-.074-.136c-.306-.561.308-1.175.869-.87l.136.075a.64.64 0 0 0 .92-.382zM14 12.5a1.5 1.5 0 1 0-3 0 1.5 1.5 0 0 0 3 0"/>
-                    </svg>
-                    Admin
-                    <span class="selected-indicator" style="display: none;">✓</span>
-                </button>
-                
-                <button class="role-button client-btn" onclick="selectRole('area distributor')">
-                    {{-- <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="role-icon">
-                        <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg> --}}
-                    <svg width="22" height="22" fill="currentColor" class="bi bi-people-fill" viewBox="0 0 16 16">
-                        <path d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6m-5.784 6A2.24 2.24 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.3 6.3 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1zM4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5"/>
-                    </svg>
-                    Partner
-                    <span class="selected-indicator" style="display: none;">✓</span>
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="login-page" id="loginFormPage" style="display: {{ $showLoginDirectly ? 'flex' : 'none' }};">
-    <div class="login-header">
-        <div class="header-left">
-            <button type="button" class="back-btn" onclick="showRoleSelection()">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                    <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-            </button>
-            <h1 class="page-title">Sign in</h1>
-        </div>
-        <div class="logo-container">
-            <img src="{{asset('images/logo_nya.png')}}" alt="Logo" class="header-logo">
-        </div>
-    </div>
-
-    <div class="login-content">
-        <div class="form-container">
-            <div class="role-indicator" id="roleIndicator" style="display: {{ $showLoginDirectly ? 'block' : 'none' }};">
-                <div class="role-info">
-                    <span class="role-label">Signing in as:</span>
-                    <span class="role-name" id="selectedRoleName">{{ $hasSelectedRole ? ucfirst(old('selected_role')) : 'User' }}</span>
-                </div>
+            <div class="role-indicator" id="roleIndicator">
+                <span class="admin-avatar" aria-hidden="true">A</span>
+                <span><span class="role-label">Signing in as</span><strong class="role-name" id="selectedRoleName">Admin</strong></span>
+                <svg class="role-check" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>
             </div>
 
             <form id="loginForm" aria-label="{{ __('Login') }}">
                 @csrf
-                
-                <input type="hidden" name="selected_role" id="selectedRoleInput" value="{{ old('selected_role') }}">
+                <input type="hidden" name="selected_role" id="selectedRoleInput" value="Admin">
 
                 <div class="input-group">
-                    <label for="email" class="input-label">Email or Phone Number</label>
-                    <input 
-                        id="email" 
-                        type="text" 
-                        class="form-input" 
-                        name="email" 
-                        value="{{ old('email') }}" 
-                        placeholder="Email or Phone Number"
-                        required 
+                    <label for="email" class="input-label">Email or phone number</label>
+                    <input
+                        id="email"
+                        type="text"
+                        class="form-input"
+                        name="email"
+                        value="{{ old('email') }}"
+                        placeholder="name@example.com or phone number"
+                        autocomplete="username"
+                        required
                         autofocus
                     >
                 </div>
 
                 <div class="input-group">
-                    <label class="input-label" for="password">Password</label>
-                    <input 
-                        id="password" 
-                        type="password" 
-                        class="form-input" 
-                        placeholder="At least 8 characters" 
-                        name="password" 
-                        required
-                    >
+                    <div class="label-row">
+                        <label class="input-label" for="password">Password</label>
+                        <a href="{{ route('password.request') }}" class="forgot-link">Forgot password?</a>
+                    </div>
+                    <div class="password-wrap">
+                        <input
+                            id="password"
+                            type="password"
+                            class="form-input"
+                            placeholder="Enter your password"
+                            name="password"
+                            autocomplete="current-password"
+                            required
+                        >
+                        <button class="password-toggle" type="button" id="passwordToggle" aria-label="Show password" aria-pressed="false">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.4-6 9.5-6 9.5 6 9.5 6-3.4 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/></svg>
+                        </button>
+                    </div>
                 </div>
 
-                <button class="signin-button" type="submit" id="signinButton">
-                    Sign in
+                <button class="signin-button submit-button" type="submit" id="signinButton">
+                    <span>Sign in as Admin</span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
                 </button>
-
-                <div class="forgot-section">
-                    <a href="{{ route('password.request') }}" class="forgot-link">
-                        Forgot password?
-                    </a>
-                </div>
-
-                <div class="progress-dots">
-                    <span class="dot"></span>
-                    <span class="dot"></span>
-                    <span class="dot active"></span>
-                </div>
+                <p class="auth-footnote form-footnote"><span class="secure-dot"></span> Your sign-in is protected and encrypted</p>
             </form>
-        </div>
+        </section>
     </div>
 </div>
-
 <style>
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+:root {
+    --auth-ink: #142b3d;
+    --auth-muted: #718397;
+    --auth-primary: #0799c4;
+    --auth-primary-dark: #087ca8;
+    --auth-line: #dbe6ee;
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background-color: #ffffff;
+    background: #f2f7fa;
+    font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
-.landing-page {
+.auth-screen,
+.auth-screen * {
+    box-sizing: border-box;
+}
+
+.auth-screen {
     min-height: 100vh;
-    background-color: #ffffff;
-    display: flex;
-    flex-direction: column;
-}
-
-.landing-content {
-    flex: 1;
+    min-height: 100svh;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0 24px;
+    padding: clamp(18px, 4vw, 56px);
+    background:
+        radial-gradient(ellipse at 8% 8%, rgba(71, 194, 221, .12), transparent 34%),
+        radial-gradient(ellipse at 96% 94%, rgba(12, 148, 190, .09), transparent 32%),
+        #f2f7fa;
 }
 
-.landing-wrapper {
-    width: 100%;
-    max-width: 400px;
-    text-align: center;
+.auth-card {
+    width: min(100%, 1080px);
+    min-height: min(680px, calc(100svh - 48px));
+    display: grid;
+    grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr);
+    overflow: hidden;
+    background: #fff;
+    border: 1px solid rgba(216, 230, 238, .9);
+    border-radius: 26px;
+    box-shadow: 0 24px 70px rgba(28, 66, 91, .12), 0 3px 12px rgba(28, 66, 91, .04);
 }
 
-.logo-section {
-    margin-bottom: 40px;
-}
-
-.main-logo-img {
-    max-width: 549px;
-    width: 100%;
-    max-height: 186px;
-    height: 100%;
-}
-
-.illustration-section {
-    margin-bottom: 30px;
-}
-
-.human-illustration {
-    max-width: 256.42px;
-    width: 100%;
-    max-height: 284px;
-    height: auto;
-}
-
-.tagline {
-    margin-bottom: 30px;
-}
-
-.tagline p {
-    font-size: 18px;
-    color: #666666;
-    font-weight: 400;
-}
-
-.progress-dots {
-    display: flex;
-    justify-content: center;
-    gap: 8px;
-    margin-bottom: 40px;
-}
-
-.dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background-color: #E0E0E0;
-    transition: background-color 0.3s ease;
-}
-
-.dot.active {
-    background-color: #5DADE2;
-}
-
-.landing-signin-button {
-    max-width: 327px;
-    width: 100%;
-    height: 57px;
-    border: none;
-    border-radius: 28px;
-    background-color: #5DADE2;
-    color: white;
-    font-size: 16px;
-    font-weight: 500;
-    cursor: pointer;
-    margin-bottom: 24px;
-    transition: all 0.3s ease;
-}
-
-.landing-signin-button:hover {
-    background-color: #3498DB;
-    transform: translateY(-2px);
-}
-
-.role-selection-page {
-    min-height: 100vh;
-    background-color: #ffffff;
-    display: flex;
-    flex-direction: column;
-}
-
-.role-header {
-    display: flex;
-    align-items: center;
-    padding: 20px 24px;
-    background-color: #ffffff;
-}
-
-.role-content {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0 24px;
-    margin-top: -80px;
-}
-
-.role-wrapper {
-    width: 100%;
-    max-width: 350px;
-    text-align: center;
-}
-
-.welcome-section {
-    margin-bottom: 20px;
-}
-
-.welcome-title {
-    font-size: 24px;
-    color: #4A5568;
-    font-weight: 600;
-    margin-bottom: 8px;
-    line-height: 1.2;
-}
-
-.welcome-subtitle {
-    font-size: 14px;
-    color: #666666;
-    font-weight: 400;
-}
-
-.context-image-section {
-    margin-bottom: 25px;
-}
-
-.context-image {
-    max-width: 200px;
-    width: 100%;
-    height: auto;
-}
-
-.role-selection-page .progress-dots {
-    display: flex;
-    justify-content: center;
-    gap: 8px;
-    margin-bottom: 25px;
-}
-
-.role-buttons {
-    margin-bottom: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.role-button {
-    width: 100%;
-    height: 48px;
-    border: none;
-    border-radius: 24px;
-    background-color: #5DADE2;
-    color: white;
-    font-size: 16px;
-    font-weight: 500;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    transition: all 0.3s ease;
+.auth-brand-panel {
     position: relative;
+    isolation: isolate;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: 54px 44px 38px;
+    background: linear-gradient(145deg, #dff6fb 0%, #edf9fb 44%, #e5f1fa 100%);
 }
 
-.role-button:hover {
-    background-color: #3498DB;
-    transform: translateY(-2px);
-}
-
-.role-button.selected {
-    opacity: 0.8;
-    box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #5DADE2;
-}
-
-.selected-indicator {
+.auth-brand-panel::before,
+.auth-brand-panel::after {
     position: absolute;
-    right: 15px;
-    font-size: 16px;
-    font-weight: bold;
+    z-index: -1;
+    content: "";
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .64);
 }
 
-.role-icon {
-    width: 20px;
-    height: 20px;
-    stroke: white;
+.auth-brand-panel::before {
+    width: 340px;
+    height: 340px;
+    top: -130px;
+    left: -120px;
 }
 
-.continue-section {
-    margin-bottom: 20px;
-    opacity: 0;
-    transition: opacity 0.3s ease;
+.auth-brand-panel::after {
+    width: 430px;
+    height: 430px;
+    right: -210px;
+    bottom: -250px;
+    background: rgba(31, 177, 210, .11);
 }
 
-.continue-section.show {
-    opacity: 1;
+.brand-glow {
+    position: absolute;
+    z-index: -1;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: #35bddd;
+    opacity: .35;
 }
 
-.continue-button {
+.brand-glow-one { top: 22%; right: 18%; }
+.brand-glow-two { bottom: 23%; left: 15%; width: 9px; height: 9px; }
+
+.brand-image-wrap {
+    width: min(100%, 355px);
+    height: 350px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.auth-illustration {
+    display: block;
     width: 100%;
-    height: 48px;
-    border: none;
-    border-radius: 24px;
-    background-color: #5DADE2;
-    color: white;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
+    max-height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 16px 20px rgba(41, 104, 128, .10));
 }
 
-.continue-button:hover {
-    background-color: #3498DB;
-    transform: translateY(-2px);
+.brand-caption {
+    max-width: 330px;
+    margin: 8px 0 0;
+    color: #3e7187;
+    font-size: 15px;
+    line-height: 1.6;
+    text-align: center;
 }
 
-.create-account-section {
-    margin-bottom: 15px;
-}
-
-.create-account-link {
-    color: #5DADE2;
-    text-decoration: underline;
-    font-size: 14px;
-    font-weight: 400;
-}
-
-.create-account-link:hover {
-    color: #3498DB;
-}
-
-.login-page {
-    min-height: 100vh;
-    background-color: #ffffff;
+.auth-form-panel {
+    min-width: 0;
     display: flex;
     flex-direction: column;
-}
-
-.login-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 20px 24px;
-    background-color: #ffffff;
-}
-
-.header-left {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-}
-
-.back-btn {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: none;
-    background-color: #5DADE2;
-    color: white;
-    display: flex;
-    align-items: center;
     justify-content: center;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-    z-index: 10;
-    position: relative;
+    padding: clamp(36px, 6vw, 76px);
 }
 
-.back-btn:hover {
-    background-color: #3498DB;
-}
-
-.page-title {
-    margin-top: 7px;
-    margin-left: 20px;
-    font-size: 27px;
-    font-weight: 550;
-    color: #5DADE2;
-    letter-spacing: 1px;
-}
-
-.logo-container {
-    width: 60px;
-    height: 60px;
-}
-
-.header-logo {
-    width: 100%;
-    height: 100%;
+.landing-copy .auth-logo {
+    width: min(240px, 70%);
+    height: 74px;
+    margin-bottom: 48px;
     object-fit: contain;
+    object-position: left center;
 }
 
-.login-content {
-    margin-top: -57px;
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0 24px;
+.auth-eyebrow {
+    margin: 0 0 12px;
+    color: var(--auth-primary);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .16em;
 }
 
-.form-container {
-    width: 100%;
-    max-width: 400px;
+.auth-form-panel h1 {
+    margin: 0;
+    color: var(--auth-ink);
+    font-size: clamp(27px, 3vw, 36px);
+    font-weight: 750;
+    letter-spacing: -.04em;
+    line-height: 1.16;
 }
 
-.role-indicator {
-    background-color: #F0F8FF;
-    border-left: 4px solid #5DADE2;
-    padding: 12px 16px;
-    border-radius: 8px;
-    margin-bottom: 24px;
-}
-
-.role-info {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.role-label {
-    font-size: 14px;
-    color: #666666;
-}
-
-.role-name {
-    font-size: 16px;
-    font-weight: 600;
-    color: #5DADE2;
-}
-
-.input-group {
-    margin-bottom: 24px;
-}
-
-.input-label {
-    display: block;
-    font-size: 16px;
-    color: #666666;
-    margin-bottom: 8px;
-    font-weight: 400;
-}
-
-.form-input {
-    width: 100%;
-    height: 56px;
-    padding: 0 20px;
-    border: none;
-    border-radius: 12px !important;
-    background-color: #F5F5F5;
-    font-size: 16px;
-    color: #333333;
-    outline: none;
-    transition: background-color 0.2s ease;
-}
-
-.form-input::placeholder {
-    color: #AAAAAA;
-    font-size: 16px;
-}
-
-.form-input:focus {
-    background-color: #EEEEEE;
+.auth-description {
+    margin: 12px 0 30px;
+    color: var(--auth-muted);
+    font-size: 15px;
+    line-height: 1.65;
 }
 
 .signin-button {
     width: 100%;
-    height: 56px;
-    border: none;
+    min-height: 54px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 12px 20px;
+    border: 0;
     border-radius: 12px;
-    background-color: #5DADE2;
-    color: white;
-    font-size: 16px;
-    font-weight: 500;
+    background: linear-gradient(100deg, #0799c4, #12acd0);
+    box-shadow: 0 8px 18px rgba(7, 153, 196, .2);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
     cursor: pointer;
-    margin-bottom: 24px;
-    transition: background-color 0.2s ease;
+    transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
 }
 
 .signin-button:hover {
-    background-color: #3498DB;
+    transform: translateY(-1px);
+    background: linear-gradient(100deg, #087ca8, #0799c4);
+    box-shadow: 0 11px 22px rgba(7, 153, 196, .26);
 }
 
-.forgot-section {
-    text-align: center;
-    margin-bottom: 24px;
+.signin-button:focus-visible,
+.back-btn:focus-visible,
+.password-toggle:focus-visible,
+.form-input:focus-visible,
+.forgot-link:focus-visible {
+    outline: 3px solid rgba(7, 153, 196, .25);
+    outline-offset: 3px;
 }
 
-.forgot-link {
-    color: #5DADE2;
-    text-decoration: none;
-    font-size: 16px;
-    font-weight: 400;
+.signin-button svg,
+.back-btn svg,
+.password-toggle svg,
+.role-check {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
 
-.forgot-link:hover {
-    text-decoration: underline;
+.auth-footnote {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 24px 0 0;
+    color: #8a9bab;
+    font-size: 12px;
 }
 
-@media (max-width: 480px) {
-    .login-header, .role-header {
-        padding: 16px 20px;
-    }
-    
-    .landing-content, .login-content, .role-content {
-        padding: 0 20px;
-    }
-    
-    .main-logo-img {
-        max-width: 200px;
-    }
-    
-    .human-illustration {
-        max-width: 160px;
-    }
-    
-    .context-image {
-        max-width: 180px;
-    }
-    
-    .tagline p {
-        font-size: 16px;
-    }
-    
-    .welcome-title {
-        font-size: 22px;
-    }
-    
-    .welcome-subtitle {
-        font-size: 13px;
-    }
-    
-    .header-left {
-        gap: 12px;
-    }
-    
-    .page-title {
-        font-size: 18px;
-    }
-    
-    .form-input, .signin-button {
-        height: 52px;
-    }
-    
-    .role-button {
-        height: 44px;
-        font-size: 15px;
-    }
-    
-    .role-icon {
-        width: 18px;
-        height: 18px;
-    }
-    
-    .role-content {
-        margin-top: -60px;
-    }
-    
-    .role-wrapper {
-        max-width: 320px;
-    }
+.secure-dot {
+    width: 7px;
+    height: 7px;
+    flex: 0 0 7px;
+    border-radius: 50%;
+    background: #26b77a;
+    box-shadow: 0 0 0 3px rgba(38, 183, 122, .12);
+}
+
+.form-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 0 0 36px;
+}
+
+.back-btn {
+    width: 42px;
+    height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--auth-line);
+    border-radius: 12px;
+    background: #fff;
+    color: #446176;
+    cursor: pointer;
+    transition: border-color .18s ease, color .18s ease, background .18s ease;
+}
+
+.back-btn:hover { border-color: #9ed9e9; color: var(--auth-primary-dark); background: #f4fcfe; }
+.form-logo { width: 88px; height: 42px; object-fit: contain; }
+.form-heading .auth-description { margin-bottom: 23px; }
+
+.role-indicator {
+        display: flex;
+align-items: center;
+    gap: 12px;
+    min-height: 62px;
+    margin: 0 0 26px;
+    padding: 10px 14px;
+    border: 1px solid #d8eef4;
+    border-radius: 14px;
+    background: #f5fbfd;
+}
+
+.admin-avatar {
+    width: 38px;
+    height: 38px;
+    display: grid;
+    flex: 0 0 38px;
+    place-items: center;
+    border-radius: 12px;
+    background: #dff5fa;
+    color: #087fa5;
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.role-label,
+.role-name { display: block; }
+.role-label { color: #7c91a1; font-size: 11px; line-height: 1.4; }
+.role-name { margin-top: 2px; color: #24475b; font-size: 14px; font-weight: 700; }
+.role-check { margin-left: auto; color: #25a878; }
+
+.input-group { margin-bottom: 20px; }
+.label-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.input-label { display: block; margin: 0; color: #344c5e; font-size: 13px; font-weight: 650; }
+
+.form-input {
+    width: 100%;
+    height: 52px;
+    padding: 0 15px;
+    border: 1px solid var(--auth-line);
+    border-radius: 11px;
+    background: #fbfdfe;
+    color: var(--auth-ink);
+    font-size: 15px;
+    transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+}
+
+.form-input::placeholder { color: #a1afba; }
+.form-input:hover { border-color: #b8cbd7; }
+.form-input:focus { border-color: #39b3d2; outline: none; background: #fff; box-shadow: 0 0 0 4px rgba(7, 153, 196, .1); }
+.password-wrap { position: relative; width: 100%}
+.password-wrap .form-input { padding-right: 52px; }
+.password-toggle { position: absolute; top: 50%; right: 8px; width: 38px; height: 38px; display: grid; place-items: center; transform: translateY(-50%); border: 0; border-radius: 9px; background: transparent; color: #7d91a0; cursor: pointer; }
+.password-toggle:hover { background: #edf7fa; color: var(--auth-primary-dark); }
+.password-toggle svg { width: 19px; height: 19px; }
+.forgot-link { color: var(--auth-primary-dark); font-size: 12px; font-weight: 650; text-decoration: none; }
+.forgot-link:hover { text-decoration: underline; }
+.submit-button { margin-top: 8px; }
+.submit-button:disabled { cursor: wait; opacity: .8; transform: none; }
+.form-footnote { margin-top: 18px; }
+
+@media (max-width: 760px) {
+    .auth-screen { align-items: flex-start; padding: 20px; }
+    .auth-card { width: min(100%, 560px); min-height: 0; grid-template-columns: 1fr; border-radius: 22px; }
+    .auth-brand-panel { min-height: 195px; padding: 18px 26px 20px; }
+    .brand-image-wrap { width: 190px; height: 142px; }
+    .brand-caption { margin-top: 0; font-size: 13px; }
+    .auth-form-panel { padding: 32px clamp(22px, 7vw, 48px) 36px; }
+    .landing-copy .auth-logo { height: 54px; margin-bottom: 27px; }
+    .landing-copy .auth-description { margin-bottom: 22px; }
+    .form-topbar { margin-bottom: 28px; }
+    .form-heading .auth-description { margin-bottom: 20px; }
+}
+
+@media (max-width: 420px) {
+    .auth-screen { padding: 12px; }
+    .auth-card { border-radius: 18px; }
+    .auth-brand-panel { min-height: 160px; }
+    .brand-image-wrap { width: 155px; height: 112px; }
+    .auth-form-panel { padding: 25px 20px 28px; }
+    .auth-form-panel h1 { font-size: 27px; }
+    .form-topbar { margin-bottom: 24px; }
+    .input-group { margin-bottom: 17px; }
+    .form-input { height: 50px; font-size: 16px; }
+    .signin-button { min-height: 52px; }
+}
+
+@media (max-height: 650px) and (min-width: 761px) {
+    .auth-screen { align-items: flex-start; }
+    .auth-card { min-height: 0; }
+    .auth-brand-panel { padding-top: 30px; padding-bottom: 24px; }
+    .brand-image-wrap { height: min(42vh, 290px); }
+    .auth-form-panel { padding-top: 34px; padding-bottom: 34px; }
+    .form-topbar { margin-bottom: 22px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .auth-screen *, .auth-screen *::before, .auth-screen *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
 }
 </style>
 <script>
-    let currentRole = '';
-
-    window.selectRole = function(role) {
-        currentRole = role;
-
-        document.querySelectorAll('.role-button').forEach(btn => {
-            btn.classList.remove('selected');
-            const check = btn.querySelector('.selected-indicator');
-            if (check) check.style.display = 'none';
-        });
-
-        const selectedBtn = event.currentTarget;
-        selectedBtn.classList.add('selected');
-
-        const checkmark = selectedBtn.querySelector('.selected-indicator');
-        if (checkmark) checkmark.style.display = 'inline';
-
-        document.getElementById('selectedRoleInput').value = role;
-
-        setTimeout(() => {
-            showLoginForm();
-        }, 300);
-    };
-
-    window.showRoleSelection = function () {
-        document.getElementById('landingPage').style.display = 'none';
-        document.getElementById('roleSelectionPage').style.display = 'flex';
-        document.getElementById('loginFormPage').style.display = 'none';
-    };
-
-    window.showLoginForm = function () {
-        document.getElementById('landingPage').style.display = 'none';
-        document.getElementById('roleSelectionPage').style.display = 'none';
-        document.getElementById('loginFormPage').style.display = 'flex';
-
-        updateLoginFormRole();
-    };
-
-    function updateLoginFormRole() {
-        if (!currentRole) return;
-
-        document.getElementById('roleIndicator').style.display = 'block';
-        document.getElementById('selectedRoleName').innerText =
-            currentRole.replace(/\b\w/g, l => l.toUpperCase());
-    }
+    document.getElementById('passwordToggle').addEventListener('click', function () {
+        const password = document.getElementById('password');
+        const isVisible = password.type === 'text';
+        password.type = isVisible ? 'password' : 'text';
+        this.setAttribute('aria-pressed', String(!isVisible));
+        this.setAttribute('aria-label', isVisible ? 'Show password' : 'Hide password');
+    });
 
     document.getElementById('loginForm').addEventListener('submit', async function (e) {
         e.preventDefault();
@@ -711,7 +445,7 @@ body {
         const formData = new FormData(this);
 
         btn.disabled = true;
-        btn.innerHTML = "Signing in...";
+        btn.querySelector("span").textContent = "Signing in as: Admin";
 
         try {
             const res = await fetch("{{ route('login') }}", {
@@ -736,7 +470,7 @@ body {
         }
 
         btn.disabled = false;
-        btn.innerHTML = "Sign in";
+        btn.querySelector("span").textContent = "Sign in as Admin";
     });
 </script>
 

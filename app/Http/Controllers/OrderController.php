@@ -110,8 +110,8 @@ class OrderController extends Controller
             ->where('status', 'Activate')
             ->orderBy('product_name')
             ->get();
-        $authorizedTerritories = Schema::hasTable('ad_areas')
-            ? DB::table('ad_areas')
+        $authorizedTerritories = Schema::connection('dms')->hasTable('ad_areas')
+            ? DB::connection('dms')->table('ad_areas')
                 ->whereNull('deleted_at')
                 ->whereNotNull('area_name')
                 ->where('area_name', '<>', '')
@@ -674,8 +674,8 @@ class OrderController extends Controller
         }
 
         $orderRows = OrderDetail::leftJoin('dealers', 'order_details.dealer_id', '=', 'dealers.user_id')
-            ->leftJoin('area_distributors as ordering_ads', 'order_details.dealer_id', '=', 'ordering_ads.user_id')
-            ->leftJoin(DB::raw('(select ad_id, min(area_name) as area_name from ad_areas where deleted_at is null group by ad_id) as ordering_ad_areas'), 'ordering_ads.id', '=', 'ordering_ad_areas.ad_id')
+            ->leftJoin(config('database.connections.dms.database') . '.area_distributors as ordering_ads', 'order_details.dealer_id', '=', 'ordering_ads.user_id')
+            ->leftJoin(DB::raw('(select ad_id, min(area_name) as area_name from ' . config('database.connections.dms.database') . '.ad_areas where deleted_at is null group by ad_id) as ordering_ad_areas'), 'ordering_ads.id', '=', 'ordering_ad_areas.ad_id')
             ->select($selects)
             ->where('order_details.ad_id', $adId)
             ->where('order_details.status', 'Completed')
@@ -749,7 +749,7 @@ class OrderController extends Controller
         });
 
         $adpoRows = AdPurchaseOrderItem::join('ad_purchase_orders', 'ad_purchase_order_items.ad_purchase_order_id', '=', 'ad_purchase_orders.id')
-            ->leftJoin(DB::raw('(select ad_id, min(area_name) as area_name from ad_areas where deleted_at is null group by ad_id) as adpo_areas'), 'ad_purchase_orders.ad_id', '=', 'adpo_areas.ad_id')
+            ->leftJoin(DB::raw('(select ad_id, min(area_name) as area_name from ' . config('database.connections.dms.database') . '.ad_areas where deleted_at is null group by ad_id) as adpo_areas'), 'ad_purchase_orders.ad_id', '=', 'adpo_areas.ad_id')
             ->select(
                 'ad_purchase_orders.authorized_territory as territory_area',
                 'adpo_areas.area_name as ad_area',
@@ -855,8 +855,8 @@ class OrderController extends Controller
             }
 
             $orderRows = OrderDetail::leftJoin('dealers', 'order_details.dealer_id', '=', 'dealers.user_id')
-                ->leftJoin('area_distributors as ordering_ads', 'order_details.dealer_id', '=', 'ordering_ads.user_id')
-                ->leftJoin(DB::raw('(select ad_id, min(area_name) as area_name from ad_areas where deleted_at is null group by ad_id) as ordering_ad_areas'), 'ordering_ads.id', '=', 'ordering_ad_areas.ad_id')
+                ->leftJoin(config('database.connections.dms.database') . '.area_distributors as ordering_ads', 'order_details.dealer_id', '=', 'ordering_ads.user_id')
+                ->leftJoin(DB::raw('(select ad_id, min(area_name) as area_name from ' . config('database.connections.dms.database') . '.ad_areas where deleted_at is null group by ad_id) as ordering_ad_areas'), 'ordering_ads.id', '=', 'ordering_ad_areas.ad_id')
                 ->select($selects)
                 ->where('order_details.ad_id', $adId)
                 ->where('order_details.status', 'Completed')

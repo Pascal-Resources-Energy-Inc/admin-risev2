@@ -1,3 +1,13 @@
+@php
+    $isMegaDealer = $isMegaDealer ?? false;
+    $editDealerLabel = $isMegaDealer ? 'Mega Dealer' : 'Dealer';
+    $nameParts = preg_split('/\s+/', trim((string) $dealer->name), -1, PREG_SPLIT_NO_EMPTY);
+    $editFirstName = old('first_name', $dealer->first_name ?: data_get($dealer, 'user.first_name') ?: ($nameParts[0] ?? ''));
+    $editLastName = old('last_name', $dealer->last_name ?: data_get($dealer, 'user.last_name') ?: (count($nameParts) > 1 ? end($nameParts) : ''));
+    $middleParts = count($nameParts) > 2 ? array_slice($nameParts, 1, -1) : [];
+    $editMiddleName = old('middle_name', $dealer->middle_name ?: data_get($dealer, 'user.middle_name') ?: implode(' ', $middleParts));
+    $editBirthdate = old('birthdate', $dealer->birthdate ? substr((string) $dealer->birthdate, 0, 10) : '');
+@endphp
 <style>
     #editDealerModal .edit-dealer-type-picker {
         display: grid;
@@ -107,11 +117,12 @@
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Edit Dealer Information</h5>
+                <h5 class="modal-title">Edit {{ $editDealerLabel }} Information</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="editDealerForm" method="POST" action="{{ route('dealer.update', $dealer->id) }}" enctype="multipart/form-data">
+            <form id="editDealerForm" method="POST" action="{{ $isMegaDealer ? route('mega-dealers.update', $dealer->id) : route('dealer.update', $dealer->id) }}" enctype="multipart/form-data">
                 @csrf
+                @if($isMegaDealer) @method('PUT') @endif
                 <input type="hidden" name="latitude" id="hidden_latitude" value="{{ $dealer->latitude }}">
                 <input type="hidden" name="longitude" id="hidden_longitude" value="{{ $dealer->longitude }}">
                 <div class="modal-body">
@@ -123,15 +134,15 @@
                         </div> --}}
                         <div class="col-md-4 mb-2">
                             <label>First Name</label>
-                            <input type="text" name="first_name" class="form-control" placeholder="Enter First Name" value="{{ old('first_name', $dealer->user->first_name) }}" data-uppercase required>
+                            <input type="text" name="first_name" class="form-control" placeholder="Enter First Name" value="{{ $editFirstName }}" data-uppercase required>
                         </div>
                         <div class="col-md-4 mb-2">
                             <label>Middle Name</label>
-                            <input type="text" name="middle_name" class="form-control" placeholder="Enter Middle Name" value="{{ old('middle_name', $dealer->user->middle_name) }}" data-uppercase>
+                            <input type="text" name="middle_name" class="form-control" placeholder="Enter Middle Name" value="{{ $editMiddleName }}" data-uppercase>
                         </div>
                         <div class="col-md-4 mb-2">
                             <label>Last Name</label>
-                            <input type="text" name="last_name" class="form-control" placeholder="Enter Last Name" value="{{ old('last_name', $dealer->user->last_name) }}" data-uppercase required>
+                            <input type="text" name="last_name" class="form-control" placeholder="Enter Last Name" value="{{ $editLastName }}" data-uppercase required>
                         </div>
                         <div class="col-md-6 mb-2">
                             <label>Email Address</label>
@@ -146,9 +157,14 @@
                             <label>Facebook</label>
                             <input type="text" name="facebook" placeholder="Enter Facebook" class="form-control" value="{{ old('facebook', $dealer->facebook) }}" data-uppercase>
                         </div>
+                        @if($isMegaDealer)
+                            <div class="col-md-6 mb-2"><label>Mother's Full Name</label><input type="text" name="mothers_name" class="form-control" value="{{ old('mothers_name', $dealer->mothers_name) }}" required data-uppercase></div>
+                            <div class="col-md-6 mb-2"><label>Birthdate</label><input type="date" name="birthdate" class="form-control" value="{{ $editBirthdate }}" max="{{ date('Y-m-d') }}" required></div>
+                            <div class="col-md-6 mb-2"><label>Status</label><select name="status" class="form-control" required><option value="Active" {{ old('status', $dealer->status) === 'Active' ? 'selected' : '' }}>Active</option><option value="Inactive" {{ old('status', $dealer->status) === 'Inactive' ? 'selected' : '' }}>Inactive</option></select></div>
+                        @endif
                         <div class="fs-6 fw-bold col-md-12 mb-3"><i class="bi bi-building-fill"></i> Business Information</div>
                         @php
-                            $currentDealerType = old('dealer_type', $dealer->dealer_type ?: 'Project');
+                            $currentDealerType = $isMegaDealer ? 'Project' : old('dealer_type', $dealer->dealer_type ?: 'Project');
                         @endphp
                         @if(auth()->user()->role === 'Admin')
                             <div class="col-md-12 mb-3" hidden>

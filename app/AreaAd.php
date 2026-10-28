@@ -11,6 +11,7 @@ class AreaAd extends Model implements Auditable
     use \OwenIt\Auditing\Auditable;
     use SoftDeletes;
 
+    protected $connection = 'dms';
     protected $table = 'ad_areas';
     protected $fillable = [
         'ad_id',
