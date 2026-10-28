@@ -8,7 +8,7 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal"
           aria-label="Close"></button>
       </div>
-      <form method='POST' action='{{url('valid-id-dealer/'.$dealer->id)}}' onsubmit='show()' enctype="multipart/form-data" class="validation-wizard wizard-circle mt-5">
+      <form method='POST' action='{{ ($isMegaDealer ?? false) ? route('mega-dealers.valid-id', $dealer->id) : url('valid-id-dealer/'.$dealer->id) }}' onsubmit='show()' enctype="multipart/form-data" class="validation-wizard wizard-circle mt-5">
       @csrf
         <div class="modal-body text-center">
           <div class="mb-3">

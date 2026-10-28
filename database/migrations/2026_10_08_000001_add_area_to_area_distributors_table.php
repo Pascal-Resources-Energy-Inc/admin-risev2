@@ -8,8 +8,8 @@ class AddAreaToAreaDistributorsTable extends Migration
 {
     public function up()
     {
-        if (! Schema::hasColumn('area_distributors', 'area')) {
-            Schema::table('area_distributors', function (Blueprint $table) {
+        if (! Schema::connection('dms')->hasColumn('area_distributors', 'area')) {
+            Schema::connection('dms')->table('area_distributors', function (Blueprint $table) {
                 $table->string('area')->nullable();
             });
         }
@@ -17,8 +17,8 @@ class AddAreaToAreaDistributorsTable extends Migration
 
     public function down()
     {
-        if (Schema::hasColumn('area_distributors', 'area')) {
-            Schema::table('area_distributors', function (Blueprint $table) {
+        if (Schema::connection('dms')->hasColumn('area_distributors', 'area')) {
+            Schema::connection('dms')->table('area_distributors', function (Blueprint $table) {
                 $table->dropColumn('area');
             });
         }

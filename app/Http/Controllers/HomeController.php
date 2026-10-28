@@ -5,6 +5,7 @@ use App\Transaction;
 use App\Dealer;
 use App\OrderDetail;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Carbon\Carbon;
 use App\Client;
 use Illuminate\Support\Collection;
@@ -42,33 +43,59 @@ class HomeController extends Controller
         $user = auth()->user();
         $role = $user->role;
         
-        $selectedYear = $request->get('year', Carbon::now()->year);
-        $selectedMonth = $request->get('month', null);
+        $requestedYear = $request->get('year', Carbon::now()->year);
+        $selectedYear = is_numeric($requestedYear) && (int) $requestedYear >= 1900 && (int) $requestedYear <= Carbon::now()->year + 1
+            ? (int) $requestedYear
+            : Carbon::now()->year;
+        $requestedMonth = $request->get('month');
+        $selectedMonth = is_numeric($requestedMonth) && (int) $requestedMonth >= 1 && (int) $requestedMonth <= 12
+            ? (int) $requestedMonth
+            : null;
         $viewType = $selectedMonth ? 'monthly' : 'yearly';
+        $periodStart = Carbon::create($selectedYear, $selectedMonth ?: 1, 1)->startOfMonth();
+        $periodEnd = $selectedMonth
+            ? $periodStart->copy()->endOfMonth()
+            : Carbon::create($selectedYear, 12, 31)->endOfDay();
+        if ($periodEnd->gt(Carbon::now())) {
+            $periodEnd = Carbon::now()->endOfDay();
+        }
+
+        $applyPeriod = function ($query) use ($selectedYear, $selectedMonth) {
+            $query->whereYear('created_at', $selectedYear);
+            if ($selectedMonth) {
+                $query->whereMonth('created_at', $selectedMonth);
+            }
+
+            return $query;
+        };
 
         $adUser = optional($user->ad)->id;
-        $pendingOrdersCount = OrderDetail::where('ad_id', $adUser)
+        $pendingOrdersCount = $applyPeriod(OrderDetail::where('ad_id', $adUser))
             ->where('status', 'Pending')
             ->count();
 
-        $transactionDetailsQuery = TransactionDetail::with(['customer', 'dealer'])->latest('id');
+        $transactionDetailsQuery = $applyPeriod(TransactionDetail::with(['customer', 'dealer']))->latest('id');
         if ($role === 'Dealer') {
             $dealer = Dealer::where('user_id', $user->id)->first();
             $transactionDetailsQuery->where('dealer_id', $user->id);
-            $dealerAvailablePoints = (float) TransactionDetail::where('dealer_id', $user->id)->sum('points_dealer')
+            $dealerAvailablePoints = (float) $applyPeriod(TransactionDetail::where('dealer_id', $user->id))->sum('points_dealer')
                 - abs((float) RedeemedHistory::where('user_id', $user->id)->sum('points_amount'));
         } elseif ($role === 'Client') {
             $customer = Client::where('user_id', $user->id)->first();
             $transactionDetailsQuery->where('client_id', optional($customer)->id ?: 0);
-            $customerAvailablePoints = (float) TransactionDetail::where('client_id', optional($customer)->id ?: 0)->sum('points_client')
+            $customerAvailablePoints = (float) $applyPeriod(TransactionDetail::where('client_id', optional($customer)->id ?: 0))->sum('points_client')
                 - abs((float) RedeemedHistory::where('user_id', $user->id)->sum('points_amount'));
         }
         $transactions_details = $transactionDetailsQuery->limit(50)->get();
 
-        $total_sales = (float) TransactionDetail::selectRaw('COALESCE(SUM(price * qty), 0) as total')->value('total');
-        $totalProductsSold = (float) TransactionDetail::sum('qty');
-        $customerCount = Client::whereHas('transactions')->count();
-        $totalDealers = Dealer::count();
+        $total_sales = (float) $applyPeriod(TransactionDetail::query())->selectRaw('COALESCE(SUM(price * qty), 0) as total')->value('total');
+        $totalProductsSold = (float) $applyPeriod(TransactionDetail::query())->sum('qty');
+        $customerCount = Client::whereHas('transactions', function ($query) use ($applyPeriod) {
+            $applyPeriod($query);
+        })->count();
+        $totalDealers = $applyPeriod(TransactionDetail::whereNotNull('dealer_id'))
+            ->distinct()
+            ->count('dealer_id');
 
         // Get chart data based on view type
         if ($viewType === 'monthly') {
@@ -91,6 +118,10 @@ class HomeController extends Controller
             )
             ->with('dealer')
             ->whereNotNull('dealer_id')
+            ->whereYear('created_at', $selectedYear)
+            ->when($selectedMonth, function ($query) use ($selectedMonth) {
+                $query->whereMonth('created_at', $selectedMonth);
+            })
             ->groupBy('dealer_id')
             ->orderByDesc('total_points')
             ->limit(10)
@@ -103,6 +134,10 @@ class HomeController extends Controller
         )
         ->with('customer')
         ->whereNotNull('client_id')
+        ->whereYear('created_at', $selectedYear)
+        ->when($selectedMonth, function ($query) use ($selectedMonth) {
+            $query->whereMonth('created_at', $selectedMonth);
+        })
         ->groupBy('client_id')
         ->orderByDesc('total_points')
         ->limit(10)
@@ -111,8 +146,8 @@ class HomeController extends Controller
         $salesTrend = $this->calculateSalesTrend();
         $qtyTrend = $this->calculateQtyTrend();
 
-        $inactiveSince = Carbon::now()->subDays(3);
-        $latestDealerSales = TransactionDetail::select('dealer_id', DB::raw('MAX(created_at) as last_transaction_date'))
+        $inactiveSince = $periodEnd->copy()->subDays(3);
+        $latestDealerSales = $applyPeriod(TransactionDetail::select('dealer_id', DB::raw('MAX(created_at) as last_transaction_date')))
             ->whereNotNull('dealer_id')
             ->groupBy('dealer_id');
         $dealers_inactive = Dealer::query()
@@ -124,11 +159,11 @@ class HomeController extends Controller
             ->orderBy('latest_dealer_sales.last_transaction_date')
             ->limit(50)
             ->get()
-            ->each(function ($inactiveDealer) {
-                $inactiveDealer->days_since_transaction = Carbon::parse($inactiveDealer->last_transaction_date)->diffInDays(now());
+            ->each(function ($inactiveDealer) use ($periodEnd) {
+                $inactiveDealer->days_since_transaction = Carbon::parse($inactiveDealer->last_transaction_date)->diffInDays($periodEnd);
             });
 
-        $mapData = $this->getPhilippineMapData();
+        $mapData = $this->getPhilippineMapData($selectedYear, $selectedMonth);
 
         return view('home',
             array(
@@ -159,81 +194,91 @@ class HomeController extends Controller
         );
     }
 
-    public function liveOverview()
+    public function liveOverview(Request $request)
     {
         abort_unless(auth()->user()->role === 'Admin', 403);
 
-        $today = Carbon::today();
-        $monthStart = Carbon::now()->startOfMonth();
-        $thirtyDaysAgo = Carbon::today()->subDays(29);
-        $saleDate = 'COALESCE(`date`, DATE(`created_at`))';
+        $requestedYear = $request->get('year', Carbon::now()->year);
+        $year = is_numeric($requestedYear) && (int) $requestedYear >= 1900 && (int) $requestedYear <= Carbon::now()->year + 1
+            ? (int) $requestedYear
+            : Carbon::now()->year;
+        $requestedMonth = $request->get('month');
+        $month = is_numeric($requestedMonth) && (int) $requestedMonth >= 1 && (int) $requestedMonth <= 12
+            ? (int) $requestedMonth
+            : null;
+        $periodStart = Carbon::create($year, $month ?: 1, 1)->startOfMonth();
+        $periodEnd = $month
+            ? $periodStart->copy()->endOfMonth()
+            : Carbon::create($year, 12, 31)->endOfDay();
+        if ($periodEnd->gt(Carbon::now())) {
+            $periodEnd = Carbon::now()->endOfDay();
+        }
 
-        $todaySalesRow = TransactionDetail::whereRaw($saleDate . ' = ?', [$today->toDateString()])
+        $periodQuery = function ($query) use ($year, $month) {
+            $query->whereYear('created_at', $year);
+            if ($month) {
+                $query->whereMonth('created_at', $month);
+            }
+
+            return $query;
+        };
+
+        $periodSales = (float) $periodQuery(TransactionDetail::query())
             ->selectRaw('COALESCE(SUM(price * qty), 0) as total')
-            ->first();
-        $monthSalesRow = TransactionDetail::whereRaw($saleDate . ' BETWEEN ? AND ?', [
-                $monthStart->toDateString(),
-                $today->toDateString(),
-            ])
-            ->selectRaw('COALESCE(SUM(price * qty), 0) as total')
-            ->first();
-        $todaySales = (float) optional($todaySalesRow)->total;
-        $monthSales = (float) optional($monthSalesRow)->total;
-        $allTimeTotals = TransactionDetail::selectRaw(
-                'COALESCE(SUM(price * qty), 0) as total_sales, COALESCE(SUM(qty), 0) as total_products_sold'
-            )
-            ->first();
-        $todayTransactions = TransactionDetail::whereRaw($saleDate . ' = ?', [$today->toDateString()])->count();
-        $monthUnits = (float) TransactionDetail::whereRaw($saleDate . ' BETWEEN ? AND ?', [
-                $monthStart->toDateString(),
-                $today->toDateString(),
-            ])
-            ->sum('qty');
-        $activeDealers = TransactionDetail::whereRaw($saleDate . ' BETWEEN ? AND ?', [
-                $thirtyDaysAgo->toDateString(),
-                $today->toDateString(),
-            ])
-            ->whereNotNull('dealer_id')
+            ->value('total');
+        $periodTransactions = (int) $periodQuery(TransactionDetail::query())->count();
+        $periodUnits = (float) $periodQuery(TransactionDetail::query())->sum('qty');
+        $refillQuery = function () use ($periodQuery) {
+            return $periodQuery(TransactionDetail::whereRaw('LOWER(COALESCE(item, ?)) LIKE ?', ['', '%refill%']));
+        };
+        $refillSales = (float) $refillQuery()->selectRaw('COALESCE(SUM(price * qty), 0) as total')->value('total');
+        $refillUnits = (float) $refillQuery()->sum('qty');
+        $activeDealers = (int) $periodQuery(TransactionDetail::whereNotNull('dealer_id'))
             ->where('dealer_id', '>', 0)
             ->distinct()
             ->count('dealer_id');
+        $activeCustomers = (int) $periodQuery(TransactionDetail::whereNotNull('client_id'))
+            ->where('client_id', '>', 0)
+            ->distinct()
+            ->count('client_id');
 
-        $dailyRows = TransactionDetail::selectRaw(
-                $saleDate . ' as sale_date, COALESCE(SUM(price * qty), 0) as sales, COALESCE(SUM(qty), 0) as units'
-            )
-            ->whereRaw($saleDate . ' BETWEEN ? AND ?', [
-                $thirtyDaysAgo->toDateString(),
-                $today->toDateString(),
-            ])
-            ->groupBy(DB::raw($saleDate))
-            ->orderBy('sale_date')
+        $groupColumn = $month ? 'DAY(created_at)' : 'MONTH(created_at)';
+        $groupedRows = $periodQuery(TransactionDetail::selectRaw(
+                $groupColumn . ' as period_number, COALESCE(SUM(price * qty), 0) as sales, COALESCE(SUM(qty), 0) as units'
+            ))
+            ->groupBy(DB::raw($groupColumn))
+            ->orderBy('period_number')
             ->get()
-            ->keyBy('sale_date');
-
-        $salesTrend = collect(range(0, 29))->map(function ($offset) use ($thirtyDaysAgo, $dailyRows) {
-            $date = $thirtyDaysAgo->copy()->addDays($offset);
-            $row = $dailyRows->get($date->toDateString());
+            ->keyBy('period_number');
+        $periodNumbers = $month
+            ? range(1, Carbon::create($year, $month, 1)->daysInMonth)
+            : range(1, 12);
+        $salesTrend = collect($periodNumbers)->map(function ($periodNumber) use ($year, $month, $groupedRows) {
+            $row = $groupedRows->get($periodNumber);
+            $label = $month
+                ? (string) $periodNumber
+                : Carbon::create($year, $periodNumber, 1)->format('M');
 
             return [
-                'date' => $date->format('M d'),
+                'date' => $label,
                 'sales' => $row ? round((float) $row->sales, 2) : 0,
                 'units' => $row ? (float) $row->units : 0,
             ];
-        });
+        })->values();
 
-        $dealerOrderStatuses = OrderDetail::selectRaw('status, COUNT(*) as total')
+        $dealerOrderStatuses = $periodQuery(OrderDetail::selectRaw('status, COUNT(*) as total'))
             ->groupBy('status')
             ->pluck('total', 'status');
-        $adOrderStatuses = AdPurchaseOrder::selectRaw('status, COUNT(*) as total')
-            ->groupBy('status')
-            ->pluck('total', 'status');
-
+        $adOrderStatuses = Schema::hasTable((new AdPurchaseOrder())->getTable())
+            ? $periodQuery(AdPurchaseOrder::selectRaw('status, COUNT(*) as total'))
+                ->groupBy('status')
+                ->pluck('total', 'status')
+            : collect();
         $statusNames = $dealerOrderStatuses->keys()
             ->merge($adOrderStatuses->keys())
             ->filter()
             ->unique()
             ->values();
-
         $orderStatuses = $statusNames->map(function ($status) use ($dealerOrderStatuses, $adOrderStatuses) {
             return [
                 'status' => $status,
@@ -241,7 +286,7 @@ class HomeController extends Controller
             ];
         })->sortByDesc('total')->values();
 
-        $recentTransactions = TransactionDetail::with(['dealer', 'customer'])
+        $recentTransactions = $periodQuery(TransactionDetail::with(['dealer', 'customer']))
             ->latest('id')
             ->limit(6)
             ->get()
@@ -259,26 +304,34 @@ class HomeController extends Controller
 
         return response()->json([
             'generated_at' => now()->toIso8601String(),
+            'year' => $year,
+            'month' => $month,
+            'view_type' => $month ? 'monthly' : 'yearly',
             'kpis' => [
-                'today_sales' => $todaySales,
-                'month_sales' => $monthSales,
-                'total_sales' => (float) optional($allTimeTotals)->total_sales,
-                'today_transactions' => $todayTransactions,
-                'month_units' => $monthUnits,
-                'total_products_sold' => (float) optional($allTimeTotals)->total_products_sold,
+                'period_sales' => $periodSales,
+                'period_transactions' => $periodTransactions,
+                'average_transaction' => $periodTransactions > 0 ? $periodSales / $periodTransactions : 0,
+                'refill_sales' => $refillSales,
+                'refill_units' => $refillUnits,
+                'total_units' => $periodUnits,
                 'active_dealers' => $activeDealers,
-                'active_customers' => Client::where('status', 'Active')->count(),
+                'active_customers' => $activeCustomers,
             ],
             'sales_trend' => $salesTrend,
             'order_statuses' => $orderStatuses,
             'recent_transactions' => $recentTransactions,
         ]);
     }
-
-    private function getPhilippineMapData()
+    private function getPhilippineMapData($year = null, $month = null)
     {
         $transactions = TransactionDetail::whereNotNull('client_address')
             ->where('client_address', '!=', '')
+            ->when($year, function ($query) use ($year) {
+                $query->whereYear('created_at', $year);
+            })
+            ->when($month, function ($query) use ($month) {
+                $query->whereMonth('created_at', $month);
+            })
             ->get();
         
         if ($transactions->isEmpty()) {
@@ -614,34 +667,50 @@ class HomeController extends Controller
             return response()->json(['error' => 'Invalid month'], 400);
         }
         
-        if ($viewType === 'monthly') {
-            $chartData = $this->getDailyData($year, $month);
-        } else {
-            $chartData = $this->getMonthlyData($year);
-        }
-        
         $availableMonths = $this->getAvailableMonths($year);
-        
-        $totalRecords = DB::table('transaction_details')
+
+        $groupColumn = $month ? 'DAY(created_at)' : 'MONTH(created_at)';
+        $refillRows = DB::table('transaction_details')
+            ->selectRaw($groupColumn . ' as period_number, COALESCE(SUM(qty), 0) as refills, COUNT(DISTINCT client_id) as beneficiaries')
             ->whereYear('created_at', $year)
-            ->when($month, function ($query) use ($year, $month) {
+            ->when($month, function ($query) use ($month) {
                 return $query->whereMonth('created_at', $month);
             })
-            ->count();
+            ->whereRaw('LOWER(COALESCE(item, ?)) LIKE ?', ['', '%refill%'])
+            ->groupBy(DB::raw($groupColumn))
+            ->orderBy('period_number')
+            ->get()
+            ->keyBy('period_number');
+
+        $periodNumbers = $month
+            ? range(1, Carbon::create((int) $year, (int) $month, 1)->daysInMonth)
+            : range(1, 12);
+
+        $periods = collect($periodNumbers)->map(function ($periodNumber) use ($month, $year, $refillRows) {
+            $row = $refillRows->get($periodNumber);
+            $refills = $row ? (float) $row->refills : 0;
+            $beneficiaries = $row ? (int) $row->beneficiaries : 0;
+            $label = $month
+                ? (string) $periodNumber
+                : Carbon::create((int) $year, (int) $periodNumber, 1)->format('M y');
+
+            return [
+                'label' => $label,
+                'refills' => $refills,
+                'beneficiaries' => $beneficiaries,
+                'average' => $beneficiaries > 0 ? round($refills / $beneficiaries, 1) : 0,
+            ];
+        })->values();
         
         return response()->json([
-            'categories' => $chartData['categories'],
-            'qty' => $chartData['qty'],
+            'categories' => $periods->pluck('label'),
+            'qty' => $periods->pluck('refills'),
+            'periods' => $periods,
             'year' => (int) $year,
             'month' => $month ? (int) $month : null,
             'view_type' => $viewType,
             'available_months' => $availableMonths,
-            'total_records' => $totalRecords,
-            'debug' => [
-                'requested_year' => $year,
-                'requested_month' => $month,
-                'data_found' => $totalRecords > 0
-            ]
+            'total_records' => $periods->sum('refills'),
         ]);
     }
 
@@ -720,9 +789,9 @@ class HomeController extends Controller
             ->pluck('year')
             ->toArray();
 
-        if (empty($years)) {
-            $years = [Carbon::now()->year];
-        }
+        $years[] = (int) Carbon::now()->year;
+        $years = array_values(array_unique(array_map('intval', $years)));
+        rsort($years, SORT_NUMERIC);
 
         return $years;
     }

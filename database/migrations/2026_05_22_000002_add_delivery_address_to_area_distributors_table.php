@@ -8,8 +8,8 @@ class AddDeliveryAddressToAreaDistributorsTable extends Migration
 {
     public function up()
     {
-        Schema::table('area_distributors', function (Blueprint $table) {
-            if (!Schema::hasColumn('area_distributors', 'delivery_address')) {
+        Schema::connection('dms')->table('area_distributors', function (Blueprint $table) {
+            if (!Schema::connection('dms')->hasColumn('area_distributors', 'delivery_address')) {
                 $table->text('delivery_address')->nullable()->after('address');
             }
         });
@@ -17,8 +17,8 @@ class AddDeliveryAddressToAreaDistributorsTable extends Migration
 
     public function down()
     {
-        Schema::table('area_distributors', function (Blueprint $table) {
-            if (Schema::hasColumn('area_distributors', 'delivery_address')) {
+        Schema::connection('dms')->table('area_distributors', function (Blueprint $table) {
+            if (Schema::connection('dms')->hasColumn('area_distributors', 'delivery_address')) {
                 $table->dropColumn('delivery_address');
             }
         });

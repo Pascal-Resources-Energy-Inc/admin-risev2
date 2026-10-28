@@ -9,6 +9,11 @@ class AreaDistributor extends Model implements Auditable
 {
     use \OwenIt\Auditing\Auditable;
 
+    /**
+     * Area distributors are mastered in the DMS database, not admin_crms.
+     */
+    protected $connection = 'dms';
+
     protected $fillable = [
         'user_id',
         'ad_reference',
@@ -55,6 +60,6 @@ class AreaDistributor extends Model implements Auditable
 
     public function userAds()
     {
-        return $this->belongsTo(User::class, 'user_id', 'id');
+        return $this->belongsTo(DmsUser::class, 'user_id', 'id');
     }
 }

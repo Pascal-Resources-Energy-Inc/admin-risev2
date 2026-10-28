@@ -320,8 +320,8 @@ class InventoryTransferController extends Controller
         $hasGuestTerritory = Schema::hasColumn('order_details', 'guest_authorized_territory');
 
         $dealerOrderQty = OrderDetail::leftJoin('dealers', 'order_details.dealer_id', '=', 'dealers.user_id')
-            ->leftJoin('area_distributors as ordering_ads', 'order_details.dealer_id', '=', 'ordering_ads.user_id')
-            ->leftJoin(DB::raw('(select ad_id, min(area_name) as area_name from ad_areas where deleted_at is null group by ad_id) as ordering_ad_areas'), 'ordering_ads.id', '=', 'ordering_ad_areas.ad_id')
+            ->leftJoin(config('database.connections.dms.database') . '.area_distributors as ordering_ads', 'order_details.dealer_id', '=', 'ordering_ads.user_id')
+            ->leftJoin(DB::raw('(select ad_id, min(area_name) as area_name from ' . config('database.connections.dms.database') . '.ad_areas where deleted_at is null group by ad_id) as ordering_ad_areas'), 'ordering_ads.id', '=', 'ordering_ad_areas.ad_id')
             ->where('order_details.ad_id', $adId)
             ->where('order_details.status', 'Completed')
             ->where(function ($query) use ($area, $hasGuestTerritory) {
@@ -347,7 +347,7 @@ class InventoryTransferController extends Controller
             ->sum('order_details.qty');
 
         $adPurchaseOrderQty = AdPurchaseOrderItem::join('ad_purchase_orders', 'ad_purchase_order_items.ad_purchase_order_id', '=', 'ad_purchase_orders.id')
-            ->leftJoin(DB::raw('(select ad_id, min(area_name) as area_name from ad_areas where deleted_at is null group by ad_id) as adpo_areas'), 'ad_purchase_orders.ad_id', '=', 'adpo_areas.ad_id')
+            ->leftJoin(DB::raw('(select ad_id, min(area_name) as area_name from ' . config('database.connections.dms.database') . '.ad_areas where deleted_at is null group by ad_id) as adpo_areas'), 'ad_purchase_orders.ad_id', '=', 'adpo_areas.ad_id')
             ->where('ad_purchase_orders.ad_user_id', $adUserId)
             ->where('ad_purchase_orders.status', 'Completed')
             ->where(function ($query) use ($area) {
@@ -460,8 +460,8 @@ class InventoryTransferController extends Controller
         }
 
         $query = OrderDetail::leftJoin('dealers', 'order_details.dealer_id', '=', 'dealers.user_id')
-            ->leftJoin('area_distributors as ordering_ads', 'order_details.dealer_id', '=', 'ordering_ads.user_id')
-            ->leftJoin(DB::raw('(select ad_id, min(area_name) as area_name from ad_areas where deleted_at is null group by ad_id) as ordering_ad_areas'), 'ordering_ads.id', '=', 'ordering_ad_areas.ad_id')
+            ->leftJoin(config('database.connections.dms.database') . '.area_distributors as ordering_ads', 'order_details.dealer_id', '=', 'ordering_ads.user_id')
+            ->leftJoin(DB::raw('(select ad_id, min(area_name) as area_name from ' . config('database.connections.dms.database') . '.ad_areas where deleted_at is null group by ad_id) as ordering_ad_areas'), 'ordering_ads.id', '=', 'ordering_ad_areas.ad_id')
             ->select($selects)
             ->where('order_details.ad_id', $adId)
             ->where('order_details.status', 'Completed')
@@ -520,7 +520,7 @@ class InventoryTransferController extends Controller
         });
 
         return AdPurchaseOrderItem::join('ad_purchase_orders', 'ad_purchase_order_items.ad_purchase_order_id', '=', 'ad_purchase_orders.id')
-            ->leftJoin(DB::raw('(select ad_id, min(area_name) as area_name from ad_areas where deleted_at is null group by ad_id) as adpo_areas'), 'ad_purchase_orders.ad_id', '=', 'adpo_areas.ad_id')
+            ->leftJoin(DB::raw('(select ad_id, min(area_name) as area_name from ' . config('database.connections.dms.database') . '.ad_areas where deleted_at is null group by ad_id) as adpo_areas'), 'ad_purchase_orders.ad_id', '=', 'adpo_areas.ad_id')
             ->select(
                 'ad_purchase_orders.authorized_territory as territory_area',
                 'adpo_areas.area_name as ad_area',

@@ -109,14 +109,21 @@
   }
 </style>
 
+@php
+  $isMegaDealer = $isMegaDealer ?? false;
+  $createLabel = $isMegaDealer ? 'Mega Dealer' : 'Dealer';
+  $createAction = $isMegaDealer ? route('mega-dealers.store') : url('new-dealer');
+  $duplicateUrl = $isMegaDealer ? route('mega-dealers.check-duplicate') : route('check.dealer.duplicate');
+  $duplicateEntityMessage = $createLabel . " with the same First Name, Last Name, and Mother's Name already exists.";
+@endphp
 <div id="new_dealer" class="modal fade modal-select2" tabindex="-1">
   <div class="modal-dialog modal-xl">
     <div class="modal-content">
       <div class="modal-header d-flex align-items-center">
-        <h4 class="modal-title" id="myModalLabel">New Dealer</h4>
+        <h4 class="modal-title" id="myModalLabel">New {{ $createLabel }}</h4>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <form id="newDealerForm" method='POST' action='{{url('new-dealer')}}' data-duplicate-url="{{ route('check.dealer.duplicate') }}" onsubmit='show()' enctype="multipart/form-data">
+      <form id="newDealerForm" method='POST' action='{{ $createAction }}' data-duplicate-url="{{ $duplicateUrl }}" onsubmit='show()' enctype="multipart/form-data">
         @csrf
         <input type="hidden" name="latitude" id="hidden_latitude">
         <input type="hidden" name="longitude" id="hidden_longitude">
@@ -164,11 +171,11 @@
               <label class="form-label" for="name">Mother's Full Name&nbsp;<span class="text-danger">*</span></label>
               <input type="text" class="form-control required {{ $errors->has('dealer_duplicate') ? 'is-invalid' : '' }}" id="mothers_name" name="mothers_name" value="{{ old('mothers_name') }}" placeholder="Enter Mother's Name" data-uppercase required/>
               <div class="invalid-feedback {{ $errors->has('dealer_duplicate') ? 'd-block' : '' }}" id="duplicateDealerFeedback">
-                  {{ $errors->first('dealer_duplicate') ?: "Dealer with same First Name, Last Name, and Mother's Name already exists." }}
+                  {{ $errors->first('dealer_duplicate') ?: $duplicateEntityMessage }}
               </div>
             </div>
             <div class="fs-6 fw-bold col-md-12 mb-3"><i class="bi bi-building-fill"></i> Business Information</div>
-            @if(auth()->user()->role === 'Admin')
+            @if(!$isMegaDealer && auth()->user()->role === 'Admin')
               <div class="col-md-12 mb-3" hidden>
                 <label class="form-label d-block">Dealer Type&nbsp;<span class="text-danger">*</span></label>
                 <div class="dealer-type-picker">
@@ -204,7 +211,7 @@
                   </label> --}}
                 </div>
               </div>
-            @else
+            @elseif(!$isMegaDealer)
               <input type="hidden" name="dealer_type" value="Project">
             @endif
             <div class="col-md-6 mb-2">
@@ -397,7 +404,7 @@
     const $mothersName = $('#new_dealer #mothers_name');
     const $duplicateDealerFeedback = $('#duplicateDealerFeedback');
     const $submitButton = $dealerForm.find('button[type="submit"]');
-    const duplicateDealerMessage = "Dealer with same First Name, Last Name, and Mother's Name already exists.";
+    const duplicateDealerMessage = @json($duplicateEntityMessage);
 
     let duplicateDealerTimeout = null;
     let duplicateDealerRequestId = 0;

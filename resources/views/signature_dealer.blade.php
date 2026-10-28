@@ -39,12 +39,12 @@
 </style>
 </head>
 <body>
-    <form method='POST' action='{{url('submit-contract-dealer/'.$dealer->id)}}' onsubmit='show()' enctype="multipart/form-data" class="validation-wizard wizard-circle mt-5">
+    <form method='POST' action='{{ ($isMegaDealer ?? false) ? route('mega-dealers.contract', $dealer->id) : url('submit-contract-dealer/'.$dealer->id) }}' onsubmit='show()' enctype="multipart/form-data" class="validation-wizard wizard-circle mt-5">
       @csrf
         <canvas id="signature-pad"></canvas>
         <input type="file" name="contract_signature" id="contract_signature" style="display: none;" required/>
         <div class="buttons">
-        <a href='{{url("/view-dealer/".$dealer->id)}}'>Back to Contract</a>
+        <a href='{{ ($isMegaDealer ?? false) ? route('mega-dealers.show', $dealer->id) : url("/view-dealer/".$dealer->id) }}'>Back to Contract</a>
         <button type='button'  onclick="clearPad()">Clear</button>
         <button type='submit'>Save</button>
         </div>

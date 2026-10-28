@@ -370,7 +370,7 @@ class ReportController extends Controller
         $ledger = collect();
 
         $purchaseRows = AdPurchaseOrderItem::join('ad_purchase_orders', 'ad_purchase_order_items.ad_purchase_order_id', '=', 'ad_purchase_orders.id')
-            ->leftJoin(DB::raw('(select ad_id, min(area_name) as area_name from ad_areas where deleted_at is null group by ad_id) as adpo_areas'), 'ad_purchase_orders.ad_id', '=', 'adpo_areas.ad_id')
+            ->leftJoin(DB::raw('(select ad_id, min(area_name) as area_name from ' . config('database.connections.dms.database') . '.ad_areas where deleted_at is null group by ad_id) as adpo_areas'), 'ad_purchase_orders.ad_id', '=', 'adpo_areas.ad_id')
             ->select(
                 'ad_purchase_order_items.product_id',
                 'ad_purchase_order_items.product_name',
@@ -444,8 +444,8 @@ class ReportController extends Controller
 
         if ($adIds->isNotEmpty()) {
             $orderRows = OrderDetail::leftJoin('dealers', 'order_details.dealer_id', '=', 'dealers.user_id')
-                ->leftJoin('area_distributors as ordering_ads', 'order_details.dealer_id', '=', 'ordering_ads.user_id')
-                ->leftJoin(DB::raw('(select ad_id, min(area_name) as area_name from ad_areas where deleted_at is null group by ad_id) as ordering_ad_areas'), 'ordering_ads.id', '=', 'ordering_ad_areas.ad_id')
+                ->leftJoin(config('database.connections.dms.database') . '.area_distributors as ordering_ads', 'order_details.dealer_id', '=', 'ordering_ads.user_id')
+                ->leftJoin(DB::raw('(select ad_id, min(area_name) as area_name from ' . config('database.connections.dms.database') . '.ad_areas where deleted_at is null group by ad_id) as ordering_ad_areas'), 'ordering_ads.id', '=', 'ordering_ad_areas.ad_id')
                 ->select(
                     'dealers.area as dealer_area',
                     'ordering_ad_areas.area_name as ad_area',
@@ -1241,7 +1241,7 @@ class ReportController extends Controller
             ->distinct()
             ->orderBy('location_region')
             ->pluck('location_region');
-        $projects = DB::table('ad_areas')
+        $projects = DB::connection('dms')->table('ad_areas')
             ->whereNull('deleted_at')
             ->whereNotNull('project_type')
             ->where('project_type', '<>', '')

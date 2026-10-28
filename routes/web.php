@@ -123,7 +123,17 @@ Route::delete('/ad-purchase-orders/{id}', 'AdPurchaseOrderController@destroy')->
 Route::get('/dealers','DealerController@index')->name('dealers');
 Route::get('/dealers/centers-for-mfi', 'DealerController@centersForMfi')->name('dealers.centers-for-mfi');
 Route::get('/dealers/data', 'DealerController@datatable')->name('dealers.data');
-Route::get('/mds','AreaDistributorController@megaDealers')->name('mds');
+Route::get('/mds', 'MegaDealerController@index')->name('mds');
+Route::get('/mega-dealers/data', 'MegaDealerController@datatable')->name('mega-dealers.data');
+Route::post('/mega-dealers', 'MegaDealerController@store')->name('mega-dealers.store');
+Route::post('/mega-dealers/check-duplicate', 'MegaDealerController@checkDuplicate')->name('mega-dealers.check-duplicate');
+Route::post('/mega-dealers/{id}/avatar', 'MegaDealerController@changeAvatar')->where('id', '[0-9]+')->name('mega-dealers.avatar');
+Route::post('/mega-dealers/{id}/valid-id', 'MegaDealerController@uploadValidId')->where('id', '[0-9]+')->name('mega-dealers.valid-id');
+Route::post('/mega-dealers/{id}/contract', 'MegaDealerController@contractSign')->where('id', '[0-9]+')->name('mega-dealers.contract');
+Route::get('/mega-dealers/{id}/signature', 'MegaDealerController@sign')->where('id', '[0-9]+')->name('mega-dealers.signature');
+Route::get('/mega-dealers/{id}', 'MegaDealerController@show')->where('id', '[0-9]+')->name('mega-dealers.show');
+Route::put('/mega-dealers/{id}', 'MegaDealerController@update')->where('id', '[0-9]+')->name('mega-dealers.update');
+Route::delete('/mega-dealers/{id}', 'MegaDealerController@destroy')->where('id', '[0-9]+')->name('mega-dealers.destroy');
 Route::post('/new-dealer','DealerController@newDealer');
 Route::post('/check-dealer-duplicate', 'DealerController@checkDuplicate')->name('check.dealer.duplicate');
 Route::get('view-dealer/{id}', 'DealerController@view')->name('dealer.view');
