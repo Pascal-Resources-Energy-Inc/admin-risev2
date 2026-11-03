@@ -143,6 +143,33 @@
                         </button> --}}
                     </div>
 
+                    <form method="GET" action="{{ route('ad-transactions') }}" class="row g-2 align-items-end mb-3 transaction-filter-form">
+                        <div class="col-12 col-sm-5 col-lg-3">
+                            <label for="transactionMfiFilter" class="form-label mb-1">MFI</label>
+                            <select name="mfi" id="transactionMfiFilter" class="form-select">
+                                <option value="">All MFIs</option>
+                                @foreach($mfiOptions as $mfi)
+                                    <option value="{{ $mfi }}" {{ $selectedMfi === $mfi ? 'selected' : '' }}>{{ $mfi }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-12 col-sm-5 col-lg-3">
+                            <label for="transactionCenterFilter" class="form-label mb-1">Center</label>
+                            <select name="center" id="transactionCenterFilter" class="form-select">
+                                <option value="">All centers</option>
+                                @foreach($centerOptions as $center)
+                                    <option value="{{ $center->center }}" data-mfi="{{ $center->mfi }}" {{ $selectedCenter === $center->center ? 'selected' : '' }}>{{ $center->center }}{{ $center->mfi ? ' — ' . $center->mfi : '' }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-6 col-sm-auto">
+                            <button type="submit" class="btn btn-primary w-100"><i class="bi bi-funnel me-1"></i> Filter</button>
+                        </div>
+                        <div class="col-6 col-sm-auto">
+                            <a href="{{ route('ad-transactions') }}" class="btn btn-outline-secondary w-100">Reset</a>
+                        </div>
+                    </form>
+
                     <div class="table-responsive">
                         <table class="table table-bordered table-striped transaction-table" id="example" style="width:100%">
                             <thead>
@@ -159,6 +186,8 @@
                                     <th scope="col">Amount</th>
                                     <th scope="col">Dealer</th>
                                     <th scope="col">Customer</th>
+                                    <th scope="col">MFI</th>
+                                    <th scope="col">Center</th>
                                     <th scope="col">Dealer Points</th>
                                     <th scope="col">Customer Points</th>
                                     <th scope="col">Item</th>
@@ -181,6 +210,8 @@
                                         <td>{{ number_format($transaction->qty * $transaction->price, 2) }}</td>
                                         <td>{{ $transaction->dealer->name ?? '' }}</td>
                                         <td>{{ $transaction->customer->name ?? '' }}</td>
+                                        <td>{{ optional($transaction->adDealer)->mfi ?: '—' }}</td>
+                                        <td>{{ optional($transaction->adDealer)->center ?: '—' }}</td>
                                         <td><span class='text-success'>{{ $transaction->points_dealer }}</span></td>
                                         <td><span class='text-success'>{{ $transaction->points_client }}</span></td>
                                         <td>{{ strtoupper($transaction->item) }}</td>
@@ -224,6 +255,26 @@
 <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const mfi = document.getElementById('transactionMfiFilter');
+    const center = document.getElementById('transactionCenterFilter');
+    if (!mfi || !center) return;
+
+    function syncCenterOptions(clearInvalid) {
+        const selectedMfi = mfi.value;
+        Array.from(center.options).forEach(function (option) {
+            if (!option.value) return;
+            option.hidden = Boolean(selectedMfi && option.dataset.mfi !== selectedMfi);
+        });
+        const selectedOption = center.options[center.selectedIndex];
+        if (clearInvalid && selectedOption && selectedOption.hidden) center.value = '';
+    }
+
+    mfi.addEventListener('change', function () { syncCenterOptions(true); });
+    syncCenterOptions(false);
+});
+</script>
 
 <script>
 $(function() {

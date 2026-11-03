@@ -63,6 +63,73 @@
     justify-content: flex-end;
     margin-bottom: 0;
 }
+
+.transactions-page { display: grid; gap: 18px; padding-bottom: 28px; --trx-ink: #172f4a; --trx-muted: #718197; --trx-line: #dfe8f0; --trx-accent: #1592bd; }
+.transactions-head { display: flex; align-items: end; justify-content: space-between; gap: 18px; }
+.transactions-eyebrow { margin: 0; color: #1688b3; font-size: 11px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+.transactions-eyebrow i { margin-right: 5px; }
+.transactions-head h1 { margin: 4px 0; color: #102a43; font-size: 28px; font-weight: 900; letter-spacing: -.04em; }
+.transactions-head > div:first-child > p:last-child { margin: 0; color: #718197; font-size: 13px; }
+.transactions-head-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+.transactions-head-actions .btn { min-height: 40px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border-radius: 9px; font-size: 12px; font-weight: 800; }
+.transactions-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.transactions-stats article { min-width: 0; min-height: 92px; display: flex; align-items: center; gap: 12px; padding: 15px; background: #fff; border: 1px solid #e1e9f0; border-radius: 12px; box-shadow: 0 8px 20px rgba(20,54,79,.04); }
+.transactions-stats small,.transactions-stats article>div>span { display: block; color: #8997a5; font-size: 11px; }
+.transactions-stats strong { display: block; margin: 3px 0; overflow: hidden; color: #162e49; font-size: clamp(18px, 2vw, 24px); font-weight: 900; line-height: 1.15; text-overflow: ellipsis; white-space: nowrap; }
+.transactions-stat-icon { width: 42px; height: 42px; display: grid; flex: 0 0 auto; place-items: center; border-radius: 10px; font-size: 19px; }
+.transactions-stat-icon.sales { color: #1592bd; background: #e4f7fd; }
+.transactions-stat-icon.count { color: #d98500; background: #fff4dc; }
+.transactions-stat-icon.quantity { color: #198754; background: #e8f8ee; }
+.transactions-stat-icon.points { color: #635bdb; background: #efedff; }
+.transactions-page .transaction-register-card { overflow: hidden; border: 1px solid var(--trx-line); border-radius: 18px !important; box-shadow: 0 12px 32px rgba(26, 50, 77, .07); }
+.transactions-page .transaction-register-card > .card-body { padding: 0; }
+.transactions-page .transaction-register-header { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 20px 22px; border-bottom: 1px solid var(--trx-line); }
+.transactions-page .transaction-register-title { margin: 0; color: var(--trx-ink); font-size: 17px; font-weight: 800; }
+.transactions-page .transaction-register-subtitle { margin: 4px 0 0; color: var(--trx-muted); font-size: 12px; }
+.transactions-page .transaction-register-actions { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+.transactions-page .transaction-register-actions .btn { min-height: 40px; border-radius: 10px; font-size: 12px; font-weight: 700; }
+.transactions-page .transaction-controls { display: grid; grid-template-columns: minmax(220px, 1fr) auto; align-items: center; gap: 14px; padding: 14px 22px; background: #fbfdff; border-bottom: 1px solid var(--trx-line); }
+.transactions-page .transaction-search-slot { min-width: 0; }
+.transactions-page .transaction-search-slot .dataTables_filter { float: none; margin: 0; text-align: left; }
+.transactions-page .transaction-search-slot .dataTables_filter label { display: block; margin: 0; color: var(--trx-muted); font-size: 11px; }
+.transactions-page .transaction-search-slot .dataTables_filter input { width: min(100%, 360px); height: 40px; margin: 0 0 0 8px; padding: 8px 12px; border: 1px solid #d9e2ec; border-radius: 10px; outline: none; }
+.transactions-page .transaction-search-slot .dataTables_filter input:focus { border-color: var(--trx-accent); box-shadow: 0 0 0 3px rgba(21,151,184,.12); }
+.transactions-page .transaction-filter-caption { color: var(--trx-muted); font-size: 11px; font-weight: 700; white-space: nowrap; }
+.transactions-page .transaction-filter-form { display: grid; grid-template-columns: minmax(160px, 1fr) minmax(180px, 1.2fr) auto auto; align-items: end; gap: 12px; padding: 16px 22px; border-bottom: 1px solid var(--trx-line); }
+.transactions-page .transaction-filter-field { min-width: 0; }
+.transactions-page .transaction-filter-field label { display: block; margin-bottom: 5px; color: #475467; font-size: 10px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+.transactions-page .transaction-filter-field .form-select { min-height: 40px; border-color: #d9e2ec; border-radius: 10px; color: var(--trx-ink); font-size: 12px; }
+.transactions-page .transaction-filter-form .btn { min-height: 40px; min-width: 92px; border-radius: 10px; font-size: 12px; font-weight: 700; }
+.transactions-page .transaction-filter-form > div > .btn { width: 100%; }
+.transactions-page .transaction-table-wrap { padding: 16px 22px 0; }
+.transactions-page .transaction-table { margin: 0; border-color: var(--trx-line); }
+.transactions-page .transaction-table thead th { padding: 12px 11px; color: #52637a; background: #f5f8fb; border-color: var(--trx-line); font-size: 10px; font-weight: 800; letter-spacing: .035em; text-transform: uppercase; white-space: nowrap; }
+.transactions-page .transaction-table tbody td { padding: 11px; color: #344054; border-color: #edf1f5; font-size: 12px; vertical-align: middle; }
+.transactions-page .transaction-table tbody tr:hover td { background: #f3fbfd; }
+.transactions-page .transaction-table .transaction-mfi-badge { display: inline-block; padding: 4px 8px; color: #116b8a; background: #e8f7fb; border-radius: 999px; font-size: 10px; font-weight: 800; }
+.transactions-page .transaction-pagination { padding: 0 22px 18px; }
+.transactions-page .transaction-pagination .pagination { gap: 4px; }
+.transactions-page .transaction-pagination .page-link { border-radius: 8px; font-size: 11px; }
+@media (max-width: 767.98px) {
+    .transactions-head { align-items: stretch; flex-direction: column; }
+    .transactions-head h1 { font-size: 24px; }
+    .transactions-head-actions { justify-content: flex-start; }
+    .transactions-head-actions .btn { flex: 1; }
+    .transactions-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .transactions-page .transaction-register-header { align-items: flex-start; flex-direction: column; padding: 17px; }
+    .transactions-page .transaction-register-actions { width: 100%; }
+    .transactions-page .transaction-controls { grid-template-columns: 1fr; padding: 12px 17px; }
+    .transactions-page .transaction-filter-caption { white-space: normal; }
+    .transactions-page .transaction-filter-form { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 14px 17px; }
+    .transactions-page .transaction-table-wrap { padding: 12px 17px 0; }
+    .transactions-page .transaction-pagination { padding: 0 17px 15px; }
+}
+@media (max-width: 420px) {
+    .transactions-stats { grid-template-columns: 1fr; }
+    .transactions-page .transaction-filter-form { grid-template-columns: 1fr; }
+    .transactions-page .transaction-register-actions .btn { flex: 1; }
+    .transactions-page .transaction-search-slot .dataTables_filter input { display: block; width: 100%; margin: 6px 0 0; }
+}
 </style>
 <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
@@ -72,89 +139,72 @@
 <meta name="csrf-token" content="{{ csrf_token() }}">
 @endsection
 @section('content')
-<div class="welcome @if(auth()->user()->role === 'Dealer') welcome-client @endif">
-    <div class="row">
-        <!-- Cards Section - All 4 cards in one row -->
-        <div class="col-12">
-            <div class="row mb-0 cards">
-                <!-- Total Sales -->
-                  <div class="col-sm-6 col-lg-4 col-xl-2">
-                    <div class="card warning-card overflow-hidden text-bg-primary w-100">
-                        <div class="card-body p-4">
-                          <div class="mb-7">
-                            <i class="ti ti-brand-producthunt fs-8 fw-lighter"></i>
-                          </div>
-                          <h5 class="text-white fw-bold fs-14 text-nowrap">
-                          {{ number_format($transactionSummary->total_sales ?? 0, 2) }}
-                          </h5>
-                          <p class="opacity-50 mb-0 ">TOTAL SALES</p>
-                        </div>
-                    </div>
-                </div>
-                  <div class="col-sm-6 col-lg-4 col-xl-2">
-                    <div class="card danger-card overflow-hidden text-bg-primary w-100">
-                        <div class="card-body p-4">
-                          <div class="mb-7">
-                            <i class="ti ti-brand-producthunt fs-8 fw-lighter"></i>
-                          </div>
-                          <h5 class="text-white fw-bold fs-14 text-nowrap">
-                            {{ number_format($transactionSummary->transaction_count ?? 0) }}
-                          </h5>
-                          <p class="opacity-50 mb-0 ">TRANSACTIONS</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-sm-6 col-lg-4 col-xl-2">
-                    <div class="card info-card overflow-hidden text-bg-primary w-100">
-                        <div class="card-body p-4">
-                          <div class="mb-7">
-                            <i class="ti ti-brand-producthunt fs-8 fw-lighter"></i>
-                          </div>
-                          <h5 class="text-white fw-bold fs-14 text-nowrap">
-                            {{ number_format($transactionSummary->total_qty ?? 0) }}
-                          </h5>
-                          <p class="opacity-50 mb-0 ">QTY SOLD</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-sm-6 col-lg-4 col-xl-2">
-                    <div class="card info-card overflow-hidden text-bg-primary w-100">
-                        <div class="card-body p-4">
-                          <div class="mb-7">
-                            <i class="ti ti-brand-producthunt fs-8 fw-lighter"></i>
-                          </div>
-                          <h5 class="text-white fw-bold fs-14 text-nowrap">
-                            {{ number_format($transactionSummary->total_points ?? 0) }}
-                          </h5>
-                          <p class="opacity-50 mb-0 ">TOTAL POINTS</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<div class="welcome transactions-page @if(auth()->user()->role === 'Dealer') welcome-client @endif">
+    <header class="transactions-head">
+        <div>
+            <p class="transactions-eyebrow"><i class="bi bi-receipt"></i> Sales management</p>
+            <h1>Transactions</h1>
+            <p>Review sales activity and filter transaction records by MFI and center.</p>
         </div>
+        <div class="transactions-head-actions">
+            @if(auth()->user()->role == "Admin")
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTransactionModalAdmin"><i class="bi bi-plus-lg"></i> Search Name</button>
+                <button type="button" class="btn btn-danger btn-sm" id="deleteSelectedBtn" title="Delete Selected" style="display: none;"><i class="bi bi-trash"></i> Delete All</button>
+            @else
+                <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#qrScannerModal"><i class="bi bi-qr-code-scan"></i> Scan QR</button>
+                <button type="button" class="btn btn-primary search-name-responsive" data-bs-toggle="modal" data-bs-target="#addTransactionModal"><i class="bi bi-plus-lg"></i> Search Name</button>
+            @endif
+        </div>
+    </header>
+
+    <section class="transactions-stats">
+        <article><span class="transactions-stat-icon sales"><i class="ti ti-currency-peso"></i></span><div><small>Total sales</small><strong>₱{{ number_format($transactionSummary->total_sales ?? 0, 2) }}</strong><span>revenue in this result</span></div></article>
+        <article><span class="transactions-stat-icon count"><i class="ti ti-receipt"></i></span><div><small>Transactions</small><strong>{{ number_format($transactionSummary->transaction_count ?? 0) }}</strong><span>matching records</span></div></article>
+        <article><span class="transactions-stat-icon quantity"><i class="ti ti-package"></i></span><div><small>Quantity sold</small><strong>{{ number_format($transactionSummary->total_qty ?? 0) }}</strong><span>items in this result</span></div></article>
+        <article><span class="transactions-stat-icon points"><i class="ti ti-award"></i></span><div><small>Points earned</small><strong>{{ number_format($transactionSummary->total_points ?? 0) }}</strong><span>dealer and customer points</span></div></article>
+    </section>
+
+    <div class="row g-3">
         
         <div class="col-12">
-            <div class="card w-100">  
+            <div class="card w-100 transaction-register-card">
                 <div class="card-body">
-                  <div class="d-flex justify-content-start align-items-center gap-2 mb-3">
-                      @if(auth()->user()->role == "Admin")
-                          <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTransactionModalAdmin">
-                              <i class="bi bi-plus-lg"></i> Search Name
-                          </button>
-                          <button type="button" class="btn btn-danger btn-sm" id="deleteSelectedBtn" title="Delete Selected" style="display: none; height: 38px;">
-                              <i class="bi bi-trash"></i> Delete All
-                          </button>
-                      @else
-                          <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#qrScannerModal">
-                              Scan QR
-                          </button>
-                          <button type="button" class="btn btn-primary search-name-responsive" data-bs-toggle="modal" data-bs-target="#addTransactionModal">
-                              <i class="bi bi-plus-lg"></i> Search Name
-                          </button>
-                      @endif
+                  <div class="transaction-register-header">
+                    <div>
+                      <h2 class="transaction-register-title">Transaction register</h2>
+                      <p class="transaction-register-subtitle">Review sales, find records, and filter by MFI or center.</p>
+                    </div>
                   </div>
 
-                  <div class="table-responsive">
+                  <div class="transaction-controls">
+                    <div class="transaction-search-slot" id="transactionSearchSlot"></div>
+                    <div class="transaction-filter-caption">{{ number_format($transactions->total()) }} matching transactions</div>
+                  </div>
+
+                  <form method="GET" action="{{ route('transactions') }}" class="transaction-filter-form">
+                      <div class="transaction-filter-field">
+                          <label for="transactionMfiFilter">MFI</label>
+                          <select name="mfi" id="transactionMfiFilter" class="form-select">
+                              <option value="">All MFIs</option>
+                              @foreach($mfiOptions as $mfi)
+                                  <option value="{{ $mfi }}" {{ $selectedMfi === $mfi ? 'selected' : '' }}>{{ $mfi }}</option>
+                              @endforeach
+                          </select>
+                      </div>
+                      <div class="transaction-filter-field">
+                          <label for="transactionCenterFilter">Center</label>
+                          <select name="center" id="transactionCenterFilter" class="form-select">
+                              <option value="">All centers</option>
+                              @foreach($centerOptions as $center)
+                                  <option value="{{ $center->center }}" data-mfi="{{ $center->mfi }}" {{ $selectedCenter === $center->center ? 'selected' : '' }}>{{ $center->center }}{{ $center->mfi ? ' — ' . $center->mfi : '' }}</option>
+                              @endforeach
+                          </select>
+                      </div>
+                      <div><button type="submit" class="btn btn-primary"><i class="bi bi-funnel me-1"></i> Apply filters</button></div>
+                      <div><a href="{{ route('transactions') }}" class="btn btn-outline-secondary">Reset</a></div>
+                  </form>
+
+                  <div class="table-responsive transaction-table-wrap">
                       <table class="table table-bordered table-striped transaction-table" id="example" style="width:100%">
                           <thead>
                               <tr>
@@ -165,14 +215,16 @@
                                           </div>
                                       </th>
                                   @endif
-                                  <th scope="col">ID</th>
+                                  {{-- <th scope="col">ID</th> --}}
                                   <th scope="col">Date</th>
                                   <th scope="col">Quantity</th>
                                   <th scope="col">Amount</th>
                                   <th scope="col">Dealer</th>
                                   <th scope="col">Customer</th>
-                                  <th scope="col">Dealer Points</th>
-                                  <th scope="col">Customer Points</th>
+                                  <th scope="col">MFI</th>
+                                  <th scope="col">Center</th>
+                                  {{-- <th scope="col">Dealer Points</th>
+                                  <th scope="col">Customer Points</th> --}}
                                   <th scope="col">Item</th>
                                   @if(auth()->user()->role == "Admin" && auth()->user()->can_delete === "on")
                                       <th scope="col" class="no-sort" style="width: 80px; text-align: center;">Actions</th>
@@ -187,14 +239,16 @@
                                               <input type="checkbox" class="checkbox-item" data-id="{{$transaction->id}}" style="cursor: pointer;">
                                           </td>
                                       @endif
-                                      <td>{{$transaction->id}}</td>
-                                      <td>{{ date('M d, Y', strtotime($transaction->date)) }}</td>
+                                      {{-- <td>{{$transaction->id}}</td> --}}
+                                      <td data-order="{{ strtotime($transaction->date) }}">{{ date('M. d, Y', strtotime($transaction->date)) }}</td>
                                       <td>{{ number_format($transaction->qty, 2) }}</td>
                                       <td>{{ number_format($transaction->qty * $transaction->price, 2) }}</td>
                                       <td>{{ $transaction->dealer->name ?? '' }}</td>
                                       <td>{{ $transaction->customer->name ?? '' }}</td>
-                                      <td><span class='text-success'>{{ $transaction->points_dealer }}</span></td>
-                                      <td><span class='text-success'>{{ $transaction->points_client }}</span></td>
+                                      <td><span class="transaction-mfi-badge">{{ optional($transaction->adDealer)->mfi ?: '—' }}</span></td>
+                                      <td class="text-nowrap">{{ optional($transaction->adDealer)->center ?: '—' }}</td>
+                                      {{-- <td><span class='text-success'>{{ $transaction->points_dealer }}</span></td>
+                                      <td><span class='text-success'>{{ $transaction->points_client }}</span></td> --}}
                                       <td>{{ strtoupper($transaction->item) }}</td>
                                       @if(auth()->user()->role == "Admin" && auth()->user()->can_delete === "on")
                                           <td style="text-align: center;">
@@ -220,7 +274,7 @@
             </div>
         </div>
     </div>
-</section>
+</div>
 
 @if(auth()->user()->role == "Admin")
   @include('new_transaction_admin')
@@ -250,6 +304,26 @@
 });
 </script> --}}
 <script>
+document.addEventListener('DOMContentLoaded', function () {
+    const mfi = document.getElementById('transactionMfiFilter');
+    const center = document.getElementById('transactionCenterFilter');
+    if (!mfi || !center) return;
+
+    function syncCenterOptions(clearInvalid) {
+        const selectedMfi = mfi.value;
+        Array.from(center.options).forEach(function (option) {
+            if (!option.value) return;
+            option.hidden = Boolean(selectedMfi && option.dataset.mfi !== selectedMfi);
+        });
+        const selectedOption = center.options[center.selectedIndex];
+        if (clearInvalid && selectedOption && selectedOption.hidden) center.value = '';
+    }
+
+    mfi.addEventListener('change', function () { syncCenterOptions(true); });
+    syncCenterOptions(false);
+});
+</script>
+<script>
 $(function() {
     const $table = $('#example');
     if (!$table.length || !$.fn.DataTable) return;
@@ -272,9 +346,15 @@ $(function() {
             }
         ],
         language: {
-            search: 'Search current page:'
+            search: 'Search this page:'
         }
     });
+
+    const $searchControl = $('#example_filter');
+    if ($searchControl.length && $('#transactionSearchSlot').length) {
+        $searchControl.appendTo('#transactionSearchSlot');
+        $searchControl.find('input').attr({ placeholder: 'Search visible rows', 'aria-label': 'Search visible transaction rows' });
+    }
 });
 </script>
 <script>

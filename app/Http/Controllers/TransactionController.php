@@ -15,11 +15,34 @@ class TransactionController extends Controller
 
     public function index(Request $request)
     {
+        $filters = $request->validate([
+            'mfi' => 'nullable|string|max:255',
+            'center' => 'nullable|string|max:255',
+        ]);
+        $selectedMfi = trim($filters['mfi'] ?? '');
+        $selectedCenter = trim($filters['center'] ?? '');
         $customers = Client::where('status', 'Active')->whereHas('serial')->get();
         $items = Item::get();
         $dealers = Dealer::get();
-        $transactionQuery = TransactionDetail::with(['dealer', 'customer'])
+        $mfiOptions = $dealers->pluck('mfi')->filter()->unique()->sort()->values();
+        $centerOptions = $dealers->filter(function ($dealer) {
+            return !empty($dealer->center);
+        })->unique(function ($dealer) {
+            return strtolower(trim($dealer->mfi)) . '|' . strtolower(trim($dealer->center));
+        })->sortBy('center')->values();
+        $transactionQuery = TransactionDetail::with(['dealer', 'customer', 'adDealer'])
             ->orderBy('id', 'desc');
+
+        if ($selectedMfi !== '' || $selectedCenter !== '') {
+            $transactionQuery->whereHas('adDealer', function ($query) use ($selectedMfi, $selectedCenter) {
+                if ($selectedMfi !== '') {
+                    $query->where('mfi', $selectedMfi);
+                }
+                if ($selectedCenter !== '') {
+                    $query->where('center', $selectedCenter);
+                }
+            });
+        }
 
         if (auth()->user()->role == "Dealer") {
             $transactionQuery->where('dealer_id', auth()->user()->id);
@@ -44,12 +67,22 @@ class TransactionController extends Controller
                 'items' => $items,
                 'customers' => $customers,
                 'dealers' => $dealers,
+                'mfiOptions' => $mfiOptions,
+                'centerOptions' => $centerOptions,
+                'selectedMfi' => $selectedMfi,
+                'selectedCenter' => $selectedCenter,
             )
         );
     }
 
     public function adTransactions(Request $request)
     {
+        $filters = $request->validate([
+            'mfi' => 'nullable|string|max:255',
+            'center' => 'nullable|string|max:255',
+        ]);
+        $selectedMfi = trim($filters['mfi'] ?? '');
+        $selectedCenter = trim($filters['center'] ?? '');
         $user = auth()->user();
         $centers = optional($user->ad)
             ->areas
@@ -57,7 +90,13 @@ class TransactionController extends Controller
             : [];
 
         $dealers = Dealer::whereIn('area', $centers)->get();
-        
+        $mfiOptions = $dealers->pluck('mfi')->filter()->unique()->sort()->values();
+        $centerOptions = $dealers->filter(function ($dealer) {
+            return !empty($dealer->center);
+        })->unique(function ($dealer) {
+            return strtolower(trim($dealer->mfi)) . '|' . strtolower(trim($dealer->center));
+        })->sortBy('center')->values();
+
         $dealerCenters = $dealers->pluck('center')->filter()->unique()->values()->toArray();
         $customers = Client::where('status', 'Active')
             ->whereHas('serial')
@@ -72,11 +111,23 @@ class TransactionController extends Controller
             ->where('status', 'Pending')
             ->count();
         
-        $transactionQuery = TransactionDetail::with(['dealer', 'customer'])
+        $transactionQuery = TransactionDetail::with(['dealer', 'customer', 'adDealer'])
             ->whereHas('adDealer', function($q) use ($centers) {
                 $q->whereIn('area', $centers);
-            })
-            ->orderBy('id', 'desc');
+            });
+
+        if ($selectedMfi !== '' || $selectedCenter !== '') {
+            $transactionQuery->whereHas('adDealer', function ($query) use ($selectedMfi, $selectedCenter) {
+                if ($selectedMfi !== '') {
+                    $query->where('mfi', $selectedMfi);
+                }
+                if ($selectedCenter !== '') {
+                    $query->where('center', $selectedCenter);
+                }
+            });
+        }
+
+        $transactionQuery->orderBy('id', 'desc');
 
         $summaryQuery = clone $transactionQuery;
         $summaryQuery->getQuery()->orders = null;
@@ -97,6 +148,10 @@ class TransactionController extends Controller
                 'items' => $items,
                 'customers' => $customers,
                 'dealers' => $dealers,
+                'mfiOptions' => $mfiOptions,
+                'centerOptions' => $centerOptions,
+                'selectedMfi' => $selectedMfi,
+                'selectedCenter' => $selectedCenter,
                 'pendingOrdersCount' => $pendingOrdersCount
             )
         );

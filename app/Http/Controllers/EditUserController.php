@@ -182,6 +182,7 @@ class EditUserController extends Controller
     public function updatePrivilege(Request $request, $id)
     {
         try {
+            abort_unless(auth()->user() && auth()->user()->role === 'Admin', 403);
             $user = User::findOrFail($id);
             
             if ($user->role !== 'Admin') {

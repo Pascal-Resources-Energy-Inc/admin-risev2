@@ -85,13 +85,36 @@ class LoginController extends Controller
 
     protected function isUserInactive($user)
     {
-        if (strtolower($user->role) === 'area distributor') {
-            $ad = AreaDistributor::where('user_id', $user->id)->first();
+        $role = strtolower(trim((string) $user->role));
 
-            return !$ad || strtolower($ad->status ?? '') === 'inactive';
+        // Some disabled partner accounts are explicitly renamed with an
+        // "Inactive " role prefix when removed from the active directory.
+        if (strpos($role, 'inactive ') === 0) {
+            return true;
         }
 
-        return false;
+        if ($role === 'admin') {
+            return strtolower(trim((string) $user->getAttribute('status'))) === 'inactive';
+        }
+
+        if ($role === 'dealer') {
+            $status = optional($user->dealer)->status;
+            return strtolower(trim((string) $status)) === 'inactive';
+        }
+
+        if ($role === 'client' || $role === 'customer') {
+            $status = optional($user->client)->status;
+            return strtolower(trim((string) $status)) === 'inactive';
+        }
+
+        if (in_array($role, ['area distributor', 'provincial distributor', 'mega dealer'], true)) {
+            $partner = AreaDistributor::where('user_id', $user->id)->first();
+
+            // A distributor login must still have an active directory record.
+            return !$partner || strtolower(trim((string) $partner->status)) === 'inactive';
+        }
+
+        return strtolower(trim((string) $user->getAttribute('status'))) === 'inactive';
     }
 
     protected function sendFailedLoginResponse(Request $request)

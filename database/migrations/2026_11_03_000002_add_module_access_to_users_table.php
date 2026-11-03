@@ -1,0 +1,26 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+class AddModuleAccessToUsersTable extends Migration
+{
+    public function up()
+    {
+        if (!Schema::hasColumn('users', 'module_access')) {
+            Schema::table('users', function (Blueprint $table) {
+                $table->text('module_access')->nullable();
+            });
+        }
+    }
+
+    public function down()
+    {
+        if (Schema::hasColumn('users', 'module_access')) {
+            Schema::table('users', function (Blueprint $table) {
+                $table->dropColumn('module_access');
+            });
+        }
+    }
+}
