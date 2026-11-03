@@ -14,7 +14,7 @@ class User extends Authenticatable implements Auditable
 
     protected $fillable = [
         'name', 'email', 'password', 'role', 'serial', 'read_notifications',
-        'warehouse', 'delivery_address', 'designation', 'employee_number', 'department',
+        'warehouse', 'delivery_address', 'designation', 'employee_number', 'department', 'status',
     ];
 
     protected $hidden = [
@@ -24,7 +24,22 @@ class User extends Authenticatable implements Auditable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'read_notifications' => 'array',
+        'module_access' => 'array',
     ];
+
+    public function hasModuleAccess($module)
+    {
+        if ($this->role !== 'Admin') {
+            return true;
+        }
+
+        $access = $this->module_access;
+        if (!is_array($access) || empty($access)) {
+            return true;
+        }
+
+        return !empty($access[$module]);
+    }
 
     public function dealer()
     {

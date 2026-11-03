@@ -2,196 +2,34 @@
 <link rel="icon" type="image/png" href="{{asset('images/logo_nya.png')}}">
 @section('css')
 <style>
-    table td:nth-child(6) {
-        white-space: nowrap;
-        text-align: center;
-        vertical-align: middle;
-    }
-
-    .transaction-table th {
-        text-align: center;
-    }
-    .btn-view {
-        width: 100px;
-        font-size: 14px;
-    }
-
-    .welcome {
-        margin-top: 20px;
-    }
-
-    .card-header {
-        font-size: 1.25rem;
-        font-weight: bold;
-    }
-
-    .card-body.users {
-        padding: 20px;
-        background-color: #ffffffff;
-        border-radius: 50px;
-    }
-
-    .filter-container {
-        margin-bottom: 20px;
-    }
-
-    .btn-custom {
-        display: inline-block;
-        padding: 8px 12px;
-        font-size: 14px;
-        font-weight: 500;
-        text-align: center;
-        white-space: nowrap;
-        vertical-align: middle;
-        border-radius: 20px;
-        border: 2px solid;
-        background-color: white;
-        text-decoration: none;
-        margin: 2px;
-        min-width: 40px;
-        min-height: 36px;
-        transition: all 0.3s ease;
-        cursor: pointer;
-    }
-
-    .btn-view-custom {
-        border-color: #1e90ff;
-        background-color: #1e90ff;
-        color: #fff;
-    }
-
-    .btn-view-custom:hover {
-        background-color: #0d7ddd;
-        border-color: #0d7ddd;
-        color: #fff !important;
-    }
-
-    .btn-edit-custom {
-        border-color: #e53e3e;
-        background-color: #e53e3e;
-        color: #fff;
-    }
-
-    .btn-edit-custom:hover {
-        background-color: #c53030;
-        border-color: #c53030;
-        color: #fff !important;
-    }
-
-    .btn-access-custom {
-        border-color: #28a745;
-        background-color: #28a745;
-        color: #fff;
-    }
-
-    .btn-access-custom:hover {
-        background-color: #218838;
-        border-color: #1e7e34;
-        color: #fff !important;
-    }
-
-    .btn-access-custom i {
-        color: white;
-    }
-
-    .btn-access-custom:hover i {
-        color: white;
-    }
-
-    .btn-group .btn {
-        border-radius: 0;
-    }
-    .btn-group .btn:first-child {
-        border-top-left-radius: 0.375rem;
-        border-bottom-left-radius: 0.375rem;
-    }
-    .btn-group .btn:last-child {
-        border-top-right-radius: 0.375rem;
-        border-bottom-right-radius: 0.375rem;
-    }
-    .btn-group .btn.active {
-        background-color: #0d6efd;
-        border-color: #0d6efd;
-        color: white;
-    }
-
-    .custom-dropdown {
-        appearance: none;
-        -webkit-appearance: none;
-        -moz-appearance: none;
-        padding-right: 2rem;
-    }
-
-    .align-label-select {
-        display: flex;
-        align-items: center;
-    }
-
-    .align-label-select label {
-        margin-bottom: 0;
-        margin-right: 10px;
-        line-height: 1.5;
-    }
-
-    .btn-custom i {
-        font-size: 16px;
-    }
-
-    .action-buttons {
-        display: flex;
-        gap: 5px;
-        justify-content: center;
-    }
-
-    .btn-add-admin {
-        color: white;
-        padding: 8px 16px;
-        border-radius: 4px;
-        font-size: 14px;
-        font-weight: 500;
-        margin-left: 15px;
-    }
-
-    .btn-add-admin i {
-        margin-right: 5px;
-    }
-
-    .users-header {
-        display: flex;
-        align-items: center;
-        margin-bottom: 20px;
-    }
-
-    .users-header h5 {
-        margin: 0;
-    }
-
-    .custom-dropdown {
-        appearance: none;
-        -webkit-appearance: none;
-        -moz-appearance: none;
-        background-color: #fff;
-        padding-right: 30px;
-        background-image: none;
-        position: relative;
-    }
-
-    .custom-select-container {
-        position: relative;
-        display: inline-block;
-        width: 200px;
-    }
-
-    .custom-select-container::after {
-        content: "▼";
-        font-size: 12px;
-        color: #333;
-        position: absolute;
-        right: 10px;
-        top: 50%;
-        transform: translateY(-50%);
-        pointer-events: none;
-    }
+    .users-page{display:grid;gap:18px;padding:4px 0 28px}
+    .users-head{align-items:flex-end;display:flex;gap:20px;justify-content:space-between}
+    .users-eyebrow{color:#1688b3;font-size:11px;font-weight:900;letter-spacing:.08em;margin:0;text-transform:uppercase}
+    .users-head h1{color:#102a43;font-size:28px;font-weight:900;letter-spacing:-.04em;margin:4px 0}
+    .users-head-copy{color:#718197;font-size:13px;margin:0}
+    .users-add{align-items:center;background:#1592bd;border:0;border-radius:9px;box-shadow:0 7px 16px rgba(21,146,189,.2);color:#fff;display:inline-flex;font-size:12px;font-weight:800;gap:7px;min-height:40px;padding:10px 14px;white-space:nowrap}
+    .users-add:hover{background:#117da4;color:#fff}
+    .users-stats{display:grid;gap:14px;grid-template-columns:repeat(4,minmax(0,1fr))}
+    .users-stat{align-items:center;background:#fff;border:1px solid #e1e9f0;border-radius:12px;box-shadow:0 8px 20px rgba(20,54,79,.04);display:flex;gap:12px;min-height:91px;padding:15px}
+    .users-stat-icon{align-items:center;border-radius:10px;display:grid;flex:0 0 42px;height:42px;justify-content:center;width:42px}
+    .users-stat-icon i{display:block!important;font-size:20px!important;line-height:1!important}
+    .users-stat-icon.total{background:#e4f7fd;color:#1592bd}.users-stat-icon.admin{background:#edf0ff;color:#6963d9}.users-stat-icon.dealer{background:#e8f8ee;color:#198754}.users-stat-icon.customer{background:#fff4dc;color:#d98500}
+    .users-stat small,.users-stat span{color:#8997a5;font-size:11px}.users-stat strong{color:#162e49;display:block;font-size:23px;font-weight:900;line-height:1;margin:4px 0}
+    .users-panel{background:#fff;border:1px solid #dfe8f0;border-radius:13px;box-shadow:0 12px 30px rgba(25,57,85,.055);overflow:hidden}
+    .users-panel-head{align-items:center;background:linear-gradient(135deg,#fff,#f8fbfc);border-bottom:1px solid #edf1f4;display:flex;justify-content:space-between;padding:19px 21px 15px}
+    .users-panel-head h2{color:#172f4a;font-size:17px;font-weight:900;margin:0}.users-panel-head p{color:#8391a0;font-size:12px;margin:4px 0 0}
+    .users-total-badge{background:#e4f7fd;border-radius:99px;color:#18799b;font-size:11px;font-weight:800;padding:7px 10px;white-space:nowrap}
+    .users-toolbar{align-items:center;border-bottom:1px solid #edf1f4;display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;padding:14px 21px}
+    .users-search{align-items:center;background:#fafcfe;border:1px solid #dce6ed;border-radius:8px;color:#8795a4;display:flex;gap:8px;max-width:420px;padding:0 11px;width:100%}
+    .users-search:focus-within{border-color:#58a6cb;box-shadow:0 0 0 3px #e4f5fc}.users-search input{background:transparent;border:0;color:#25364b;font-size:13px;height:39px;outline:0;width:100%}
+    .users-role-filter{align-items:center;display:flex;gap:9px}.users-role-filter label{color:#718197;font-size:11px;font-weight:800;white-space:nowrap}.users-role-filter select{background:#fff;border:1px solid #dce6ed;border-radius:8px;color:#354c63;font-size:12px;min-height:39px;min-width:175px;padding:0 30px 0 11px}
+    .users-table-wrap{overflow-x:auto;padding:0 21px}.users-table{margin:0!important;min-width:830px;width:100%!important}.users-table thead th{background:#f8fafc;border-bottom:1px solid #e8eef3!important;color:#718196;font-size:10px;font-weight:900;letter-spacing:.055em;padding:12px 13px!important;text-transform:uppercase;white-space:nowrap}.users-table tbody td{border-bottom:1px solid #edf2f5;color:#354b61;font-size:12px;padding:13px!important;vertical-align:middle}.users-table tbody tr:hover{background:#f7fcfe}.users-table tbody tr:last-child td{border-bottom:0}
+    .users-table .dataTables_empty{text-align:center;padding:40px!important;color:#8291a1}.user-name-wrap{align-items:center;display:flex;gap:9px;min-width:180px}.user-avatar-initial{align-items:center;background:#dff3fb;border-radius:10px;color:#176d96;display:inline-flex;flex:0 0 34px;font-size:12px;font-weight:900;height:34px;justify-content:center}.user-name-cell{color:#203a54;font-weight:800}.user-email-cell{color:#526b81}.user-address-cell{color:#718197;display:block;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.user-status-pill,.user-role-pill{border-radius:99px;display:inline-flex;font-size:10px;font-weight:900;padding:6px 9px;text-transform:uppercase;white-space:nowrap}.user-status-pill.active{background:#e8f8ee;color:#16834a}.user-status-pill.inactive{background:#fff0ef;color:#c43c31}.user-status-pill.other{background:#f0f3f6;color:#64748b}.user-role-pill.admin{background:#edf0ff;color:#6258cf}.user-role-pill.dealer{background:#e8f8ee;color:#16834a}.user-role-pill.client{background:#e4f7fd;color:#18799b}.user-role-pill.other{background:#f0f3f6;color:#64748b}
+    .users-actions{display:flex;gap:6px;justify-content:flex-start;white-space:nowrap}.users-actions .btn{align-items:center;border:1px solid transparent;border-radius:7px;display:inline-flex;font-size:11px;font-weight:800;gap:5px;min-height:31px;padding:5px 9px}.users-actions .btn-edit-user{background:#edf6ff;border-color:#cfe5f7;color:#1876a2}.users-actions .btn-edit-user:hover{background:#dff1fb}.users-actions .btn-access-user{background:#fff5e5;border-color:#f7dfb6;color:#a35d00}.users-actions .btn-access-user:hover{background:#ffedce}
+    .users-panel .dataTables_wrapper{padding:0 21px 15px}.users-panel .dataTables_filter{display:none}.users-dt-footer{align-items:center;border-top:1px solid #edf2f5;display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;padding-top:13px}.users-panel .dataTables_length{color:#7b8795;font-size:11px;padding:12px 0}.users-panel .dataTables_length select{background:#fff;border:1px solid #dbe5ed;border-radius:6px;color:#36536a;font-size:11px;margin:0 5px;padding:5px 22px 5px 8px}.users-panel .dataTables_info{color:#77889a;font-size:11px;padding:0}.users-panel .dataTables_paginate{padding:0}.users-panel .dataTables_processing{background:rgba(255,255,255,.94)!important;border:1px solid #dce8f0!important;border-radius:10px;box-shadow:0 8px 24px rgba(25,57,85,.09);color:#1688b3!important;font-size:12px!important;font-weight:800;left:50%!important;padding:13px 20px!important;top:50%!important;transform:translate(-50%,-50%);width:auto!important}
+    @media(max-width:900px){.users-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(max-width:640px){.users-page{gap:14px}.users-head{align-items:stretch;flex-direction:column}.users-head h1{font-size:24px}.users-add{justify-content:center}.users-stats{gap:9px}.users-stat{min-height:78px;padding:11px}.users-stat-icon{flex-basis:36px;height:36px;width:36px}.users-stat strong{font-size:20px}.users-panel-head,.users-toolbar{padding-left:14px;padding-right:14px}.users-toolbar{align-items:stretch;flex-direction:column}.users-search{max-width:none}.users-role-filter{align-items:stretch;flex-direction:column;gap:5px}.users-role-filter select{width:100%}.users-table-wrap{padding:0 14px}.users-panel .dataTables_wrapper{padding:0 14px 14px}.users-panel .dataTables_paginate{overflow-x:auto;max-width:100%;white-space:nowrap}}
+    @media(max-width:390px){.users-stats{grid-template-columns:1fr}.users-panel-head{align-items:flex-start}.users-total-badge{font-size:10px}}
 </style>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chosen/1.8.7/chosen.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
@@ -201,186 +39,60 @@
 
 @endsection
 @section('content')
-<section class="welcome">
-    <div class="row">
-        <div class="col-lg-12 col-xl-12 d-flex align-items-stretch">
-            <div class="card w-100">
-                <div class="card-body users">
-                    <div class="users-header">
-                        <div class="d-flex justify-content-between align-items-center w-100">
-                            <div class="d-flex align-items-center">
-                                <h5 class="mb-0">Users</h5>
-                                @php
-                                    $currentUser = auth()->user();
-                                    $canShowAddAdmin = false;
-                                    
-                                    // Check if current user can add (has can_add permission)
-                                    if ($currentUser && $currentUser->role === 'Admin' && $currentUser->can_add === 'on') {
-                                        $canShowAddAdmin = true;
-                                    }
-                                @endphp
-                                
-                                @if($canShowAddAdmin)
-                                {{-- <button type="button" class="btn btn-add-admin btn-success btn" data-bs-toggle="modal" data-bs-target="#add-admin-modal">
-                                    <i class="fas fa-plus"></i>Add Users
-                                    
-                                </button> --}}
-                                <button class="btn-success btn-add-admin btn" data-bs-toggle="modal" data-bs-target="#new_users"><i class="fas fa-plus"></i>&nbsp;Add Users</button>
-                                @endif
-                            </div>
-                            
-                            <div class="align-label-select custom-select-wrapper">
-                                <label for="roleFilter" class="mb-0 mr-2">Role Filter:</label>
-                                <div class="custom-select-container">
-                                    <select id="roleFilter" class="form-control custom-dropdown">
-                                        <option value="">All Roles</option>
-                                        <option value="Admin">Admin</option>
-                                        <option value="Dealer">Dealer</option>
-                                        <option value="Client">Client</option>
-                                        <option value="Area Distributor">Area Distributor</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="table-responsive">
-                    <table id="example" class="table table-bordered table-striped" style="width:100%">
-                        <thead>
-                            <tr>
-                                <th scope="col" width="20%">Name</th>
-                                <th scope="col" width="20%">Email</th>
-                                <th scope="col" width="25%">Address</th>
-                                <th scope="col" width="15%">Status</th>
-                                <th scope="col" width="10%">Role</th>
-                                <th scope="col" width="10%">Actions</th>
-                            </tr>
-                        </thead>
-                        {{-- <tbody id="userBody">
-                            @foreach($users as $user)
-                            <tr>
-                                 <td scope="col">
-                                    @if($user->role == 'Dealer' && $user->dealer)
-                                        <span>{{$user->name}}</span>
-                                    @elseif($user->role == 'Client' && $user->client)
-                                        <span>{{$user->name}}</span>
-                                    @else
-                                        {{$user->name}}
-                                    @endif
-                                </td>
-                                <td scope="col">{{$user->email}}</td>
-                                <td scope="col">
-                                    @if($user->role == 'Dealer' && $user->dealer)
-                                        {{$user->dealer->address}}
-                                    @elseif($user->role == 'Client' && $user->client)
-                                        {{$user->client->address ?? 'N/A'}}
-                                    @elseif($user->role == 'Admin')
-                                        {{$user->address ?? ''}}
-                                    @else
-                                        N/A
-                                    @endif
-                                </td>
-                                <td scope="col">
-                                    @php
-                                        $status = '';
-                                        
-                                        if($user->role == 'Dealer' && $user->dealer) {
-                                            $status = $user->dealer->status;
-                                        } elseif($user->role == 'Client' && $user->client) {
-                                            $status = $user->client->status ?? '';
-                                        }
-                                    @endphp
-                                    <span>
-                                        {{$status}}
-                                    </span>
-                                </td>
-                                <td scope="col">
-                                    @php
-                                        $role = $user->role ?? 'N/A';
-                                        $roleClass = 'badge-default';
-                                        
-                                        switch(strtolower($role)) {
-                                            case 'dealer':
-                                                $roleClass = 'badge-dealer';
-                                                break;
-                                            case 'client':
-                                                $roleClass = 'badge-client';
-                                                break;
-                                            case 'admin':
-                                                $roleClass = 'badge-admin';
-                                                break;
-                                            default:
-                                                $roleClass = 'badge-default';
-                                        }
-                                    @endphp
-                                    <span class="badge-custom {{$roleClass}}">
-                                        {{$role}}
-                                    </span>
-                                </td>
-                                <td scope="col">
-                                    @php
-                                        $status = 'N/A';
-                                        
-                                        if($user->role == 'Dealer' && $user->dealer) {
-                                            $status = $user->dealer->status;
-                                        } elseif($user->role == 'Client' && $user->client) {
-                                            $status = $user->client->status ?? '';
-                                        }
-                                        
-                                        // Check current user permissions
-                                        $currentUser = auth()->user();
-                                        $canEdit = $currentUser && $currentUser->role === 'Admin' && $currentUser->can_edit === 'on';
-                                        $canAdd = $currentUser && $currentUser->role === 'Admin' && $currentUser->can_add === 'on';
-                                    @endphp
-
-                                    <div class="action-buttons">
-                                        @if($status !== 'Inactive')
-                                            @if($user->role == 'Dealer' && $user->dealer)
-                                                <a href='view-dealer/{{$user->dealer->id}}' class="btn-custom btn-view-custom" title="View Details">
-                                                    <i class="fas fa-eye"></i>
-                                                </a>
-                                            @elseif($user->role == 'Client' && $user->client)
-                                                <a href='view-client/{{$user->client->id}}' class="btn-custom btn-view-custom" title="View Details">
-                                                    <i class="fas fa-eye"></i>
-                                                </a>
-                                            @endif
-                                        @endif
-
-                                        @if($user->role == 'Admin')
-                                            @if($canEdit)
-                                                <button class="btn-custom btn-edit-custom" data-bs-toggle="modal" data-bs-target="#edit-users-{{ $user->id }}" title="Edit Admin">
-                                                    <i class="fas fa-edit"></i>
-                                                </button>
-                                            @endif
-                                            
-                                            @if($canEdit || $canAdd)
-                                                <button class="btn-custom btn-access-custom" data-bs-toggle="modal" data-bs-target="#access-admin-{{ $user->id }}" title="Access Control">
-                                                    <i class="fas fa-key"></i>
-                                                </button>
-                                            @endif
-                                        @else
-                                        
-                                            @if($canEdit)
-                                                <button class="btn-custom btn-edit-custom" data-bs-toggle="modal" data-bs-target="#edit-users-{{ $user->id }}" title="Edit User">
-                                                    <i class="fas fa-edit"></i>
-                                                </button>
-                                            @endif
-                                        @endif
-                                    </div>
-                                </td>
-                            </tr>
-                            @endforeach
-                        </tbody> --}}
-                        <tbody></tbody>
-                    </table>
-                  </div>
-                </div>
-            </div>
+<div class="users-page">
+    <header class="users-head">
+        <div>
+            <p class="users-eyebrow"><i class="bi bi-people-fill"></i> Account management</p>
+            <h1>Users</h1>
+            <p class="users-head-copy">Manage administrator access and review customer and dealer accounts.</p>
         </div>
-    </div>
-</section>
+        @php
+            $currentUser = auth()->user();
+            $canShowAddAdmin = $currentUser && $currentUser->role === 'Admin' && $currentUser->can_add === 'on';
+        @endphp
+        @if($canShowAddAdmin)
+            <button type="button" class="users-add" data-bs-toggle="modal" data-bs-target="#new_users">
+                <i class="bi bi-plus-lg"></i> Add admin user
+            </button>
+        @endif
+    </header>
+
+    <section class="users-stats" aria-label="User account summary">
+        <article class="users-stat"><span class="users-stat-icon total"><i class="bi bi-people-fill" aria-hidden="true"></i></span><div><small>Total users</small><strong>{{ number_format($userStats['total']) }}</strong><span>All account types</span></div></article>
+        <article class="users-stat"><span class="users-stat-icon admin"><i class="bi bi-shield-lock-fill" aria-hidden="true"></i></span><div><small>Administrators</small><strong>{{ number_format($userStats['admins']) }}</strong><span>System access accounts</span></div></article>
+        <article class="users-stat"><span class="users-stat-icon dealer"><i class="bi bi-shop" aria-hidden="true"></i></span><div><small>Dealers</small><strong>{{ number_format($userStats['dealers']) }}</strong><span>Dealer and mega dealer accounts</span></div></article>
+        <article class="users-stat"><span class="users-stat-icon customer"><i class="bi bi-person-fill" aria-hidden="true"></i></span><div><small>Customers</small><strong>{{ number_format($userStats['customers']) }}</strong><span>Customer accounts</span></div></article>
+    </section>
+
+    <section class="users-panel">
+        <div class="users-panel-head">
+            <div><h2>User directory</h2><p>Search accounts, filter by role, and manage user access.</p></div>
+            <span class="users-total-badge">{{ number_format($userStats['total']) }} records</span>
+        </div>
+        <div class="users-toolbar">
+            <label class="users-search" for="userSearch"><i class="bi bi-search"></i><input type="search" id="userSearch" placeholder="Search name, email, address, or status" autocomplete="off"></label>
+            <div class="users-role-filter"><label for="roleFilter">Filter by role</label><select id="roleFilter"><option value="">All roles</option><option value="Admin">Admin</option><option value="Dealer">Dealer</option><option value="Mega Dealer">Mega Dealer</option><option value="Client">Customer</option><option value="Area Distributor">Area Distributor</option></select></div>
+        </div>
+        <table id="example" class="table users-table" style="width:100%">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Address</th>
+                    <th>Status</th>
+                    <th>Role</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </section>
+</div>
 
 @include('new_admin')
-@include('users.create')
+@if(auth()->user()->role === 'Admin' && auth()->user()->can_add === 'on')
+    @include('users.create')
+@endif
 @include('edit_users')
 @include('admin-privillege')
 @endsection
@@ -406,6 +118,14 @@
         var table = $('#example').DataTable({
             processing: true,
             serverSide: true,
+            pageLength: 10,
+            lengthMenu: [10, 15, 25, 50],
+            dom: 'lrt<"users-dt-footer"ip>',
+            language: {
+                processing: 'Loading users…',
+                emptyTable: 'No user accounts found.',
+                zeroRecords: 'No users match your search.'
+            },
             ajax: {
                 url: "{{ route('users.data') }}",
                 data: function (d) {
@@ -429,35 +149,100 @@
         $('#roleFilter').on('change', function () {
             table.ajax.reload();
         });
+        $('#userSearch').on('input', function () {
+            table.search(this.value).draw();
+        });
 
         $(document).on('click', '.btn-edit-user', function () {
 
             let id = $(this).data('id');
 
             $.get('/users/' + id + '/show', function (res) {
-
                 $('#edit_user_id').val(res.id);
-                $('#edit_name').val(res.name);
-                $('#edit_email').val(res.email);
+                const isAdmin = res.role === 'Admin';
+                $('#edit_user_id').val(res.id);
+                $('#edit_role').val(res.role || '');
+                $('#editUserTitle').text(isAdmin ? 'Edit Admin User' : 'Edit User');
+                $('#editUserSubtitle').text(isAdmin
+                    ? 'Update administrator details, work information, and account status.'
+                    : 'Update account name and email address.');
+                $('#editAdminFields').prop('hidden', !isAdmin);
+                $('#editBasicFields').prop('hidden', isAdmin);
+
+                if (isAdmin) {
+                    const nameParts = String(res.name || '').trim().split(/\s+/).filter(Boolean);
+                    const fallbackFirst = nameParts.shift() || '';
+                    const fallbackLast = nameParts.length ? nameParts.pop() : '';
+                    const fallbackMiddle = nameParts.join(' ');
+                    $('#edit_first_name').val(res.first_name || fallbackFirst);
+                    $('#edit_middle_name').val(res.middle_name || fallbackMiddle);
+                    $('#edit_last_name').val(res.last_name || fallbackLast);
+                    $('#edit_email').val(res.email || '');
+                    $('#edit_employee_number').val(res.employee_number || '');
+                    $('#edit_department').val(res.department || '');
+                    $('#edit_designation').val(res.designation || '');
+                    $('#edit_status').val(res.status || 'Active');
+                } else {
+                    $('#edit_name').val(res.name || '');
+                    $('#edit_email_basic').val(res.email || '');
+                }
 
                 $('#editUserModal').modal('show');
             });
         });
 
         $('#saveUser').click(function () {
-
-            $.post('/users/update', {
+            const isAdmin = $('#edit_role').val() === 'Admin';
+            const payload = {
                 id: $('#edit_user_id').val(),
-                name: $('#edit_name').val(),
-                email: $('#edit_email').val()
-            }, function (res) {
+                role: $('#edit_role').val(),
+                email: isAdmin ? $('#edit_email').val() : $('#edit_email_basic').val()
+            };
+
+            if (isAdmin) {
+                payload.first_name = $('#edit_first_name').val().trim();
+                payload.middle_name = $('#edit_middle_name').val().trim();
+                payload.last_name = $('#edit_last_name').val().trim();
+                payload.designation = $('#edit_designation').val().trim();
+                payload.employee_number = $('#edit_employee_number').val().trim();
+                payload.department = $('#edit_department').val().trim();
+                payload.status = $('#edit_status').val();
+            } else {
+                payload.name = $('#edit_name').val().trim();
+            }
+
+            $.post('/users/update', payload, function (res) {
 
                 if (res.success) {
                     $('#editUserModal').modal('hide');
                     $('#example').DataTable().ajax.reload(null, false);
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'User updated',
+                        text: res.message || 'User details were saved successfully.',
+                        confirmButtonText: 'Continue',
+                        confirmButtonColor: '#1592bd'
+                    });
                 } else {
-                    alert(res.message);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Update failed',
+                        text: res.message || 'The user details could not be saved.',
+                        confirmButtonText: 'OK',
+                        confirmButtonColor: '#1592bd'
+                    });
                 }
+            }).fail(function (xhr) {
+                const message = xhr.responseJSON && xhr.responseJSON.message
+                    ? xhr.responseJSON.message
+                    : 'The user details could not be saved. Please try again.';
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Update failed',
+                    text: message,
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#1592bd'
+                });
             });
         });
 
@@ -468,6 +253,7 @@
             $.get('/users/' + id + '/show', function (res) {
 
                 $('#access_user_id').val(res.id);
+                $('#accessAdminName').text(res.name || 'this administrator');
 
                 // ✅ FIX: CHECKBOX (not select anymore)
                 $('#can_edit').prop('checked', res.can_edit === 'on');
@@ -478,11 +264,29 @@
                 $('#can_add_rewards').prop('checked', res.can_add_rewards === 'on');
                 $('#can_delete_rewards').prop('checked', res.can_delete_rewards === 'on');
 
+                const moduleAccess = res.module_access;
+                const hasModuleSettings = moduleAccess && Object.keys(moduleAccess).length > 0;
+                $('.module-access-toggle').each(function () {
+                    const module = $(this).data('module');
+                    const enabled = module === 'dashboard' || !hasModuleSettings
+                        || moduleAccess[module] === true || moduleAccess[module] === 'on';
+                    $(this).prop('checked', enabled);
+                });
+
                 $('#accessUserModal').modal('show');
             });
         });
 
+        $('#selectAllModules').click(function () {
+            $('.module-access-toggle:not(:disabled)').prop('checked', true);
+        });
+
         $('#saveAccess').click(function () {
+
+            const moduleAccess = {};
+            $('.module-access-toggle:checked').each(function () {
+                moduleAccess[$(this).data('module')] = true;
+            });
 
             $.post('/users/access-update', {
                 id: $('#access_user_id').val(),
@@ -494,300 +298,46 @@
                 can_edit_rewards: $('#can_edit_rewards').is(':checked') ? 'on' : 'off',
                 can_add_rewards: $('#can_add_rewards').is(':checked') ? 'on' : 'off',
                 can_delete_rewards: $('#can_delete_rewards').is(':checked') ? 'on' : 'off',
+                module_access: moduleAccess,
 
             }, function (res) {
 
                 if (res.success) {
                     $('#accessUserModal').modal('hide');
-                    $('#example').DataTable().ajax.reload(null, false);
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Access updated',
+                        text: 'The admin module access was saved.',
+                        confirmButtonText: 'Continue',
+                        confirmButtonColor: '#1592bd'
+                    });
                 } else {
-                    alert(res.message);
+                    Swal.fire({ icon: 'error', title: 'Could not save access', text: res.message || 'Please try again.' });
                 }
+            }).fail(function (xhr) {
+                const message = xhr.responseJSON && xhr.responseJSON.message
+                    ? xhr.responseJSON.message
+                    : 'Please try again.';
+                Swal.fire({ icon: 'error', title: 'Could not save access', text: message });
             });
 
         });
 
     });
-    function toggleFieldRequired() {
-        const contact = document.getElementById("contact_number");
-        const facebook = document.getElementById("facebook");
-        const contactMark = document.getElementById("contactRequiredMark");
-        const facebookMark = document.getElementById("facebookRequiredMark");
-
-        if (!contact || !facebook) return;
-
-        const hasContact = contact.value.trim() !== "";
-        const hasFacebook = facebook.value.trim() !== "";
-
-        // Contact → Facebook not required
-        if (hasContact) {
-            facebook.removeAttribute("required");
-            if (facebookMark) facebookMark.style.display = "none";
-        } else {
-            facebook.setAttribute("required", "required");
-            if (facebookMark) facebookMark.style.display = "inline";
-        }
-
-        // Facebook → Contact not required
-        if (hasFacebook) {
-            contact.removeAttribute("required");
-            if (contactMark) contactMark.style.display = "none";
-        } else {
-            contact.setAttribute("required", "required");
-            if (contactMark) contactMark.style.display = "inline";
-        }
-    }
 </script>
 
+@endsection
+
+@section('js')
+@if(session('success'))
 <script>
-    $(function () {
-
-        const roleFilter = $('#roleFilter2');
-
-        const businessFields = $('.business-fields');
-        const attachmentFields = $('.attachment-field');
-        const adminFields = $('.admin-fields');
-        const adminRequiredFields = $('.admin-required');
-        const nonAdminPersonalFields = $('.non-admin-personal-fields');
-        const locationFields = $('.location-fields');
-        const nonAdminPersonalInputs = nonAdminPersonalFields.find('input, select, textarea');
-        const locationInputs = locationFields.find('input, select, textarea');
-        const distributorDeliveryFields = $('.distributor-delivery-fields');
-        const distributorDeliveryRequiredFields = $('.distributor-delivery-required');
-        const areaField = $('.project-area-field');
-
-        const areaSelect = $('#area_name');
-        const businessName = $('#business_name');
-        const businessType = $('#business_type');
-        const partnerCode = $('#store_code');
-        const attachment = $('#attachment');
-
-        const dynamicAreaWrapper = $('#dynamic-area-wrapper');
-        const projectRows = $('#projectRows');
-
-        function getSelectedProjects() {
-            let selected = [];
-
-            $('input[name="type[]"]:checked').each(function () {
-                const val = $(this).val();
-                if (val !== 'Regular') {
-                    selected.push(val);
-                }
-            });
-
-            return selected;
-        }
-
-        function toggleProjectAreas() {
-            const selected = getSelectedProjects();
-
-            const isRise = selected.includes('Project Rise');
-            const isGenesis = selected.includes('Project Genesis');
-
-            $('.project-row').each(function () {
-
-                const riseCol = $(this).find('.project-rise-area');
-                const genesisCol = $(this).find('.project-genesis-area');
-
-                // Show/Hide columns
-                riseCol.toggle(isRise);
-                genesisCol.toggle(isGenesis);
-
-                // Required rules
-                riseCol.find('select').prop('required', isRise);
-                genesisCol.find('select').prop('required', isGenesis);
-
-                // Clear hidden values
-                if (!isRise) {
-                    riseCol.find('select').val(null).trigger('change');
-                }
-
-                if (!isGenesis) {
-                    genesisCol.find('select').val(null).trigger('change');
-                }
-            });
-        }
-
-        function addProjectRow() {
-            const template = document.querySelector('#project-row-template');
-            const clone = template.content.cloneNode(true);
-
-            const $row = $(clone);
-            projectRows.append($row);
-
-            initSelect2($row);
-
-            toggleProjectAreas();
-        }
-
-        $('#addProjectRow').on('click', function () {
-            addProjectRow();
-        });
-
-        $(document).on('click', '.remove-row', function () {
-            if ($('.project-row').length > 1) {
-                $(this).closest('.project-row').remove();
-            } else {
-                alert('At least one row is required.');
-            }
-        });
-
-        function refreshProjectVisibility() {
-
-            const role = roleFilter.val();
-            const isAdmin = role === 'Admin';
-
-            const selectedProjects = getSelectedProjects();
-            const hasProject = selectedProjects.length > 0;
-            const onlyRegular = selectedProjects.length === 1 && $('input[name="type[]"]:checked').val() === 'Regular';
-
-            if (!role || isAdmin || !hasProject || onlyRegular) {
-                dynamicAreaWrapper.hide();
-                projectRows.html('');
-                return;
-            }
-
-            dynamicAreaWrapper.show();
-
-            if ($('.project-row').length === 0) {
-                addProjectRow();
-            }
-
-            toggleProjectAreas();
-        }
-
-        function toggleBusinessFields() {
-
-            const selectedRole = roleFilter.val();
-
-            if (!selectedRole) {
-                businessFields.hide();
-                attachmentFields.hide();
-                adminFields.hide();
-                nonAdminPersonalFields.show();
-                locationFields.show();
-                distributorDeliveryFields.hide();
-                areaField.hide();
-
-                businessName.prop('required', false);
-                businessType.prop('required', false);
-                partnerCode.prop('required', false);
-                adminRequiredFields.prop('required', false);
-                nonAdminPersonalInputs.prop('disabled', false);
-                locationInputs.prop('disabled', false);
-                distributorDeliveryRequiredFields.prop('required', false);
-                areaSelect.prop('required', false);
-                attachment.prop('required', false);
-
-                partnerCode.val('');
-                $('input[name="warehouse"]').prop('checked', false);
-                $('#delivery_address').val('').prop('readonly', false);
-                $('#same_as_address').prop('checked', false);
-                $('#same_as_delivery_address').prop('checked', false);
-                return;
-            }
-
-            const isAdmin = selectedRole === 'Admin';
-            const isProvincialDistributor = selectedRole === 'Provincial Distributor';
-            const isAreaDistributor = selectedRole === 'Area Distributor';
-            const needsDeliveryAddress = isProvincialDistributor || isAreaDistributor;
-
-            const selectedProjects = getSelectedProjects();
-            const showArea = selectedProjects.includes('Project Rise') && !isAdmin;
-
-            businessFields.toggle(!isAdmin);
-            attachmentFields.toggle(isProvincialDistributor || isAreaDistributor);
-            adminFields.toggle(isAdmin);
-            nonAdminPersonalFields.toggle(!isAdmin);
-            locationFields.toggle(!isAdmin);
-            distributorDeliveryFields.toggle(needsDeliveryAddress);
-            areaField.toggle(showArea);
-
-            businessName.prop('required', !isAdmin);
-            businessType.prop('required', !isAdmin);
-            partnerCode.prop('required', !isAdmin);
-            adminRequiredFields.prop('required', isAdmin);
-            nonAdminPersonalInputs.prop('disabled', isAdmin);
-            locationInputs.prop('disabled', isAdmin);
-            distributorDeliveryRequiredFields.prop('required', needsDeliveryAddress);
-
-            areaSelect.prop('required', showArea);
-            areaSelect.prop('disabled', !showArea);
-
-            attachment.prop('required', isProvincialDistributor || isAreaDistributor);
-
-            if (!showArea) {
-                areaSelect.val(null).trigger('change');
-            }
-
-            if (!isAdmin) {
-                $('input[name="warehouse"]').prop('checked', false);
-                $('#same_as_address').prop('checked', false);
-                adminRequiredFields.val('');
-            } else {
-                nonAdminPersonalInputs.filter(':not([type="hidden"])').val('');
-                locationInputs.filter(':not([type="hidden"])').val('');
-                if (typeof toggleContactRequired === 'function') {
-                    toggleContactRequired();
-                }
-            }
-
-            if (!needsDeliveryAddress) {
-                $('#delivery_address').val('').prop('readonly', false);
-                $('#same_as_delivery_address').prop('checked', false);
-            }
-
-            if (!isAdmin) {
-                generatePartnerCode();
-            }
-        }
-
-        function generatePartnerCode() {
-
-            const role = roleFilter.val();
-
-            if (!role || role === 'Admin') {
-                partnerCode.val('');
-                return;
-            }
-
-            $.ajax({
-                url: "{{ route('generate.partner.code') }}",
-                type: "POST",
-                data: {
-                    role: role,
-                    _token: "{{ csrf_token() }}"
-                },
-                success: function (res) {
-                    partnerCode.val(res.success ? res.code : '');
-                },
-                error: function () {
-                    partnerCode.val('');
-                }
-            });
-        }
-
-        roleFilter.on('change', function () {
-            toggleBusinessFields();
-            refreshProjectVisibility();
-        });
-
-        $(document).on('change', 'input[name="type[]"]', function () {
-            toggleBusinessFields();
-            refreshProjectVisibility();
-            toggleProjectAreas();
-        });
-
-        $('#new_users').on('shown.bs.modal', function () {
-            toggleBusinessFields();
-            refreshProjectVisibility();
-        });
-
-        toggleBusinessFields();
-        refreshProjectVisibility();
-        toggleProjectAreas();
-        
-
+    Swal.fire({
+        icon: 'success',
+        title: 'Admin user created',
+        text: @json(session('success')),
+        confirmButtonText: 'Continue',
+        confirmButtonColor: '#1592bd'
     });
 </script>
+@endif
 @endsection

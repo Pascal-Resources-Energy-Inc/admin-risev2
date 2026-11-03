@@ -1216,6 +1216,7 @@
             <div class="nav-section">
                 <div class="nav-section-title">HOME</div>
                 @if((auth()->user()->role == "Admin"))
+                @if(auth()->user()->hasModuleAccess('dashboard'))
                 <div class="nav-item">
                     <a href="{{url('/')}}" class="nav-link @if(Route::currentRouteName() == 'home')active @endif">
                         <div class="nav-icon">
@@ -1224,6 +1225,7 @@
                         <span class="nav-text">Dashboard</span>
                     </a>
                 </div>
+                @endif
                 @elseif(auth()->user()->role == "Area Distributor")
                     <div class="nav-item">
                         <a href="{{url('ad-dashboard')}}" class="nav-link @if(Route::currentRouteName() == 'ad-dashboard') active @endif">
@@ -1326,7 +1328,7 @@
                         </div>
                     </div>
                 @endif
-                @if(auth()->user()->role == "Admin" && strtolower((string) auth()->user()->warehouse) === 'guinobatan')
+                @if(auth()->user()->role == "Admin" && strtolower((string) auth()->user()->warehouse) === 'guinobatan' && (auth()->user()->hasModuleAccess('purchase_orders') || auth()->user()->hasModuleAccess('reports') || auth()->user()->hasModuleAccess('inventory_reports')))
                     @php
                         $pendingAdPurchaseOrdersCount = \App\AdPurchaseOrder::where('status', 'Pending')
                             ->where(function ($query) {
@@ -1354,6 +1356,7 @@
                             })
                             ->count();
                     @endphp
+                    @if(auth()->user()->hasModuleAccess('purchase_orders'))
                     <div class="nav-item">
                         <a href="{{ route('warehouse-ad-purchase-orders.region-v') }}"
                             class="nav-link @if(in_array(Route::currentRouteName(), ['warehouse-ad-purchase-orders.region-v','ad-purchase-orders.show'])) active @endif position-relative">
@@ -1368,6 +1371,8 @@
                             <span class="nav-text">Purchase Orders</span>
                         </a>
                     </div>
+                    @endif
+                    @if(auth()->user()->hasModuleAccess('reports') || auth()->user()->hasModuleAccess('inventory_reports'))
                     <div class="nav-item">
                         <a href="javascript:void(0)" class="nav-link" data-bs-toggle="collapse" data-bs-target="#reportsMenu" aria-expanded="{{ in_array(Route::currentRouteName(), ['dpo','isl']) ? 'true' : 'false' }}">
                             <div class="nav-icon">
@@ -1380,16 +1385,22 @@
                         <div class="collapse @if(in_array(Route::currentRouteName(), ['dpo','isl'])) show @endif"
                             id="reportsMenu">
                             <ul class="nav flex-column ms-3">
+                                @if(auth()->user()->hasModuleAccess('reports'))
                                 <li class="nav-item">
                                     <a href="{{ url('/reports/dpo-report') }}" class="nav-link @if(Route::currentRouteName() == 'dpo') active @endif" style="font-size: 14px">Distributor Purchase Order Report</a>
                                 </li>
+                                @endif
+                                @if(auth()->user()->hasModuleAccess('inventory_reports'))
                                 <li class="nav-item">
                                     <a href="{{ route('isl') }}" class="nav-link @if(Route::currentRouteName() == 'isl') active @endif" style="font-size: 14px">Inventory Stock Level Report</a>
                                 </li>
+                                @endif
                             </ul>
                         </div>
                     </div>
+                    @endif
                 @elseif(auth()->user()->role == "Admin" && strtolower((string) auth()->user()->warehouse) === 'lubao')
+                    @if(auth()->user()->hasModuleAccess('purchase_orders'))
                     @php
                         $pendingAdPurchaseOrdersCount = \App\AdPurchaseOrder::where('status', 'Pending')->count();
                     @endphp
@@ -1407,8 +1418,9 @@
                             <span class="nav-text">Purchase Orders</span>
                         </a>
                     </div>
+                    @endif
                 @endif
-                @if(auth()->user()->role === 'Admin' && strtolower((string) auth()->user()->warehouse) === 'lubao')
+                @if(auth()->user()->role === 'Admin' && strtolower((string) auth()->user()->warehouse) === 'lubao' && auth()->user()->hasModuleAccess('inventory_reports'))
                     <div class="nav-item">
                         <a href="{{ route('isl') }}" class="nav-link @if(Route::currentRouteName() == 'isl') active @endif">
                             <div class="nav-icon">
@@ -1419,7 +1431,7 @@
                     </div>
                 @endif
                 {{-- @if((auth()->user()->role == "Admin") || (auth()->user()->role == "Dealer") && !in_array(auth()->user()->warehouse, ['lubao', 'guinobatan'])) --}}
-                @if((auth()->user()->role == "Admin" || auth()->user()->role == "Dealer") && !in_array(strtolower(auth()->user()->warehouse), ['lubao', 'guinobatan']))
+                @if((auth()->user()->role == "Admin" || auth()->user()->role == "Dealer") && !in_array(strtolower(auth()->user()->warehouse), ['lubao', 'guinobatan']) && auth()->user()->hasModuleAccess('transactions'))
                     <div class="nav-item">
                         <a href="{{url('/transactions')}}" class="nav-link @if(Route::currentRouteName() == 'transactions')active @endif">
                             <div class="nav-icon">
@@ -1431,7 +1443,7 @@
                 @endif
                 
                 {{-- @if(auth()->user()->role == "Admin" && auth()->user()->warehouse != ["lubao", "guinobatan"]) --}}
-                @if(auth()->user()->role === "Admin" && !in_array(auth()->user()->warehouse, ['lubao', 'guinobatan']))
+                @if(auth()->user()->role === "Admin" && !in_array(auth()->user()->warehouse, ['lubao', 'guinobatan']) && (auth()->user()->hasModuleAccess('dealers') || auth()->user()->hasModuleAccess('mega_dealers')))
                     {{-- <div class="nav-item">
                         <a href="javascript:void(0)" class="nav-link" data-bs-toggle="collapse" data-bs-target="#partnersMenu" aria-expanded="{{ in_array(Route::currentRouteName(), ['ads','pds','mds']) ? 'true' : 'false' }}">
                             <div class="nav-icon">
@@ -1469,12 +1481,16 @@
                                     <a href="{{ url('/mds') }}" class="nav-link @if(Route::currentRouteName() == 'mds') active @endif" style="font-size: 14px">Mega Dealer</a>
                                 </li> --}}
 
+                                @if(auth()->user()->hasModuleAccess('dealers'))
                                 <li class="nav-item">
                                     <a href="{{ url('/dealers') }}" class="nav-link @if(Route::currentRouteName() == 'dealers') active @endif" style="font-size: 14px">Dealers</a>
                                 </li>
+                                @endif
+                                @if(auth()->user()->hasModuleAccess('mega_dealers'))
                                 <li class="nav-item">
                                     <a href="{{ url('/mds') }}" class="nav-link @if(Route::currentRouteName() == 'mds') active @endif" style="font-size: 14px">Mega Dealers</a>
                                 </li>
+                                @endif
                             </ul>
                         </div>
                     </div>
@@ -1486,6 +1502,7 @@
                             <span class="nav-text">Dealers</span>
                         </a>
                     </div> --}}
+                    @if(auth()->user()->hasModuleAccess('customers'))
                     <div class="nav-item">
                         <a href="{{url('/customers')}}" class="nav-link @if(Route::currentRouteName() == 'customers')active @endif">
                             <div class="nav-icon">
@@ -1494,6 +1511,8 @@
                             <span class="nav-text">Customers</span>
                         </a>
                     </div>
+                    @endif
+                    @if(auth()->user()->hasModuleAccess('users'))
                     <div class="nav-item">
                         <a href="{{url('/users')}}" class="nav-link @if(Route::currentRouteName() == 'users')active @endif">
                             <div class="nav-icon">
@@ -1502,18 +1521,24 @@
                             <span class="nav-text">Users</span>
                         </a>
                     </div>
+                    @endif
+                    @if(auth()->user()->hasModuleAccess('center_chiefs'))
                     <div class="nav-item">
                         <a href="{{ route('center-chiefs.index') }}" class="nav-link @if(Route::currentRouteName() == 'center-chiefs.index') active @endif">
                             <div class="nav-icon"><i class="bi bi-person-workspace"></i></div>
                             <span class="nav-text">Center Chiefs</span>
                         </a>
                     </div>
+                    @endif
+                    @if(auth()->user()->hasModuleAccess('centers'))
                     <div class="nav-item">
                         <a href="{{ route('centers.index') }}" class="nav-link @if(Route::currentRouteName() == 'centers.index') active @endif">
                             <div class="nav-icon"><i class="bi bi-buildings"></i></div>
                             <span class="nav-text">Centers</span>
                         </a>
                     </div>
+                    @endif
+                    @if(auth()->user()->hasModuleAccess('stock_requests'))
                     <div class="nav-item">
                         <a href="{{ route('admin.stock.requests') }}" class="nav-link @if(Route::currentRouteName() == 'admin.stock.requests') active @endif position-relative">
                             <div class="nav-icon position-relative">
@@ -1528,12 +1553,15 @@
                             @endif
                         </a>
                     </div>
+                    @endif
+                    @if(auth()->user()->hasModuleAccess('serial_numbers'))
                     <div class="nav-item">
                         <a href="{{ route('serial-numbers.index') }}" class="nav-link @if(Route::currentRouteName() == 'serial-numbers.index') active @endif">
                             <div class="nav-icon"><i class="bi bi-upc-scan"></i></div>
                             <span class="nav-text">Serial Numbers</span>
                         </a>
                     </div>
+                    @endif
                     {{-- <div class="nav-item">
                         <a href="{{url('/rewards')}}" class="nav-link @if(Route::currentRouteName() == 'rewards')active @endif">
                             <div class="nav-icon">

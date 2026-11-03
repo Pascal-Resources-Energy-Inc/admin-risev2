@@ -8,11 +8,8 @@ use App\Stove;
 use App\Area;
 use App\TransactionDetail;
 use App\AreaDistributor;
-use App\AreaAd;
-use RealRashid\SweetAlert\Facades\Alert;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
-use OwenIt\Auditing\Facades\Auditor;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Http\Request;
 
 class UserController extends Controller
@@ -30,300 +27,71 @@ class UserController extends Controller
             ->latest()
             ->paginate(20); // ✅ IMPORTANT
 
-        return view('users.index', compact('stoves', 'users', 'areas'));
+        $userStats = [
+            'total' => User::count(),
+            'admins' => User::where('role', 'Admin')->count(),
+            'dealers' => User::whereIn('role', ['Dealer', 'Mega Dealer'])->count(),
+            'customers' => User::where('role', 'Client')->count(),
+        ];
+
+        return view('users.index', compact('stoves', 'users', 'areas', 'userStats'));
     }
 
     public function store(Request $request)
     {
-       $isAdmin = $request->role === 'Admin';
-       $needsDeliveryAddress = in_array($request->role, ['Area Distributor', 'Provincial Distributor'], true);
+        $actor = auth()->user();
+        abort_unless($actor && $actor->role === 'Admin' && $actor->can_add === 'on', 403);
 
-       if ($isAdmin && $request->has('same_as_address')) {
-            $request->merge([
-                'delivery_address' => $request->address,
-            ]);
-       }
-
-       if ($needsDeliveryAddress && $request->has('same_as_delivery_address')) {
-            $request->merge([
-                'delivery_address' => $request->address,
-            ]);
-       }
-
-       if ($needsDeliveryAddress && trim((string) $request->delivery_address) === '') {
-            return back()
-                ->withErrors(['delivery_address' => 'Delivery address is required.'])
-                ->withInput();
-       }
-
-       $request->validate([
+        $data = $request->validate([
+            'first_name' => 'required|string|max:255',
+            'middle_name' => 'nullable|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'email_address' => 'required|email|max:255|unique:users,email',
+            'designation' => 'required|string|max:255',
+            'employee_number' => 'required|string|max:255',
+            'department' => 'required|string|max:255',
+            'status' => 'required|in:Active,Inactive',
             'warehouse' => 'nullable|in:lubao,guinobatan',
-            'delivery_address' => 'nullable|string|max:1000',
-            'designation' => 'required_if:role,Admin|nullable|string|max:255',
-            'employee_number' => 'required_if:role,Admin|nullable|string|max:255',
-            'department' => 'required_if:role,Admin|nullable|string|max:255',
         ]);
 
-       $duplicate = false;
-
-       if (!$isAdmin) {
-            $duplicate = User::where('first_name', $request->first_name)
-                ->where('last_name', $request->last_name)
-                ->where('mothers_name', $request->mothers_name)
-                ->exists();
-       }
-
-        if ($duplicate) {
-
-            return back()->withErrors([
-                'duplicate' => 'User already exists.'
-            ]);
-
-        }
-
-        $types = $request->input('type', []);
-        $types = array_values(array_filter($types, fn($t) => $t !== 'Regular'));
-
-
-        $imagePath = null;
-        if ($request->hasFile('avatar')) {
-            $file = $request->file('avatar');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            $file->move(public_path('uploads/area_distributor'), $filename);
-            $imagePath = 'uploads/area_distributor/' . $filename;
-        }
-
         $fullName = trim(collect([
-            $request->first_name,
-            $request->middle_name,
-            $request->last_name,
+            $data['first_name'],
+            $data['middle_name'] ?? null,
+            $data['last_name'],
         ])->filter()->implode(' '));
-        
-        $user = new User();
-        $user->first_name = $request->first_name;
-        $user->middle_name = $request->middle_name;
-        $user->last_name = $request->last_name;
-        $user->name = $fullName;
-        $user->email = $request->email_address;
-        $user->address = $isAdmin ? null : $request->address;
-        $user->warehouse = $isAdmin ? $request->warehouse : null;
-        $user->delivery_address = $isAdmin
-            ? ($request->has('same_as_address') ? $request->address : $request->delivery_address)
-            : null;
-        $user->role = $request->role;
-        $user->type = json_encode($types);
-        $user->birthdate = $isAdmin ? null : $request->birthdate;
-        $user->age = $isAdmin ? null : $request->age;
-        $user->mothers_name = $isAdmin ? null : $request->mothers_name;
-        $user->designation = $isAdmin ? $request->designation : null;
-        $user->employee_number = $isAdmin ? $request->employee_number : null;
-        $user->department = $isAdmin ? $request->department : null;
-        $user->password = bcrypt('12345678');
 
-        if ($imagePath) {
-            $user->avatar = $imagePath;
+        $user = new User();
+        $user->name = $fullName;
+        $user->email = $data['email_address'];
+        $user->role = 'Admin';
+        $user->password = bcrypt('12345678');
+        $user->designation = $data['designation'];
+        $user->employee_number = $data['employee_number'];
+        $user->department = $data['department'];
+        $user->status = $data['status'];
+
+        $optionalValues = [
+            'first_name' => $data['first_name'],
+            'middle_name' => $data['middle_name'] ?? null,
+            'last_name' => $data['last_name'],
+            'warehouse' => $data['warehouse'] ?? null,
+        ];
+        foreach ($optionalValues as $column => $value) {
+            if (Schema::hasColumn('users', $column)) {
+                $user->{$column} = $value;
+            }
+        }
+
+        if (Schema::hasColumn('users', 'type')) {
+            $user->type = json_encode([]);
         }
 
         $user->save();
 
-        if ($request->role === 'Admin') {
-            return redirect()
-                ->route('users')
-                ->with('success', 'Admin successfully created');
-        }
-
-        $latestAd = AreaDistributor::orderBy('id', 'desc')->first();
-
-        $number = ($latestAd && $latestAd->ad_reference)
-            ? intval(substr($latestAd->ad_reference, 4)) + 1
-            : 1;
-
-        $ad_reference = 'PRP' . str_pad($number, 5, '0', STR_PAD_LEFT);
-
-
-        $attachmentPath = null;
-        if ($request->hasFile('attachment')) {
-            $file = $request->file('attachment');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            $file->move(public_path('uploads/attachments'), $filename);
-            $attachmentPath = 'uploads/attachments/' . $filename;
-        }
-
-        $areaDistributor = new AreaDistributor();
-        $areaDistributor->user_id = $user->id;
-        $areaDistributor->ad_reference = $ad_reference;
-        $areaDistributor->name = $fullName;
-        $areaDistributor->store_code = $request->store_code;
-        $areaDistributor->email_address = $request->email_address;
-        $areaDistributor->contact_number = $request->contact_number;
-        $areaDistributor->facebook = $request->facebook;
-        $areaDistributor->address = $request->address;
-        $areaDistributor->delivery_address = $needsDeliveryAddress
-            ? $request->delivery_address
-            : null;
-
-        $areaDistributor->street_address = $request->street_address;
-        $areaDistributor->location_region = $request->location_region;
-        $areaDistributor->location_province = $request->location_province;
-        $areaDistributor->location_city = $request->location_city;
-        $areaDistributor->location_barangay = $request->location_barangay;
-        $areaDistributor->zipcode = $request->zipcode;
-
-        $areaDistributor->business_name = $request->business_name;
-        $areaDistributor->business_type = $request->business_type;
-        $areaDistributor->withholding_tax = $request->has('withholding_tax') ? 1 : 0;
-
-        $areaDistributor->latitude = $request->latitude;
-        $areaDistributor->longitude = $request->longitude;
-
-        if ($attachmentPath) {
-            $areaDistributor->attachment = $attachmentPath;
-        }
-
-        if ($imagePath) {
-            $areaDistributor->avatar = $imagePath;
-        }
-
-        $areaDistributor->status = "Active";
-        $areaDistributor->save();
-
-
-        $joiningDates = $request->input('joining_date', []);
-        $riseAreas = $request->input('area_name_rise', []);
-        $genesisAreas = $request->input('area_name_genesis', []);
-
-        $maxRows = max(
-            count($joiningDates),
-            count($riseAreas),
-            count($genesisAreas)
-        );
-
-        for ($i = 0; $i < $maxRows; $i++) {
-
-            $rise = $riseAreas[$i] ?? null;
-            $genesis = $genesisAreas[$i] ?? null;
-            $date = $joiningDates[$i] ?? null;
-
-            // Save Rise
-            if ($rise) {
-                AreaAd::create([
-                    'ad_id' => $areaDistributor->id,
-                    'ad_user_id' => $user->id,
-                    'area_name' => $rise,
-                    'project_type' => 'Project Rise',
-                    'joining_date' => $date,
-                    'user_role' => $request->role,
-                ]);
-            }
-
-            // Save Genesis
-            if ($genesis) {
-                AreaAd::create([
-                    'ad_id' => $areaDistributor->id,
-                    'ad_user_id' => $user->id,
-                    'area_name' => $genesis,
-                    'project_type' => 'Project Genesis',
-                    'joining_date' => $date,
-                    'user_role' => $request->role,
-                ]);
-            }
-        }
-
         return redirect()
             ->route('users')
-            ->with('success', 'Successfully encoded');
+            ->with('success', 'Admin successfully created. Initial password: 12345678.');
     }
-
-    // public function store(Request $request)
-    // {
-    //     $latestAd = AreaDistributor::orderBy('id', 'desc')->first();
-
-    //     $number = ($latestAd && $latestAd->ad_reference)
-    //         ? intval(substr($latestAd->ad_reference, 4)) + 1
-    //         : 1;
-
-    //     $ad_reference = 'PRAD' . str_pad($number, 5, '0', STR_PAD_LEFT);
-
-    //     $imagePath = null;
-
-    //     if ($request->hasFile('avatar')) {
-    //         $file = $request->file('avatar');
-    //         $filename = time() . '_' . $file->getClientOriginalName();
-    //         $file->move(public_path('uploads/area_distributor'), $filename);
-    //         $imagePath = 'uploads/area_distributor/' . $filename;
-    //     }
-
-    //     // ✅ Attachment fix
-    //     $attachmentPath = null;
-    //     if ($request->hasFile('attachment')) {
-    //         $file = $request->file('attachment');
-    //         $filename = time() . '_' . $file->getClientOriginalName();
-    //         $file->move(public_path('uploads/attachments'), $filename);
-    //         $attachmentPath = 'uploads/attachments/' . $filename;
-    //     }
-
-    //     $fullAddress = $request->address;
-
-    //     $user = new User;
-    //     $user->name = $request->name;
-    //     $user->email = $request->email_address;
-    //     $user->address = $fullAddress;
-    //     $user->role = $request->role;
-    //     $user->type = $request->type;
-    //     $user->birthdate = $request->birthdate;
-    //     $user->password = bcrypt('12345678');
-
-    //     if ($imagePath) {
-    //         $user->avatar = $imagePath;
-    //     }
-
-    //     $user->save();
-
-    //     $areaDistributor = new AreaDistributor;
-    //     $areaDistributor->user_id = $user->id;
-    //     $areaDistributor->ad_reference = $ad_reference;
-    //     $areaDistributor->name = $request->name;
-    //     $areaDistributor->store_code = $request->store_code;
-    //     $areaDistributor->email_address = $request->email_address;
-    //     $areaDistributor->contact_number = $request->contact_number;
-    //     $areaDistributor->facebook = $request->facebook;
-    //     $areaDistributor->address = $fullAddress;
-
-    //     // ✅ ZIPCODE SAVED PROPERLY
-    //     $areaDistributor->location_region = $request->location_region;
-
-    //     $areaDistributor->business_name = $request->business_name;
-    //     $areaDistributor->business_type = $request->business_type;
-    //     $areaDistributor->joining_date = $request->joining_date;
-    //     $areaDistributor->latitude = $request->latitude;
-    //     $areaDistributor->longitude = $request->longitude;
-
-    //     if ($attachmentPath) {
-    //         $areaDistributor->attachment = $attachmentPath;
-    //     }
-
-    //     if ($imagePath) {
-    //         $areaDistributor->avatar = $imagePath;
-    //     }
-
-    //     $areaDistributor->status = "Active";
-    //     $areaDistributor->save();
-
-    //     $areas = $request->input('area_name', []);
-
-    //     foreach ($areas as $area) {
-    //         AreaAd::create([
-    //             'ad_id' => $areaDistributor->id,
-    //             'ad_user_id' => $user->id,
-    //             'area_name' => $area,
-    //             'user_role' => $request->role,
-    //             'joining_date' => $request->joining_date
-    //         ]);
-    //     }
-
-    //     return redirect()->route('users')->with('success', 'Successfully encoded');
-    // }
-
     public function view(){
 
         if(auth()->user()->role == "Dealer")
@@ -523,11 +291,21 @@ class UserController extends Controller
                 'dealer:id,user_id,address,status',
                 'client:id,user_id,address,status'
             ])->findOrFail($id);
+            $nameParts = preg_split('/\s+/', trim((string) $user->name), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+            $fallbackFirstName = count($nameParts) ? array_shift($nameParts) : '';
+            $fallbackLastName = count($nameParts) ? array_pop($nameParts) : '';
 
             return response()->json([
                 'id' => $user->id,
                 'name' => $user->name ?? '',
+                'role' => $user->role ?? '',
+                'first_name' => $user->getAttribute('first_name') ?: $fallbackFirstName,
+                'middle_name' => $user->getAttribute('middle_name') ?: implode(' ', $nameParts),
+                'last_name' => $user->getAttribute('last_name') ?: $fallbackLastName,
                 'email' => $user->email ?? '',
+                'designation' => $user->getAttribute('designation') ?? '',
+                'employee_number' => $user->getAttribute('employee_number') ?? '',
+                'department' => $user->getAttribute('department') ?? '',
                 'can_edit' => $user->can_edit,
                 'can_add' => $user->can_add,
                 'can_delete' => $user->can_delete,
@@ -535,13 +313,16 @@ class UserController extends Controller
                 'can_edit_rewards' => $user->can_edit_rewards,
                 'can_add_rewards' => $user->can_add_rewards,
                 'can_delete_rewards' => $user->can_delete_rewards,
+                'module_access' => $user->module_access,
                 'address' => optional($user->dealer)->address
                     ?? optional($user->client)->address
                     ?? $user->address
                     ?? '',
-                'status' => optional($user->dealer)->status
-                    ?? optional($user->client)->status
-                    ?? ''
+                'status' => $user->role === 'Admin'
+                    ? ($user->getAttribute('status') ?: 'Active')
+                    : (optional($user->dealer)->status
+                        ?? optional($user->client)->status
+                        ?? '')
             ]);
 
         } catch (\Exception $e) {
@@ -555,18 +336,49 @@ class UserController extends Controller
     public function update(Request $request)
     {
         try {
-            $request->validate([
-                'id' => 'required|exists:users,id',
-                'name' => 'required|string|max:255',
-                'email' => 'required|email|unique:users,email,' . $request->id,
-            ]);
-
+            $request->validate(['id' => 'required|exists:users,id']);
             $user = User::findOrFail($request->id);
+            $rules = [
+                'email' => 'required|email|max:255|unique:users,email,' . $user->id,
+            ];
+
+            if ($user->role === 'Admin') {
+                $rules += [
+                    'first_name' => 'required|string|max:255',
+                    'middle_name' => 'nullable|string|max:255',
+                    'last_name' => 'required|string|max:255',
+                    'designation' => 'required|string|max:255',
+                    'employee_number' => 'required|string|max:255',
+                    'department' => 'required|string|max:255',
+                    'status' => 'required|in:Active,Inactive',
+                ];
+            } else {
+                $rules['name'] = 'required|string|max:255';
+            }
+            $data = $request->validate($rules);
 
             DB::beginTransaction();
 
-            $user->name = $request->name;
-            $user->email = $request->email;
+            if ($user->role === 'Admin') {
+                $user->name = trim(collect([
+                    $data['first_name'],
+                    $data['middle_name'] ?? null,
+                    $data['last_name'],
+                ])->filter()->implode(' '));
+                $user->designation = $data['designation'];
+                $user->employee_number = $data['employee_number'];
+                $user->department = $data['department'];
+                $user->status = $data['status'];
+
+                foreach (['first_name', 'middle_name', 'last_name'] as $column) {
+                    if (Schema::hasColumn('users', $column)) {
+                        $user->{$column} = $data[$column] ?? null;
+                    }
+                }
+            } else {
+                $user->name = $data['name'];
+            }
+            $user->email = $data['email'];
             $user->save();
 
             // OPTIONAL: update related tables
@@ -592,8 +404,16 @@ class UserController extends Controller
                 'message' => 'User updated successfully'
             ]);
 
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->validator->errors()->first(),
+                'errors' => $e->errors(),
+            ], 422);
         } catch (\Exception $e) {
-            DB::rollBack();
+            if (DB::transactionLevel() > 0) {
+                DB::rollBack();
+            }
 
             \Log::error('Update error: ' . $e->getMessage());
 
@@ -606,7 +426,14 @@ class UserController extends Controller
 
     public function updateAccess(Request $request)
     {
+        $actor = auth()->user();
+        abort_unless($actor && $actor->role === 'Admin' && ($actor->can_edit === 'on' || $actor->can_add === 'on'), 403);
+        $request->validate([
+            'id' => 'required|exists:users,id',
+            'module_access' => 'nullable|array',
+        ]);
         $user = User::findOrFail($request->id);
+        abort_unless($user->role === 'Admin', 403, 'Module access can only be assigned to admin users.');
 
         $user->can_edit = $request->can_edit;
         $user->can_add = $request->can_add;
@@ -615,6 +442,14 @@ class UserController extends Controller
         $user->can_edit_rewards = $request->can_edit_rewards;
         $user->can_add_rewards = $request->can_add_rewards;
         $user->can_delete_rewards = $request->can_delete_rewards;
+
+        $selectedModules = ['dashboard' => true];
+        foreach (array_keys(config('admin_modules', [])) as $module) {
+            if ($module !== 'dashboard' && $request->input('module_access.' . $module)) {
+                $selectedModules[$module] = true;
+            }
+        }
+        $user->module_access = $selectedModules;
 
         $user->save();
 
@@ -638,16 +473,20 @@ class UserController extends Controller
         return \Yajra\DataTables\Facades\DataTables::of($query)
 
             ->addColumn('name', function ($user) {
-                return trim(strtoupper(($user->first_name ?? '') . ' ' . ($user->last_name ?? '')))
-                    ?: strtoupper(($user->name ?? ''));
+                $name = trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? '')) ?: ($user->name ?? '');
+                $initial = mb_strtoupper(mb_substr($name, 0, 1));
+                return '<div class="user-name-wrap"><span class="user-avatar-initial">'.e($initial).'</span><strong class="user-name-cell">'.e($name).'</strong></div>';
             })
 
             ->addColumn('email', function ($user) {
-                return strtoupper($user->email ?? '');
+                return '<span class="user-email-cell">'.e($user->email ?? '').'</span>';
             })
 
             ->addColumn('role', function ($user) {
-                return strtoupper($user->role ?? '');
+                $role = $user->role ?? 'Unknown';
+                $normalizedRole = strtolower($role);
+                $roleClass = $normalizedRole === 'admin' ? 'admin' : (in_array($normalizedRole, ['dealer', 'mega dealer'], true) ? 'dealer' : ($normalizedRole === 'client' ? 'client' : 'other'));
+                return '<span class="user-role-pill '.$roleClass.'">'.e($role).'</span>';
             })
 
             // ->addColumn('address', function ($user) {
@@ -664,23 +503,30 @@ class UserController extends Controller
                     ?? $user->address
                     ?? 'N/A';
 
-                return strtoupper($address);
+                return '<span class="user-address-cell" title="'.e($address).'">'.e($address).'</span>';
             })
 
             ->addColumn('status', function ($user) {
-                $status = optional($user->dealer)->status
+                $status = $user->role === 'Admin' ? $user->status : (optional($user->dealer)->status
                     ?? optional($user->client)->status
                     ?? optional($user->ad)->status
-                    ?? 'N/A';
+                    ?? 'N/A');
 
-                return strtoupper($status);
+                $normalizedStatus = strtolower(trim((string) $status));
+                $statusClass = $normalizedStatus === 'active' ? 'active' : ($normalizedStatus === 'inactive' ? 'inactive' : 'other');
+                return '<span class="user-status-pill '.$statusClass.'">'.e($status ?: 'N/A').'</span>';
             })
 
             ->addColumn('actions', function ($user) {
-                return '
-                    <button class="btn btn-sm btn-primary btn-edit-user" data-id="'.$user->id.'">Edit</button>
-                    <button class="btn btn-sm btn-warning btn-access-user" data-id="'.$user->id.'">Access</button>
-                ';
+                $actions = '<div class="users-actions"><button type="button" class="btn btn-edit-user" data-id="'.(int) $user->id.'"><i class="bi bi-pencil-square"></i>Edit</button>';
+
+                $actor = auth()->user();
+                if ($user->role === 'Admin' && $actor && $actor->role === 'Admin'
+                    && ($actor->can_edit === 'on' || $actor->can_add === 'on')) {
+                    $actions .= '<button type="button" class="btn btn-access-user" data-id="'.(int) $user->id.'"><i class="bi bi-shield-lock"></i>Access</button>';
+                }
+
+                return $actions.'</div>';
             })
 
             // 🔥 IMPORTANT: ENABLE SEARCH HERE
@@ -715,7 +561,7 @@ class UserController extends Controller
                 }
             })
 
-            ->rawColumns(['actions'])
+            ->rawColumns(['name', 'email', 'address', 'status', 'role', 'actions'])
             ->make(true);
     }
 }

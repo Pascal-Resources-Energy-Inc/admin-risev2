@@ -130,28 +130,109 @@
   </div>
 </div> --}}
 
-<div class="modal fade" id="editUserModal" tabindex="-1">
-  <div class="modal-dialog">
+<div class="modal fade admin-user-modal" id="editUserModal" tabindex="-1" aria-labelledby="editUserTitle" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content">
-
       <div class="modal-header">
-        <h5>Edit User</h5>
+        <div>
+          <h5 class="modal-title text-white" id="editUserTitle">Edit User</h5>
+          <p id="editUserSubtitle">Update account information.</p>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
 
       <div class="modal-body">
         <input type="hidden" id="edit_user_id">
+        <input type="hidden" id="edit_role">
 
-        <input type="text" id="edit_name" class="form-control mb-2" placeholder="Name">
-        <input type="email" id="edit_email" class="form-control" placeholder="Email">
+        <div id="editAdminFields" hidden>
+          <section class="admin-user-section">
+            <h6><i class="bi bi-person-vcard"></i> Personal information</h6>
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label for="edit_first_name" class="form-label">First name <span>*</span></label>
+                <input type="text" id="edit_first_name" class="form-control" maxlength="255" autocomplete="given-name" required>
+              </div>
+              <div class="col-md-4">
+                <label for="edit_middle_name" class="form-label">Middle name</label>
+                <input type="text" id="edit_middle_name" class="form-control" maxlength="255" autocomplete="additional-name">
+              </div>
+              <div class="col-md-4">
+                <label for="edit_last_name" class="form-label">Last name <span>*</span></label>
+                <input type="text" id="edit_last_name" class="form-control" maxlength="255" autocomplete="family-name" required>
+              </div>
+              <div class="col-md-8">
+                <label for="edit_email" class="form-label">Email address <span>*</span></label>
+                <input type="email" id="edit_email" class="form-control" maxlength="255" autocomplete="email" required>
+              </div>
+            </div>
+          </section>
+
+          <section class="admin-user-section">
+            <h6><i class="bi bi-briefcase"></i> Work information</h6>
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label for="edit_employee_number" class="form-label">Employee number <span>*</span></label>
+                <input type="text" id="edit_employee_number" class="form-control" maxlength="255" required>
+              </div>
+              <div class="col-md-4">
+                <label for="edit_department" class="form-label">Department <span>*</span></label>
+                <input type="text" id="edit_department" class="form-control" maxlength="255" required>
+              </div>
+              <div class="col-md-4">
+                <label for="edit_designation" class="form-label">Designation <span>*</span></label>
+                <input type="text" id="edit_designation" class="form-control" maxlength="255" required>
+              </div>
+              <div class="col-md-4">
+                <label for="edit_status" class="form-label">Status <span>*</span></label>
+                <select id="edit_status" class="form-select" required>
+                  <option value="Active">Active</option>
+                  <option value="Inactive">Inactive</option>
+                </select>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div id="editBasicFields" class="row g-3" hidden>
+          <div class="col-12">
+            <label for="edit_name" class="form-label">Full name <span class="text-danger">*</span></label>
+            <input type="text" id="edit_name" class="form-control" maxlength="255" required>
+          </div>
+          <div class="col-12">
+            <label for="edit_email_basic" class="form-label">Email address <span class="text-danger">*</span></label>
+            <input type="email" id="edit_email_basic" class="form-control" maxlength="255" required>
+          </div>
+        </div>
       </div>
 
       <div class="modal-footer">
-        <button class="btn btn-primary" id="saveUser">Save</button>
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" id="saveUser"><i class="bi bi-check2 me-1"></i> Save changes</button>
       </div>
-
     </div>
   </div>
 </div>
+
+<style>
+  #editUserModal .modal-content { overflow: hidden; border: 0; border-radius: 16px; box-shadow: 0 24px 70px rgba(16,42,67,.24); }
+  #editUserModal .modal-header { padding: 20px 24px; color: #fff; background: linear-gradient(120deg,#123c61,#1592bd); border: 0; }
+  #editUserModal .modal-title { font-size: 18px; font-weight: 900; }
+  #editUserModal .modal-header p { margin: 4px 0 0; color: rgba(255,255,255,.78); font-size: 12px; }
+  #editUserModal .btn-close { filter: brightness(0) invert(1); }
+  #editUserModal .modal-body { padding: 22px 24px; }
+  #editUserModal .admin-user-section { margin-bottom: 20px; padding-bottom: 18px; border-bottom: 1px solid #edf1f5; }
+  #editUserModal .admin-user-section h6 { margin: 0 0 14px; color: #193b59; font-size: 13px; font-weight: 900; }
+  #editUserModal .admin-user-section h6 i { margin-right: 6px; color: #1688b3; }
+  #editUserModal .form-label { margin-bottom: 6px; color: #445b70; font-size: 11px; font-weight: 800; }
+  #editUserModal .admin-user-section .form-label span { color: #dc3545; }
+  #editUserModal .form-control, #editUserModal .form-select { min-height: 41px; border-color: #d9e3eb; border-radius: 9px; font-size: 12px; }
+  #editUserModal .form-control:focus, #editUserModal .form-select:focus { border-color: #1592bd; box-shadow: 0 0 0 3px rgba(21,146,189,.12); }
+  #editUserModal .modal-footer { padding: 14px 24px; border-top-color: #edf1f5; }
+  #editUserModal .modal-footer .btn { min-height: 39px; padding-inline: 15px; border-radius: 9px; font-size: 12px; font-weight: 800; }
+  #editUserModal .modal-footer .btn-primary { background: #1592bd; border-color: #1592bd; }
+  @media (max-width: 575px) { #editUserModal .modal-header, #editUserModal .modal-body { padding: 17px; } #editUserModal .modal-footer { padding: 12px 17px; } }
+</style>
 
 <style>
 .modal-body {
