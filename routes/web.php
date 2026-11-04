@@ -32,6 +32,7 @@ Route::group(['middleware' => 'auth'], function () {
 
 Route::get('/home', 'HomeController@index')->name('home');
 Route::get('/transactions','TransactionController@index')->name('transactions');
+Route::get('/transactions/export', 'TransactionController@export')->name('transactions.export');
 Route::get('/ad-transactions','TransactionController@adTransactions')->name('ad-transactions');
 Route::delete('/transactions/{id}', 'TransactionController@destroy')->name('transactions.destroy');
 Route::post('/transactions/bulk-delete', 'TransactionController@bulkDelete')->name('transactions.bulkDelete');
@@ -68,7 +69,8 @@ Route::get('/home/live-overview', 'HomeController@liveOverview')->name('home.liv
 Route::post('/store-transaction','TransactionController@store')->name('new-transaction');
 Route::post('/store-transaction-admin','TransactionController@storeAdmin')->name('new-transaction');
 Route::post('/store-transaction-ad','TransactionController@storeAd')->name('ad.new-transaction');
-Route::get('user-profile','UserController@view');
+Route::get('user-profile', 'UserController@view')->name('user-profile');
+Route::put('user-profile/password', 'UserController@updatePassword')->name('user-profile.password');
 Route::get('get-user/{id}','CustomerController@getUser');
 
 Route::get('/search', 'SearchController@search')->name('search');

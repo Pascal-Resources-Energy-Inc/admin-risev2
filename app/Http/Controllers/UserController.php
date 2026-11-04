@@ -10,7 +10,9 @@ use App\TransactionDetail;
 use App\AreaDistributor;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
+use RealRashid\SweetAlert\Facades\Alert;
 
 class UserController extends Controller
 {
@@ -93,24 +95,52 @@ class UserController extends Controller
             ->with('success', 'Admin successfully created. Initial password: 12345678.');
     }
     public function view(){
+        $user = auth()->user();
+        $account = null;
 
-        if(auth()->user()->role == "Dealer")
-        {
-            $profile = Dealer::where('user_id',auth()->user()->id)->first();
-             $transactions = TransactionDetail::where('dealer_id',$profile->user_id)->get();
+        if ($user->role === 'Dealer' || $user->role === 'Mega Dealer') {
+            $account = Dealer::where('user_id', $user->id)->first();
+        } elseif ($user->role === 'Client' || $user->role === 'Customer') {
+            $account = Client::where('user_id', $user->id)->first();
+        } elseif ($user->role === 'Area Distributor' || $user->role === 'Provincial Distributor') {
+            $account = AreaDistributor::where('user_id', $user->id)->first();
         }
-        else
-        {
-            $profile = Client::where('user_id',auth()->user()->id)->first();
-            $transactions = TransactionDetail::where('client_id',$profile->id)->get();
+
+        $transactions = collect();
+        if ($user->role === 'Dealer' || $user->role === 'Mega Dealer') {
+            $transactions = TransactionDetail::where('dealer_id', $user->id)->latest()->limit(50)->get();
+        } elseif (($user->role === 'Client' || $user->role === 'Customer') && $account) {
+            $transactions = TransactionDetail::where('client_id', $account->id)->latest()->limit(50)->get();
         }
-       
-       return view('view_profile',
-            array(
-                'profile' => $profile,  
-                'transactions' => $transactions,
-            )
-        );
+
+        return view('users.my-profile', compact('user', 'account', 'transactions'));
+    }
+
+    public function updatePassword(Request $request)
+    {
+        $data = $request->validate([
+            'current_password' => 'required|string',
+            'password' => 'required|string|min:8|confirmed',
+        ], [
+            'password.confirmed' => 'The new password confirmation does not match.',
+        ]);
+
+        $user = $request->user();
+        if (!Hash::check($data['current_password'], $user->password)) {
+            return back()->withErrors(['current_password' => 'The current password is incorrect.'])->withInput();
+        }
+
+        if (Hash::check($data['password'], $user->password)) {
+            return back()->withErrors(['password' => 'Choose a password different from your current password.']);
+        }
+
+        $user->password = Hash::make($data['password']);
+        $user->setRememberToken(null);
+        $user->save();
+
+        Alert::success('Password Updated', 'Your password was changed successfully.');
+
+        return redirect()->route('user-profile');
     }
 
     public function generatePartnerCode(Request $request)

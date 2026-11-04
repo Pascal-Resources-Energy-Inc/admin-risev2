@@ -147,6 +147,7 @@
             <p>Review sales activity and filter transaction records by MFI and center.</p>
         </div>
         <div class="transactions-head-actions">
+            <a href="{{ route('transactions.export', request()->only('mfi', 'center')) }}" class="btn btn-outline-primary"><i class="bi bi-download"></i> Export CSV</a>
             @if(auth()->user()->role == "Admin")
                 <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTransactionModalAdmin"><i class="bi bi-plus-lg"></i> Search Name</button>
                 <button type="button" class="btn btn-danger btn-sm" id="deleteSelectedBtn" title="Delete Selected" style="display: none;"><i class="bi bi-trash"></i> Delete All</button>
