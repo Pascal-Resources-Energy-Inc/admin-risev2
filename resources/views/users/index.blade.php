@@ -71,7 +71,7 @@
         </div>
         <div class="users-toolbar">
             <label class="users-search" for="userSearch"><i class="bi bi-search"></i><input type="search" id="userSearch" placeholder="Search name, email, address, or status" autocomplete="off"></label>
-            <div class="users-role-filter"><label for="roleFilter">Filter by role</label><select id="roleFilter"><option value="">All roles</option><option value="Admin">Admin</option><option value="Dealer">Dealer</option><option value="Mega Dealer">Mega Dealer</option><option value="Client">Customer</option><option value="Area Distributor">Area Distributor</option></select></div>
+            <div class="users-role-filter"><label for="roleFilter">Filter by role</label><select id="roleFilter"><option value="">All roles</option><option value="Admin">Admin</option><option value="Dealer">Dealer</option><option value="Mega Dealer">Mega Dealer</option><option value="Client">Customer</option></select></div>
         </div>
         <table id="example" class="table users-table" style="width:100%">
             <thead>

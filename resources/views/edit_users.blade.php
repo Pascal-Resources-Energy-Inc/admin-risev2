@@ -151,15 +151,15 @@
             <div class="row g-3">
               <div class="col-md-4">
                 <label for="edit_first_name" class="form-label">First name <span>*</span></label>
-                <input type="text" id="edit_first_name" class="form-control" maxlength="255" autocomplete="given-name" required>
+                <input type="text" id="edit_first_name" class="form-control" maxlength="255" autocomplete="given-name" data-uppercase required>
               </div>
               <div class="col-md-4">
                 <label for="edit_middle_name" class="form-label">Middle name</label>
-                <input type="text" id="edit_middle_name" class="form-control" maxlength="255" autocomplete="additional-name">
+                <input type="text" id="edit_middle_name" class="form-control" maxlength="255" autocomplete="additional-name" data-uppercase>
               </div>
               <div class="col-md-4">
                 <label for="edit_last_name" class="form-label">Last name <span>*</span></label>
-                <input type="text" id="edit_last_name" class="form-control" maxlength="255" autocomplete="family-name" required>
+                <input type="text" id="edit_last_name" class="form-control" maxlength="255" autocomplete="family-name" data-uppercase required>
               </div>
               <div class="col-md-8">
                 <label for="edit_email" class="form-label">Email address <span>*</span></label>
@@ -173,15 +173,15 @@
             <div class="row g-3">
               <div class="col-md-4">
                 <label for="edit_employee_number" class="form-label">Employee number <span>*</span></label>
-                <input type="text" id="edit_employee_number" class="form-control" maxlength="255" required>
+                <input type="text" id="edit_employee_number" class="form-control" maxlength="255" data-uppercase required>
               </div>
               <div class="col-md-4">
                 <label for="edit_department" class="form-label">Department <span>*</span></label>
-                <input type="text" id="edit_department" class="form-control" maxlength="255" required>
+                <input type="text" id="edit_department" class="form-control" maxlength="255" data-uppercase required>
               </div>
               <div class="col-md-4">
                 <label for="edit_designation" class="form-label">Designation <span>*</span></label>
-                <input type="text" id="edit_designation" class="form-control" maxlength="255" required>
+                <input type="text" id="edit_designation" class="form-control" maxlength="255" data-uppercase required>
               </div>
               <div class="col-md-4">
                 <label for="edit_status" class="form-label">Status <span>*</span></label>

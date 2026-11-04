@@ -125,8 +125,10 @@ Route::delete('/ad-purchase-orders/{id}', 'AdPurchaseOrderController@destroy')->
 Route::get('/dealers','DealerController@index')->name('dealers');
 Route::get('/dealers/centers-for-mfi', 'DealerController@centersForMfi')->name('dealers.centers-for-mfi');
 Route::get('/dealers/data', 'DealerController@datatable')->name('dealers.data');
+Route::get('/dealers/export', 'DirectoryExportController@dealers')->name('dealers.export');
 Route::get('/mds', 'MegaDealerController@index')->name('mds');
 Route::get('/mega-dealers/data', 'MegaDealerController@datatable')->name('mega-dealers.data');
+Route::get('/mega-dealers/export', 'DirectoryExportController@megaDealers')->name('mega-dealers.export');
 Route::post('/mega-dealers', 'MegaDealerController@store')->name('mega-dealers.store');
 Route::post('/mega-dealers/check-duplicate', 'MegaDealerController@checkDuplicate')->name('mega-dealers.check-duplicate');
 Route::post('/mega-dealers/{id}/avatar', 'MegaDealerController@changeAvatar')->where('id', '[0-9]+')->name('mega-dealers.avatar');
@@ -149,6 +151,7 @@ Route::get('/get-zipcode1', [DealerController::class, 'getZipCode1']);
 
 Route::get('/customers','CustomerController@index')->name('customers');
 Route::get('/customers/data', 'CustomerController@datatable')->name('customers.data');
+Route::get('/customers/export', 'DirectoryExportController@customers')->name('customers.export');
 Route::get('/customers/territories-for-location', 'CustomerController@territoriesForLocation')->name('customers.territories-for-location');
 Route::get('/customer','CustomerController@view')->name('customer');
 Route::get('/dashboard-customer','CustomerController@show')->name('customer');
@@ -227,6 +230,7 @@ Route::post('/stock-requests/{id}/approve', 'DealerStockRequestController@approv
 Route::post('/stock-requests/{id}/reject', 'DealerStockRequestController@reject')->name('admin.stock.requests.reject');
 
 Route::get('/center-chiefs', 'CenterChiefController@index')->name('center-chiefs.index');
+Route::get('/center-chiefs/export', 'DirectoryExportController@centerChiefs')->name('center-chiefs.export');
 Route::post('/center-chiefs', 'CenterChiefController@store')->name('center-chiefs.store');
 Route::put('/center-chiefs/{centerChief}', 'CenterChiefController@update')->name('center-chiefs.update');
 Route::delete('/center-chiefs/{centerChief}', 'CenterChiefController@destroy')->name('center-chiefs.destroy');

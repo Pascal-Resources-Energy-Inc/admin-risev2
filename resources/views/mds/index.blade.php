@@ -13,7 +13,10 @@
     <section class="mega-head d-flex justify-content-between align-items-center flex-wrap gap-3">
         <div><div class="mega-eyebrow">Partner network</div><h1>Mega Dealers</h1><div class="text-muted">Manage Mega Dealer accounts, territory, and business information.</div></div>
         @if(auth()->user()->role === 'Admin')
-            <button type="button" class="btn btn-info text-white" data-bs-toggle="modal" data-bs-target="#new_dealer"><i class="ti ti-plus"></i> Add Mega Dealer</button>
+            <div class="d-flex flex-wrap gap-2">
+                <a id="megaDealerExportLink" class="btn btn-outline-primary" href="{{ route('mega-dealers.export') }}"><i class="ti ti-download"></i> Export CSV</a>
+                <button type="button" class="btn btn-info text-white" data-bs-toggle="modal" data-bs-target="#new_dealer"><i class="ti ti-plus"></i> Add Mega Dealer</button>
+            </div>
         @endif
     </section>
 
@@ -40,7 +43,7 @@
 <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
 <script>
 $(function () {
-    $('#megaDealersTable').DataTable({
+    const megaDealersTable = $('#megaDealersTable').DataTable({
         processing: true,
         serverSide: true,
         responsive: true,
@@ -59,6 +62,12 @@ $(function () {
             {data: 'status_display', name: 'status'},
             {data: 'actions', orderable: false, searchable: false}
         ]
+    });
+    $('#megaDealerExportLink').on('click', function () {
+        const url = new URL(this.href, window.location.origin);
+        const search = megaDealersTable.search().trim();
+        if (search) url.searchParams.set('search', search); else url.searchParams.delete('search');
+        this.href = url.toString();
     });
 });
 </script>

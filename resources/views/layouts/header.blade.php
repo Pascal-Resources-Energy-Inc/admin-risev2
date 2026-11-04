@@ -918,11 +918,21 @@
             min-width: 0 !important;
             margin-top: 10px !important;
             padding: 8px !important;
-            overflow: hidden;
+            max-height: calc(100vh - 100px);
+            max-height: calc(100dvh - 100px);
+            overflow-x: hidden;
+            overflow-y: auto;
+            overscroll-behavior: contain;
             border: 1px solid #e5edf4 !important;
             border-radius: 18px !important;
             background: #fff;
             box-shadow: 0 18px 48px rgba(15, 39, 64, .2) !important;
+            z-index: 1102 !important;
+        }
+
+        /* Keep the profile menu above dashboard cards while it is expanded. */
+        .main-layout .topbar:has(.account-menu.show) {
+            z-index: 1101 !important;
         }
 
         .main-layout .account-menu .account-menu-header {
@@ -1312,6 +1322,223 @@
     </style>
     
     @yield('css')
+    <style>
+        :root {
+            --app-table-ink: #263d53;
+            --app-table-muted: #718398;
+            --app-table-line: #e5ecf2;
+            --app-table-head: #f5f8fb;
+            --app-table-hover: #f3fafc;
+            --app-control-border: #d7e2eb;
+            --app-accent: #1592bd;
+        }
+
+        .main-layout .main-content .content-area {
+            box-sizing: border-box;
+            min-width: 0;
+            padding-left: clamp(12px, 2vw, 28px);
+            padding-right: clamp(12px, 2vw, 28px);
+        }
+
+        .main-layout .content-area .app-module-surface {
+            box-sizing: border-box;
+            width: 100%;
+            max-width: 1720px;
+            min-width: 0;
+            margin-right: auto;
+            margin-left: auto;
+        }
+
+        .main-layout .content-area .app-module-surface > * { min-width: 0; }
+
+        .main-layout .content-area .app-module-surface .card {
+            border-color: #e3ebf2;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(25, 57, 85, .055);
+        }
+
+        .main-layout .content-area .app-module-surface .card > .card-header {
+            border-bottom-color: #e8eef3;
+            color: #233b53;
+            font-weight: 700;
+        }
+
+        .main-layout .content-area .app-module-heading {
+            min-width: 0;
+            gap: 16px;
+        }
+
+        .main-layout .content-area .app-module-heading h1,
+        .main-layout .content-area .app-module-heading h2,
+        .main-layout .content-area .app-module-heading h3,
+        .main-layout .content-area .app-module-heading h4,
+        .main-layout .content-area .app-module-heading h5 {
+            color: #102a43;
+            font-size: clamp(22px, 2.2vw, 30px);
+            font-weight: 800;
+            letter-spacing: -.035em;
+            line-height: 1.2;
+        }
+
+        .main-layout .content-area .app-module-heading > div:first-child { min-width: 0; }
+
+        .main-layout .content-area .app-table-scroll {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: auto;
+            overflow-y: hidden;
+            overscroll-behavior-x: contain;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+            scrollbar-color: #b9c9d6 #f2f6f9;
+        }
+
+        .main-layout .content-area .app-table-scroll::-webkit-scrollbar { height: 8px; }
+        .main-layout .content-area .app-table-scroll::-webkit-scrollbar-track { background: #f2f6f9; border-radius: 99px; }
+        .main-layout .content-area .app-table-scroll::-webkit-scrollbar-thumb { background: #b9c9d6; border-radius: 99px; }
+        .main-layout .content-area .app-table-scroll:focus-visible { outline: 3px solid rgba(21, 146, 189, .22); outline-offset: 2px; }
+
+        .main-layout .content-area table.app-uniform-table {
+            width: 100%;
+            min-width: 640px;
+            margin: 0 !important;
+            border-color: var(--app-table-line) !important;
+            border-collapse: separate !important;
+            border-spacing: 0 !important;
+            color: var(--app-table-ink);
+            background: #fff;
+            font-size: 12px;
+        }
+
+        .main-layout .content-area table.app-uniform-table thead th {
+            padding: 12px 13px !important;
+            border-color: var(--app-table-line) !important;
+            border-bottom-width: 1px !important;
+            background: var(--app-table-head) !important;
+            color: #63758a !important;
+            font-size: 10px !important;
+            font-weight: 800 !important;
+            letter-spacing: .045em;
+            line-height: 1.35;
+            text-transform: uppercase;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+
+        .main-layout .content-area table.app-uniform-table tbody td {
+            padding: 11px 13px !important;
+            border-color: #edf1f5 !important;
+            color: #344b61;
+            font-size: 12px;
+            line-height: 1.45;
+            vertical-align: middle;
+        }
+
+        .main-layout .content-area table.app-uniform-table tbody tr:hover > td {
+            background-color: var(--app-table-hover) !important;
+        }
+
+        .main-layout .content-area .dataTables_wrapper {
+            min-width: 0;
+            color: var(--app-table-muted);
+            font-size: 12px;
+        }
+
+        .main-layout .content-area .dataTables_wrapper .dataTables_length,
+        .main-layout .content-area .dataTables_wrapper .dataTables_filter,
+        .main-layout .content-area .dataTables_wrapper .dataTables_info {
+            color: var(--app-table-muted);
+            font-size: 12px;
+        }
+
+        .main-layout .content-area .dataTables_wrapper .dataTables_filter input,
+        .main-layout .content-area .dataTables_wrapper .dataTables_length select {
+            min-height: 36px;
+            margin-left: 6px;
+            padding: 6px 10px;
+            border: 1px solid var(--app-control-border);
+            border-radius: 8px;
+            background-color: #fff;
+            color: var(--app-table-ink);
+            outline: none;
+        }
+
+        .main-layout .content-area .dataTables_wrapper .dataTables_filter input:focus,
+        .main-layout .content-area .dataTables_wrapper .dataTables_length select:focus {
+            border-color: var(--app-accent);
+            box-shadow: 0 0 0 3px rgba(21, 146, 189, .12);
+        }
+
+        .main-layout .content-area .dataTables_wrapper .pagination {
+            gap: 4px;
+            flex-wrap: wrap;
+            margin: 10px 0 0;
+        }
+
+        .main-layout .content-area .dataTables_wrapper .pagination .page-link {
+            min-width: 34px;
+            border-color: var(--app-table-line);
+            border-radius: 7px;
+            color: #456078;
+            text-align: center;
+        }
+
+        .main-layout .content-area .dataTables_wrapper .pagination .active .page-link {
+            border-color: var(--app-accent);
+            background: var(--app-accent);
+            color: #fff;
+        }
+
+        .main-layout .content-area .form-control,
+        .main-layout .content-area .form-select {
+            border-color: var(--app-control-border);
+            border-radius: 8px;
+        }
+
+        .main-layout .content-area .form-control:focus,
+        .main-layout .content-area .form-select:focus {
+            border-color: var(--app-accent);
+            box-shadow: 0 0 0 3px rgba(21, 146, 189, .12);
+        }
+
+        .main-layout .content-area .btn { border-radius: 8px; }
+
+        @media (max-width: 767.98px) {
+            .main-layout .content-area .app-module-heading {
+                align-items: flex-start;
+                flex-wrap: wrap;
+            }
+
+            .main-layout .content-area .app-module-heading > div:first-child { flex: 1 1 100%; }
+
+            .main-layout .content-area .app-module-heading > .btn,
+            .main-layout .content-area .app-module-heading > a.btn,
+            .main-layout .content-area .app-module-heading > .d-flex {
+                max-width: 100%;
+            }
+
+            .main-layout .content-area .dataTables_wrapper > .row {
+                row-gap: 8px;
+            }
+            .main-layout .content-area .dataTables_wrapper .dataTables_filter,
+            .main-layout .content-area .dataTables_wrapper .dataTables_length {
+                text-align: left;
+            }
+            .main-layout .content-area .dataTables_wrapper .dataTables_filter input {
+                box-sizing: border-box;
+                max-width: min(100%, 280px);
+            }
+            .main-layout .content-area .dataTables_wrapper .dataTables_paginate {
+                padding-top: 6px;
+                text-align: left;
+            }
+        }
+
+        @media (max-width: 420px) {
+            .main-layout .content-area table.app-uniform-table { min-width: 580px; }
+            .main-layout .content-area .dataTables_wrapper .dataTables_filter input { max-width: 190px; }
+        }
+    </style>
 </head>
 <body class="main-layout">
     <div id="loader" style="display:none;" class="loader"></div>
@@ -2240,6 +2467,69 @@
 
         @keyframes app-table-loader-spin { to { transform: rotate(360deg); } }
     </style>
+
+    <script>
+        (function () {
+            var moduleRootSelectors = [
+                '.transactions-page', '.dealer-page', '.mega-page', '.chief-page', '.centers-page',
+                '.serial-page', '.stock-approval-page', '.users-page', '.items-page', '.voucher-page',
+                '.raffle-page', '.inventory-transfer-page', '.inventory-page', '.adpo-page', '.orders-page',
+                '.report-page', '.products-page', '.rewards-page'
+            ];
+            var moduleHeadingSelectors = [
+                '.transactions-head', '.dealer-head', '.mega-head', '.chief-head', '.centers-head',
+                '.serial-page__head', '.stock-head', '.users-head', '.items-head', '.voucher-head',
+                '.raffle-head', '.inventory-head', '.inventory-transfer-head', '.adpo-head', '.orders-head',
+                '.report-head', '.aging-head', '.dpo-head', '.msr-report-head', '.isl-report-head', '.vhr-head'
+            ];
+
+            moduleRootSelectors.forEach(function (selector) {
+                document.querySelectorAll('.main-layout .content-area ' + selector).forEach(function (root) {
+                    root.classList.add('app-module-surface');
+                });
+            });
+            moduleHeadingSelectors.forEach(function (selector) {
+                document.querySelectorAll('.main-layout .content-area ' + selector).forEach(function (heading) {
+                    heading.classList.add('app-module-heading');
+                });
+            });
+
+            moduleRootSelectors.forEach(function (selector) {
+                document.querySelectorAll('.main-layout .content-area ' + selector + ' > header').forEach(function (heading) {
+                    heading.classList.add('app-module-heading');
+                });
+            });
+
+            var contentArea = document.querySelector('.main-layout .content-area');
+            if (contentArea) {
+                Array.prototype.forEach.call(contentArea.children, function (child) {
+                    if (child.tagName === 'FOOTER' || child.tagName === 'SCRIPT' || child.tagName === 'STYLE' || child.classList.contains('modal')) return;
+                    child.classList.add('app-module-surface');
+                });
+            }
+
+            var tables = document.querySelectorAll('.main-layout .content-area table');
+            Array.prototype.forEach.call(tables, function (table) {
+                if (table.parentElement && table.parentElement.closest('table')) return;
+                table.classList.add('app-uniform-table');
+
+                var existingResponsiveWrapper = table.closest('.table-responsive');
+                if (existingResponsiveWrapper) {
+                    existingResponsiveWrapper.classList.add('app-table-scroll');
+                    if (!existingResponsiveWrapper.hasAttribute('tabindex')) existingResponsiveWrapper.setAttribute('tabindex', '0');
+                    if (!existingResponsiveWrapper.hasAttribute('aria-label')) existingResponsiveWrapper.setAttribute('aria-label', 'Scrollable data table');
+                    return;
+                }
+
+                var wrapper = document.createElement('div');
+                wrapper.className = 'table-responsive app-table-scroll';
+                wrapper.setAttribute('tabindex', '0');
+                wrapper.setAttribute('aria-label', 'Scrollable data table');
+                table.parentNode.insertBefore(wrapper, table);
+                wrapper.appendChild(table);
+            });
+        })();
+    </script>
 
     @yield('javascript')
 

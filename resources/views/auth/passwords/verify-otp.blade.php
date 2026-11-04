@@ -1,408 +1,98 @@
 @extends('layouts.app')
 
 @section('content')
+@include('auth.partials.screen-styles')
+
 <style>
-    .otp-container {
-        min-height: 100vh;
-        background: linear-gradient(135deg, #ffffffff 0%, #ffffffff 100%);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: clamp(10px, 2vw, 20px);
-    }
-
-    .main-card {
-        background: white;
-        border-radius: clamp(15px, 2vw, 20px);
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
-        overflow: hidden;
-        max-width: 1200px;
-        width: 100%;
-        display: flex;
-        min-height: clamp(400px, 60vh, 600px);
-    }
-
-    .illustration-section {
-        flex: 1;
-        background: linear-gradient(135deg, #fafdffff 0%, #ffffffff 100%);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: clamp(20px, 4vw, 40px);
-        position: relative;
-        min-width: 0;
-    }
-
-    .context-image {
-        max-width: 100%;
-        max-height: 70vh;
-        width: auto;
-        height: auto;
-        object-fit: contain;
-        border-radius: clamp(10px, 1.5vw, 20px);
-    }
-
-    .context-image-mobile {
-        display: none;
-        max-width: 200px;
-        max-height: 250px;
-        width: auto;
-        height: auto;
-        object-fit: contain;
-        border-radius: 10px;
-        margin: 0 auto;
-    }
-
-    .form-section {
-        flex: 1;
-        padding: clamp(20px, 4vw, 60px) clamp(15px, 3vw, 40px);
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        min-width: 0;
-    }
-
-    .card {
-        border: none !important;
-        box-shadow: none !important;
-        background: transparent !important;
-    }
-
-    .card-body {
-        padding: 0 !important;
-    }
-
-    .otp-title {
-        color: #4facfe !important;
-        font-size: 23px !important;
-        font-weight: 600 !important;
-        margin-bottom: 20px !important;
-    }
-
-    .text-muted {
-        color: #666 !important;
-        margin-bottom: clamp(20px, 3vw, 30px) !important;
-        font-size: clamp(14px, 2vw, 16px);
-    }
-
-    .alert-info {
-        background-color: rgba(79, 172, 254, 0.1) !important;
-        border: 1px solid #4facfe !important;
-        color: #4facfe !important;
-        border-radius: clamp(8px, 1vw, 10px) !important;
-        font-size: clamp(13px, 2vw, 14px);
-        padding: clamp(10px, 2vw, 15px) !important;
-    }
-
-    .otp-input-container {
-        display: flex;
-        justify-content: space-between;
-        gap: 10px;
-        margin: 20px 0;
-    }
-
-    .otp-input {
-        width: 50px !important;
-        height: 50px !important;
-        text-align: center !important;
-        font-size: 20px !important;
-        font-weight: bold !important;
-        border: 2px solid #e0e0e0 !important;
-        border-radius: 10px !important;
-        background: white !important;
-        transition: all 0.3s ease !important;
-    }
-
-    .otp-input:focus {
-        border-color: #4facfe !important;
-        box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1) !important;
-        outline: none !important;
-    }
-
-    .otp-input.filled {
-        border-color: #4facfe !important;
-        background-color: rgba(79, 172, 254, 0.05) !important;
-    }
-
-    .otp-input.error {
-        border-color: #dc3545 !important;
-        background-color: rgba(220, 53, 69, 0.05) !important;
-    }
-
-    .form-label {
-        font-size: clamp(14px, 2vw, 16px);
-        font-weight: 500;
-        margin-bottom: clamp(6px, 1vw, 8px);
-    }
-
-    .btn-success {
-        background-color: #5DADE2;
-        border: none !important;
-        border-radius: clamp(20px, 3vw, 25px) !important;
-        padding: clamp(12px, 2.5vw, 15px) !important;
-        font-size: clamp(14px, 2.5vw, 16px) !important;
-        font-weight: bold !important;
-        transition: transform 0.2s ease, box-shadow 0.2s ease !important;
-        width: 100%;
-        min-height: clamp(45px, 6vw, 50px);
-    }
-
-    .btn-success:hover:not(:disabled) {
-        transform: translateY(-2px) !important;
-        box-shadow: 0 8px 25px rgba(79, 172, 254, 0.3) !important;
-        background-color: #4a8ab6ff;
-    }
-
-    .btn-success:disabled {
-        background-color: #ccc !important;
-        transform: none !important;
-        box-shadow: none !important;
-        cursor: not-allowed !important;
-        opacity: 0.6;
-    }
-
-    .alert-danger {
-        border-radius: clamp(8px, 1vw, 10px) !important;
-        border: 1px solid #dc3545 !important;
-        font-size: clamp(13px, 2vw, 14px);
-        padding: clamp(10px, 2vw, 15px) !important;
-    }
-
-    .back-link {
-        text-align: center;
-        margin-top: clamp(15px, 2.5vw, 20px);
-    }
-
-    .back-link p {
-        font-size: clamp(13px, 2vw, 14px);
-        margin-bottom: 0;
-    }
-
-    .back-link a {
-        color: #4facfe !important;
-        text-decoration: none !important;
-        font-weight: 500;
-    }
-
-    .back-link a:hover {
-        text-decoration: underline !important;
-    }
-
-    .resend-container {
-        text-align: center;
-        margin-top: 20px;
-        padding: 15px;
-        background-color: rgba(79, 172, 254, 0.05);
-        border-radius: 10px;
-    }
-
-    .resend-text {
-        font-size: 14px;
-        color: #666;
-        margin-bottom: 10px;
-    }
-
-    .timer {
-        font-weight: bold;
-        color: #4facfe;
-    }
-
-    .btn-link {
-        color: #4facfe !important;
-        text-decoration: none !important;
-        font-weight: 500;
-        border: none;
-        background: none;
-        padding: 5px 10px;
-        border-radius: 5px;
-        transition: background-color 0.2s ease;
-    }
-
-    .btn-link:hover {
-        background-color: rgba(79, 172, 254, 0.1);
-        text-decoration: none !important;
-    }
-
-    .loading {
-        opacity: 0.7;
-        pointer-events: none;
-    }
-
-    .loading .btn-success {
-        background-color: #ccc !important;
-    }
-
-    /* Mobile responsiveness */
-    @media (max-width: 479px) {
-        .main-card {
-            flex-direction: column;
-            margin: 5px;
-            min-height: auto;
-        }
-
-        .illustration-section {
-            display: none;
-        }
-
-        .form-section {
-            padding: 20px 15px;
-        }
-
-        .otp-input {
-            width: 45px !important;
-            height: 45px !important;
-            font-size: 18px !important;
-        }
-
-        .otp-input-container {
-            gap: 8px;
-        }
-
-        .context-image-mobile {
-            display: block;
-            margin: 15px auto 25px auto;
-        }
-    }
-
-    @media (min-width: 480px) and (max-width: 767px) {
-        .main-card {
-            flex-direction: column;
-            margin: 10px;
-        }
-
-        .illustration-section {
-            display: none;
-        }
-
-        .form-section {
-            padding: 25px 20px;
-        }
-
-        .context-image-mobile {
-            display: block;
-            margin: 15px auto 25px auto;
-            max-height: 180px;
-        }
-    }
-
-    @media (max-width: 767px) and (orientation: landscape) {
-        .main-card {
-            flex-direction: row;
-            min-height: 400px;
-        }
-
-        .illustration-section {
-            flex: 0.6;
-            min-height: auto;
-            padding: 15px;
-        }
-
-        .form-section {
-            flex: 1.4;
-            padding: 20px 15px;
-        }
-
-        .context-image {
-            max-height: 50vh;
-        }
-        .context-image-mobile {
-            display: none !important;
-        }
-    }
+    .otp-screen .auth-form-panel { padding-top: clamp(30px, 5vw, 62px); padding-bottom: clamp(30px, 5vw, 62px); }
+    .otp-screen .auth-description { margin-bottom: 22px; }
+    .otp-input-container { display: flex; justify-content: space-between; gap: clamp(6px, 1.5vw, 12px); margin: 10px 0 8px; }
+    .otp-input { width: min(56px, 14vw) !important; height: 56px !important; border: 1px solid #dbe6ee !important; border-radius: 12px !important; background: #fbfdfe !important; color: #142b3d !important; font-size: 21px !important; font-weight: 750 !important; }
+    .otp-input:focus { border-color: #39b3d2 !important; box-shadow: 0 0 0 4px rgba(7,153,196,.1) !important; outline: 0 !important; }
+    .otp-input.filled { border-color: #39b3d2 !important; background: #f2fbfd !important; text-align: center; }
+    .otp-screen .resend-container { margin-top: 20px; padding: 14px; border: 1px solid #e5eef3; border-radius: 12px; background: #f8fbfd; text-align: center; }
+    .otp-screen .resend-text { margin-bottom: 4px; color: #718397; font-size: 13px; }
+    .otp-screen .timer { color: #087ca8; font-weight: 700; }
+    .otp-screen #resend-link { padding: 4px 8px; border: 0; background: transparent; color: #087ca8; font-size: 13px; font-weight: 700; }
+    .otp-screen #resend-link:hover { text-decoration: underline; }
+    .otp-screen .auth-feedback { margin: 0 0 16px; padding: 11px 13px; border: 1px solid #f2c7c7; border-radius: 11px; background: #fff6f6; color: #a83232; font-size: 13px; }
+    .otp-screen .auth-feedback-info { border-color: #d8eef4; background: #f3fbfd; color: #35677d; }
+    .otp-screen .auth-feedback-success { border-color: #c9ead9; background: #f1fbf5; color: #27764b; }
+    .otp-screen .auth-back-link { margin: 20px 0 0; color: #718397; font-size: 13px; text-align: center; }
+    .otp-screen .auth-back-link a { color: #087ca8; font-weight: 700; text-decoration: none; }
+    .otp-screen .auth-back-link a:hover { text-decoration: underline; }
+    .otp-screen .signin-button:disabled { cursor: not-allowed; opacity: .55; box-shadow: none; }
+    @media (max-width: 420px) { .otp-screen .auth-form-panel { padding: 25px 20px 28px; } .otp-input-container { gap: 6px; } }
 </style>
 
-<div class="otp-container">
-    <div class="main-card">
-        <!-- Illustration Section -->
-        <div class="illustration-section">
-           <img src="{{asset('images/password.png')}}" alt="OTP Verification" class="context-image">
-        </div>
-
-        <!-- Form Section -->
-        <div class="form-section">
-            <div class="row justify-content-center">
-                <div class="col-12">
-                    <div class="card mt-4 card-bg-fill">
-                        <div class="card-body p-4">
-                            <div class="text-center mt-2">
-                                <h5 class="otp-title">Verify OTP</h5>
-                            </div>
-
-                            <!-- Image shows here only on mobile -->
-                            <div class="text-center">
-                                <img src="{{asset('images/password.png')}}" alt="OTP Verification" class="context-image-mobile">
-                            </div>
-
-                            <div class="alert border-0 alert-info text-center mb-3" role="alert">
-                                We've sent a 6-digit OTP to <strong>{{ $email }}</strong>
-                            </div>
-
-                            @if (session('success'))
-                                <div class="alert alert-success text-center mb-3" role="alert">
-                                    {{ session('success') }}
-                                </div>
-                            @endif
-
-                            @if ($errors->any())
-                                <div class="alert alert-danger mb-3" role="alert">
-                                    @foreach ($errors->all() as $error)
-                                        <div>{{ $error }}</div>
-                                    @endforeach
-                                </div>
-                            @endif
-
-                            <div class="p-2">
-                                <form method="POST" action="{{ route('password.verify-otp') }}" id="otp-form">
-                                    @csrf
-                                    <input type="hidden" name="email" value="{{ $email }}">
-                                    
-                                    <div class="mb-4">
-                                        <label class="form-label text-center d-block">Enter OTP Code</label>
-                                        <div class="otp-input-container">
-                                            <input type="text" class="otp-input" maxlength="1" data-index="0" autocomplete="off">
-                                            <input type="text" class="otp-input" maxlength="1" data-index="1" autocomplete="off">
-                                            <input type="text" class="otp-input" maxlength="1" data-index="2" autocomplete="off">
-                                            <input type="text" class="otp-input" maxlength="1" data-index="3" autocomplete="off">
-                                            <input type="text" class="otp-input" maxlength="1" data-index="4" autocomplete="off">
-                                            <input type="text" class="otp-input" maxlength="1" data-index="5" autocomplete="off">
-                                        </div>
-                                        <input type="hidden" name="otp" id="otp-hidden" required>
-                                    </div>
-
-                                    <div class="text-center mt-4">
-                                        <button class="btn btn-success w-100" type="submit" id="verify-btn" disabled>
-                                            <span class="btn-text">Verify OTP</span>
-                                            <span class="btn-loading" style="display: none;">Verifying...</span>
-                                        </button>
-                                    </div>
-                                </form>
-
-                                <div class="resend-container">
-                                    <div class="resend-text">
-                                        Didn't receive the code? 
-                                        <span class="timer" id="timer-display">Resend in <span id="countdown">60</span>s</span>
-                                    </div>
-                                    <form method="POST" action="{{ route('password.email') }}" id="resend-form" style="display: none;">
-                                        @csrf
-                                        <input type="hidden" name="email" value="{{ $email }}">
-                                        <button type="submit" class="btn btn-link" id="resend-link">
-                                            Resend OTP
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- end card body -->
-                    </div>
-                    <!-- end card -->
-
-                    <div class="back-link">
-                        <p class="mb-0">Back to <a href="{{ route('password.request') }}" class="fw-semibold text-primary text-decoration-underline">Forgot Password</a></p>
-                    </div>
-                </div>
+<div class="login-page auth-screen otp-screen" id="verifyOtpPage">
+    <div class="auth-card login-card">
+        <section class="auth-brand-panel login-brand-panel">
+            <div class="brand-glow brand-glow-one"></div>
+            <div class="brand-glow brand-glow-two"></div>
+            <div class="brand-image-wrap">
+                <img src="{{ asset('images/admin-login.png') }}" alt="" class="auth-illustration">
             </div>
-        </div>
+            <p class="brand-caption">One quick check keeps your GazLite account secure.</p>
+        </section>
+
+        <section class="auth-form-panel">
+            <div class="form-topbar form-topbar-single">
+                <img src="{{ asset('images/logo_nya.png') }}" alt="GazLite" class="form-logo">
+            </div>
+
+            <div class="form-heading">
+                <p class="auth-eyebrow">ACCOUNT RECOVERY</p>
+                <h1>Verify your email</h1>
+                <p class="auth-description">Enter the six-digit code we sent to <strong>{{ $email }}</strong>.</p>
+            </div>
+
+            @if (session('success'))
+                <div class="auth-feedback auth-feedback-success" role="status">{{ session('success') }}</div>
+            @endif
+            @if ($errors->any())
+                <div class="auth-feedback" role="alert">
+                    @foreach ($errors->all() as $error)
+                        <div>{{ $error }}</div>
+                    @endforeach
+                </div>
+            @endif
+
+            <form method="POST" action="{{ route('password.verify-otp') }}" id="otp-form">
+                @csrf
+                <input type="hidden" name="email" value="{{ $email }}">
+                <div class="input-group">
+                    <label class="input-label" for="otp-0">Verification code</label>
+                    <div class="otp-input-container" role="group" aria-label="Six-digit verification code">
+                        <input id="otp-0" type="text" inputmode="numeric" pattern="[0-9]*" class="otp-input" maxlength="1" data-index="0" autocomplete="one-time-code" aria-label="Digit 1">
+                        <input type="text" inputmode="numeric" pattern="[0-9]*" class="otp-input" maxlength="1" data-index="1" autocomplete="off" aria-label="Digit 2">
+                        <input type="text" inputmode="numeric" pattern="[0-9]*" class="otp-input" maxlength="1" data-index="2" autocomplete="off" aria-label="Digit 3">
+                        <input type="text" inputmode="numeric" pattern="[0-9]*" class="otp-input" maxlength="1" data-index="3" autocomplete="off" aria-label="Digit 4">
+                        <input type="text" inputmode="numeric" pattern="[0-9]*" class="otp-input" maxlength="1" data-index="4" autocomplete="off" aria-label="Digit 5">
+                        <input type="text" inputmode="numeric" pattern="[0-9]*" class="otp-input" maxlength="1" data-index="5" autocomplete="off" aria-label="Digit 6">
+                    </div>
+                    <input type="hidden" name="otp" id="otp-hidden" required>
+                </div>
+
+                <button class="signin-button submit-button" type="submit" id="verify-btn" disabled>
+                    <span class="btn-text">Verify code</span>
+                    <span class="btn-loading" style="display: none;">Verifying…</span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                </button>
+            </form>
+
+            <div class="resend-container">
+                <div class="resend-text">Didn’t receive the code?</div>
+                <span class="timer" id="timer-display">Resend in <span id="countdown">60</span>s</span>
+                <form method="POST" action="{{ route('password.email') }}" id="resend-form" style="display: none;">
+                    @csrf
+                    <input type="hidden" name="email" value="{{ $email }}">
+                    <button type="submit" id="resend-link">Resend code</button>
+                </form>
+            </div>
+
+            <p class="auth-back-link"><a href="{{ route('password.request') }}">Back to forgot password</a></p>
+        </section>
     </div>
 </div>
 
@@ -542,7 +232,7 @@ document.addEventListener('DOMContentLoaded', function() {
         verifyBtn.disabled = true;
         btnText.style.display = 'none';
         btnLoading.style.display = 'inline';
-        document.querySelector('.form-section').classList.add('loading');
+        document.querySelector('.otp-screen .auth-form-panel').classList.add('loading');
         
         this.submit();
     });

@@ -364,6 +364,9 @@
             </div>
             <div class="dealer-actions">
                 @if(auth()->user()->role == 'Admin' && Route::currentRouteName() !== 'mds')
+                    <a id="dealerExportLink" class="btn btn-outline-primary" href="{{ route('dealers.export', ['dealer_type' => 'Project']) }}"><i class="ti ti-download"></i> Export CSV</a>
+                @endif
+                @if(auth()->user()->role == 'Admin' && Route::currentRouteName() !== 'mds')
                     <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#new_dealer">
                         <i class="ti ti-plus"></i>
                         Add {{ $dealerSingularTitle }}
@@ -605,7 +608,14 @@
                 $tab.addClass('active').attr('aria-selected', 'true');
                 $('#dealerTableTitle').text(activeDealerType + ' Dealers');
                 $('#dealerTableCount').text(count.toLocaleString() + ' record' + (count === 1 ? '' : 's') + ' listed');
-                dealerTable.search('').ajax.reload();
+                dealerTable.ajax.reload();
+            });
+            $('#dealerExportLink').on('click', function () {
+                const url = new URL(this.href, window.location.origin);
+                url.searchParams.set('dealer_type', activeDealerType);
+                const search = dealerTable.search().trim();
+                if (search) url.searchParams.set('search', search); else url.searchParams.delete('search');
+                this.href = url.toString();
             });
             initSelect2();
             return;
