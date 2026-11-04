@@ -64,6 +64,36 @@ class DealerController extends Controller
         }
 
         return \Yajra\DataTables\Facades\DataTables::eloquent($query)
+            ->filter(function ($query) use ($request) {
+                $search = trim((string) $request->input('search.value', ''));
+                if ($search === '') {
+                    return;
+                }
+
+                $searchableColumns = [
+                    'dealers.dealer_reference',
+                    'dealers.name',
+                    'dealers.store_name',
+                    'dealers.store_type',
+                    'dealers.number',
+                    'dealers.address',
+                    'dealers.area',
+                    'dealers.status',
+                ];
+
+                foreach (['mfi', 'center', 'location_city', 'location_province', 'location_region'] as $optionalColumn) {
+                    if (Schema::hasColumn('dealers', $optionalColumn)) {
+                        $searchableColumns[] = 'dealers.' . $optionalColumn;
+                    }
+                }
+
+                $query->where(function ($matches) use ($searchableColumns, $search) {
+                    foreach ($searchableColumns as $index => $column) {
+                        $method = $index === 0 ? 'where' : 'orWhere';
+                        $matches->{$method}($column, 'like', '%' . $search . '%');
+                    }
+                });
+            }, false)
             ->addColumn('reference', function ($dealer) { return '<span class="dealer-ref">' . e(strtoupper($dealer->dealer_reference)) . '</span>'; })
             ->addColumn('name', function ($dealer) { return '<a href="' . route('dealer.view', $dealer->id) . '" class="dealer-link">' . e(strtoupper($dealer->name)) . '</a>'; })
             ->editColumn('store_name', function ($dealer) { return e(strtoupper($dealer->store_name ?: '-')); })

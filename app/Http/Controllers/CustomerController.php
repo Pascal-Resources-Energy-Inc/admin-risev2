@@ -58,7 +58,7 @@ class CustomerController extends Controller
 
         return \Yajra\DataTables\Facades\DataTables::eloquent($query)
             ->addColumn('reference', function ($customer) {
-                return '<span class="font-weight-bold">' . e($customer->client_reference ?: '—') . '</span>';
+                return '<span class="customer-reference">' . e($customer->client_reference ?: '—') . '</span>';
             })
             ->addColumn('customer_name', function ($customer) {
                 return '<a class="customer-name" href="' . route('client.view', $customer->id) . '">' . e(strtoupper($customer->name)) . '</a>';
@@ -92,9 +92,9 @@ class CustomerController extends Controller
                 return e(strtoupper($customer->spo ?: '—'));
             })
             ->addColumn('status_badge', function ($customer) {
-                $class = $customer->status === 'Active' ? 'badge-success' : 'badge-danger';
+                $class = $customer->status === 'Active' ? 'active' : 'inactive';
 
-                return '<span class="badge ' . $class . ' px-2 py-1">' . e($customer->status) . '</span>';
+                return '<span class="customer-status-pill ' . $class . '">' . e($customer->status) . '</span>';
             })
             ->rawColumns(['reference', 'customer_name', 'status_badge'])
             ->toJson();

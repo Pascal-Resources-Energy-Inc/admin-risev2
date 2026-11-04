@@ -1,360 +1,93 @@
 @extends('layouts.app')
 
 @section('content')
+@include('auth.partials.screen-styles')
 <style>
-    .reset-password-container {
-        min-height: 100vh;
-        background: linear-gradient(135deg, #ffffffff 0%, #ffffffff 100%);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: clamp(10px, 2vw, 20px);
-    }
-
-    .main-card {
-        background: white;
-        border-radius: clamp(15px, 2vw, 20px);
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
-        overflow: hidden;
-        max-width: 1200px;
-        width: 100%;
-        display: flex;
-        min-height: clamp(400px, 60vh, 600px);
-    }
-
-    .illustration-section {
-        flex: 1;
-        background: linear-gradient(135deg, #fafdffff 0%, #ffffffff 100%);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: clamp(20px, 4vw, 40px);
-        position: relative;
-        min-width: 0;
-    }
-
-    .context-image {
-        max-width: 100%;
-        max-height: 70vh;
-        width: auto;
-        height: auto;
-        object-fit: contain;
-        border-radius: clamp(10px, 1.5vw, 20px);
-    }
-
-    .context-image-mobile {
-        display: none;
-        max-width: 200px;
-        max-height: 250px;
-        width: auto;
-        height: auto;
-        object-fit: contain;
-        border-radius: 10px;
-        margin: 0 auto;
-    }
-
-    .form-section {
-        flex: 1;
-        padding: clamp(20px, 4vw, 60px) clamp(15px, 3vw, 40px);
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        min-width: 0;
-    }
-
-    .card {
-        border: none !important;
-        box-shadow: none !important;
-        background: transparent !important;
-    }
-
-    .card-body {
-        padding: 0 !important;
-    }
-
-    .reset-title {
-        color: #4facfe !important;
-        font-size: 23px !important;
-        font-weight: 600 !important;
-        margin-bottom: 20px !important;
-    }
-
-    .text-muted {
-        color: #666 !important;
-        margin-bottom: clamp(20px, 3vw, 30px) !important;
-        font-size: clamp(14px, 2vw, 16px);
-    }
-
-    .alert-success {
-        background-color: rgba(40, 167, 69, 0.1) !important;
-        border: 1px solid #28a745 !important;
-        color: #28a745 !important;
-        border-radius: clamp(8px, 1vw, 10px) !important;
-        font-size: clamp(13px, 2vw, 14px);
-        padding: clamp(10px, 2vw, 15px) !important;
-    }
-
-    .form-label {
-        font-size: clamp(14px, 2vw, 16px);
-        font-weight: 500;
-        margin-bottom: clamp(6px, 1vw, 8px);
-    }
-
-    .form-control {
-        padding: clamp(12px, 2.5vw, 15px) !important;
-        border: 2px solid #e0e0e0 !important;
-        border-radius: clamp(8px, 1vw, 10px) !important;
-        font-size: clamp(14px, 2vw, 16px) !important;
-        width: 100%;
-        box-sizing: border-box;
-    }
-
-    .form-control:focus {
-        border-color: #4facfe !important;
-        box-shadow: 0 0 0 clamp(2px, 0.3vw, 3px) rgba(79, 172, 254, 0.1) !important;
-    }
-
-    .form-control.is-invalid {
-        border-color: #dc3545 !important;
-    }
-
-    .btn-success {
-        background-color: #5DADE2;
-        border: none !important;
-        border-radius: clamp(20px, 3vw, 25px) !important;
-        padding: clamp(12px, 2.5vw, 15px) !important;
-        font-size: clamp(14px, 2.5vw, 16px) !important;
-        font-weight: bold !important;
-        transition: transform 0.2s ease, box-shadow 0.2s ease !important;
-        width: 100%;
-        min-height: clamp(45px, 6vw, 50px);
-    }
-
-    .btn-success:hover {
-        transform: translateY(-2px) !important;
-        box-shadow: 0 8px 25px rgba(79, 172, 254, 0.3) !important;
-        background-color: #4a8ab6ff;
-    }
-
-    .alert-danger {
-        border-radius: clamp(8px, 1vw, 10px) !important;
-        border: 1px solid #dc3545 !important;
-        font-size: clamp(13px, 2vw, 14px);
-        padding: clamp(10px, 2vw, 15px) !important;
-    }
-
-    .back-link {
-        text-align: center;
-        margin-top: clamp(15px, 2.5vw, 20px);
-    }
-
-    .back-link p {
-        font-size: clamp(13px, 2vw, 14px);
-        margin-bottom: 0;
-    }
-
-    .back-link a {
-        color: #4facfe !important;
-        text-decoration: none !important;
-        font-weight: 500;
-    }
-
-    .back-link a:hover {
-        text-decoration: underline !important;
-    }
-
-    .password-strength {
-        margin-top: 10px;
-        font-size: 12px;
-    }
-
-    .strength-weak { color: #dc3545; }
-    .strength-medium { color: #ffc107; }
-    .strength-strong { color: #28a745; }
-
-    .password-requirements {
-        background-color: #f8f9fa;
-        border-radius: 8px;
-        padding: 15px;
-        margin-top: 10px;
-        font-size: 13px;
-    }
-
-    .password-requirements ul {
-        margin-bottom: 0;
-        padding-left: 20px;
-    }
-
-    .password-requirements li {
-        margin-bottom: 5px;
-    }
-
-    .requirement-met {
-        color: #28a745;
-    }
-
-    .requirement-not-met {
-        color: #dc3545;
-    }
-
-    /* Mobile responsiveness */
-    @media (max-width: 479px) {
-        .main-card {
-            flex-direction: column;
-            margin: 5px;
-            min-height: auto;
-        }
-
-        .illustration-section {
-            display: none;
-        }
-
-        .form-section {
-            padding: 20px 15px;
-        }
-
-        .context-image-mobile {
-            display: block;
-            margin: 15px auto 25px auto;
-        }
-    }
-
-    @media (min-width: 480px) and (max-width: 767px) {
-        .main-card {
-            flex-direction: column;
-            margin: 10px;
-        }
-
-        .illustration-section {
-            display: none;
-        }
-
-        .form-section {
-            padding: 25px 20px;
-        }
-
-        .context-image-mobile {
-            display: block;
-            margin: 15px auto 25px auto;
-            max-height: 180px;
-        }
-    }
-
-    @media (max-width: 767px) and (orientation: landscape) {
-        .main-card {
-            flex-direction: row;
-            min-height: 400px;
-        }
-
-        .illustration-section {
-            flex: 0.6;
-            min-height: auto;
-            padding: 15px;
-        }
-
-        .form-section {
-            flex: 1.4;
-            padding: 20px 15px;
-        }
-
-        .context-image {
-            max-height: 50vh;
-        }
-        .context-image-mobile {
-            display: none !important;
-        }
-    }
+    .reset-screen .auth-form-panel { padding-top: clamp(28px, 4vw, 50px); padding-bottom: clamp(28px, 4vw, 50px); }
+    .reset-screen .auth-description { margin-bottom: 20px; }
+    .reset-screen .reset-notice { margin: 0 0 18px; padding: 12px 14px; border: 1px solid #c9ead9; border-radius: 11px; background: #f1fbf5; color: #27764b; font-size: 13px; }
+    .reset-screen .reset-error { margin: 0 0 16px; padding: 11px 13px; border: 1px solid #f2c7c7; border-radius: 11px; background: #fff6f6; color: #a83232; font-size: 13px; }
+    .reset-screen .reset-email { background: #f3f7fa; color: #607487; }
+    .reset-screen .password-requirements { margin-top: 10px; padding: 13px 15px; border: 1px solid #e5eef3; border-radius: 11px; background: #f8fbfd; color: #344c5e; font-size: 12px; }
+    .reset-screen .password-requirements strong { display: block; margin-bottom: 5px; font-size: 12px; }
+    .reset-screen .password-requirements ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 14px; margin: 0; padding-left: 18px; }
+    .reset-screen .password-requirements li { margin: 0; }
+    .reset-screen .requirement-not-met { color: #ad4b4b; }
+    .reset-screen .requirement-met { color: #258353; }
+    .reset-screen .password-strength { min-height: 18px; margin-top: 7px; color: #718397; font-size: 12px; }
+    .reset-screen .strength-weak { color: #b83d3d; font-weight: 700; }
+    .reset-screen .strength-medium { color: #9a6700; font-weight: 700; }
+    .reset-screen .strength-strong { color: #258353; font-weight: 700; }
+    .reset-screen .auth-back-link { margin: 20px 0 0; color: #718397; font-size: 13px; text-align: center; }
+    .reset-screen .auth-back-link a { color: #087ca8; font-weight: 700; text-decoration: none; }
+    .reset-screen .auth-back-link a:hover { text-decoration: underline; }
+    @media (max-width: 460px) { .reset-screen .password-requirements ul { grid-template-columns: 1fr; } }
 </style>
 
-<div class="reset-password-container">
-    <div class="main-card">
-        <!-- Illustration Section -->
-        <div class="illustration-section">
-           <img src="{{asset('images/password.png')}}" alt="Reset Password" class="context-image">
-        </div>
+<div class="login-page auth-screen reset-screen" id="resetPasswordPage">
+    <div class="auth-card login-card">
+        <section class="auth-brand-panel login-brand-panel">
+            <div class="brand-glow brand-glow-one"></div>
+            <div class="brand-glow brand-glow-two"></div>
+            <div class="brand-image-wrap">
+                <img src="{{ asset('images/admin-login.png') }}" alt="" class="auth-illustration">
+            </div>
+            <p class="brand-caption">Choose a strong password to secure your GazLite account.</p>
+        </section>
 
-        <!-- Form Section -->
-        <div class="form-section">
-            <div class="row justify-content-center">
-                <div class="col-12">
-                    <div class="card mt-4 card-bg-fill">
-                        <div class="card-body p-4">
-                            <div class="text-center mt-2">
-                                <h5 class="reset-title">Reset Password</h5>
-                            </div>
+        <section class="auth-form-panel">
+            <div class="form-topbar form-topbar-single">
+                <img src="{{ asset('images/logo_nya.png') }}" alt="GazLite" class="form-logo">
+            </div>
 
-                            <!-- Image shows here only on mobile -->
-                            <div class="text-center">
-                                <img src="{{asset('images/password.png')}}" alt="Reset Password" class="context-image-mobile">
-                            </div>
+            <div class="form-heading">
+                <p class="auth-eyebrow">ACCOUNT RECOVERY</p>
+                <h1>Reset your password</h1>
+                <p class="auth-description">Create a new password for your account.</p>
+            </div>
 
-                            @if (session('success'))
-                                <div class="alert border-0 alert-success text-center mb-3" role="alert">
-                                    {{ session('success') }}
-                                </div>
-                            @endif
+            @if (session('success'))
+                <div class="reset-notice" role="status">{{ session('success') }}</div>
+            @endif
+            <div class="reset-notice" role="status">Your email is verified. You can now set a new password.</div>
+            @if ($errors->has('password'))
+                <div class="reset-error" role="alert">{{ $errors->first('password') }}</div>
+            @endif
 
-                            <div class="alert border-0 alert-success text-center mb-3" role="alert">
-                                OTP verified! Please enter your new password.
-                            </div>
-
-                            <div class="p-2">
-                                <form method="POST" action="{{ route('password.update') }}">
-                                    @csrf
-                                    <input type="hidden" name="email" value="{{ $email }}">
-                                    
-                                    <div class="mb-4">
-                                        <label class="form-label">Email</label>
-                                        <input type="email" class="form-control" value="{{ $email }}" readonly>
-                                    </div>
-
-                                    <div class="mb-4">
-                                        <label class="form-label">New Password</label>
-                                        <input id="password" type="password" placeholder="New Password" class="form-control{{ $errors->has('password') ? ' is-invalid' : '' }}" name="password" required>
-                                        
-                                        <div class="password-strength" id="password-strength"></div>
-                                        
-                                        <div class="password-requirements">
-                                            <strong>Password Requirements:</strong>
-                                            <ul id="password-requirements">
-                                                <li id="req-length" class="requirement-not-met">At least 8 characters</li>
-                                                <li id="req-uppercase" class="requirement-not-met">One uppercase letter</li>
-                                                <li id="req-lowercase" class="requirement-not-met">One lowercase letter</li>
-                                                <li id="req-number" class="requirement-not-met">One number</li>
-                                                <li id="req-special" class="requirement-not-met">One special character</li>
-                                            </ul>
-                                        </div>
-                                    </div>
-
-                                    <div class="mb-4">
-                                        <label class="form-label">Confirm New Password</label>
-                                        <input id="password-confirm" type="password" placeholder="Confirm New Password" class="form-control" name="password_confirmation" required>
-                                        <div id="password-match" class="mt-2" style="font-size: 13px;"></div>
-                                    </div>
-
-                                    <div class="text-center mt-4">
-                                        <button class="btn btn-success w-100" type="submit" id="reset-btn">Reset Password</button>
-                                    </div>
-                                    
-                                    @if ($errors->has('password'))
-                                        <div class="mt-3 form-group alert alert-danger alert-dismissable">
-                                            <strong>{{ $errors->first('password') }}</strong>
-                                        </div>
-                                    @endif
-                                </form>
-                            </div>
-                        </div>
-                        <!-- end card body -->
-                    </div>
-                    <!-- end card -->
-
-                    <div class="back-link">
-                        <p class="mb-0">Back to <a href="{{ route('login') }}" class="fw-semibold text-primary text-decoration-underline">Login</a></p>
+            <form method="POST" action="{{ route('password.update') }}">
+                @csrf
+                <input type="hidden" name="email" value="{{ $email }}">
+                <div class="input-group">
+                    <label for="reset-email" class="input-label">Email address</label>
+                    <input id="reset-email" type="email" class="form-input reset-email" value="{{ $email }}" readonly autocomplete="email">
+                </div>
+                <div class="input-group">
+                    <label for="password" class="input-label">New password</label>
+                    <input id="password" type="password" class="form-input" placeholder="Create a new password" name="password" minlength="8" autocomplete="new-password" required>
+                    <div class="password-strength" id="password-strength" aria-live="polite"></div>
+                    <div class="password-requirements">
+                        <strong>Password requirements</strong>
+                        <ul id="password-requirements">
+                            <li id="req-length" class="requirement-not-met">At least 8 characters</li>
+                            <li id="req-uppercase" class="requirement-not-met">One uppercase letter</li>
+                            <li id="req-lowercase" class="requirement-not-met">One lowercase letter</li>
+                            <li id="req-number" class="requirement-not-met">One number</li>
+                            <li id="req-special" class="requirement-not-met">One special character (@$!%*?&)</li>
+                        </ul>
                     </div>
                 </div>
-            </div>
-        </div>
+                <div class="input-group">
+                    <label for="password-confirm" class="input-label">Confirm new password</label>
+                    <input id="password-confirm" type="password" class="form-input" placeholder="Re-enter your new password" name="password_confirmation" autocomplete="new-password" required>
+                    <div id="password-match" class="password-strength" aria-live="polite"></div>
+                </div>
+                <button class="signin-button submit-button" type="submit" id="reset-btn">
+                    <span>Reset password</span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                </button>
+            </form>
+            <p class="auth-back-link">Remembered your password? <a href="{{ route('login', ['direct' => 'true']) }}">Back to sign in</a></p>
+        </section>
     </div>
 </div>
 
@@ -400,7 +133,7 @@ document.addEventListener('DOMContentLoaded', function() {
             {id: 'req-lowercase', test: /[a-z]/.test(password)},
             {id: 'req-uppercase', test: /[A-Z]/.test(password)},
             {id: 'req-number', test: /[0-9]/.test(password)},
-            {id: 'req-special', test: /[^a-zA-Z0-9]/.test(password)}
+            {id: 'req-special', test: /[@$!%*?&]/.test(password)}
         ];
         
         requirements.forEach(req => {
