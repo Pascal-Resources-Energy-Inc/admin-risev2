@@ -75,6 +75,89 @@ class TransactionController extends Controller
         );
     }
 
+    public function export(Request $request)
+    {
+        $filters = $request->validate([
+            'mfi' => 'nullable|string|max:255',
+            'center' => 'nullable|string|max:255',
+        ]);
+        $selectedMfi = trim($filters['mfi'] ?? '');
+        $selectedCenter = trim($filters['center'] ?? '');
+
+        $query = TransactionDetail::with([
+            'dealer:id,name',
+            'customer:id,name',
+            'adDealer:user_id,mfi,center',
+        ])->orderBy('id', 'desc');
+
+        if ($selectedMfi !== '' || $selectedCenter !== '') {
+            $query->whereHas('adDealer', function ($dealerQuery) use ($selectedMfi, $selectedCenter) {
+                if ($selectedMfi !== '') {
+                    $dealerQuery->where('mfi', $selectedMfi);
+                }
+                if ($selectedCenter !== '') {
+                    $dealerQuery->where('center', $selectedCenter);
+                }
+            });
+        }
+
+        if (auth()->user()->role === 'Dealer') {
+            $query->where('dealer_id', auth()->id());
+        }
+
+        $filename = 'transactions_' . date('Ymd_His') . '.csv';
+
+        return response()->stream(function () use ($query) {
+            $output = fopen('php://output', 'w');
+            fwrite($output, "\xEF\xBB\xBF");
+            fputcsv($output, [
+                'Transaction ID', 'Date', 'Quantity', 'Unit Price', 'Amount',
+                'Dealer', 'Customer', 'MFI', 'Center', 'Item',
+                'Dealer Points', 'Customer Points', 'Payment Method',
+            ]);
+
+            $query->chunk(500, function ($transactions) use ($output) {
+                foreach ($transactions as $transaction) {
+                    $date = $transaction->date ? date('Y-m-d', strtotime($transaction->date)) : '';
+                    $mfi = optional($transaction->adDealer)->mfi ?: '';
+                    $center = optional($transaction->adDealer)->center ?: '';
+                    $dealerName = optional($transaction->dealer)->name ?: '';
+                    $customerName = optional($transaction->customer)->name ?: '';
+                    $item = $transaction->item ?: '';
+
+                    // Prevent spreadsheet cells containing user text from being evaluated as formulas.
+                    foreach (['dealerName', 'customerName', 'mfi', 'center', 'item'] as $textField) {
+                        if (preg_match('/^[=+@\-\t\r]/', $$textField)) {
+                            $$textField = "'" . $$textField;
+                        }
+                    }
+
+                    fputcsv($output, [
+                        $transaction->id,
+                        $date,
+                        $transaction->qty,
+                        number_format((float) $transaction->price, 2, '.', ''),
+                        number_format((float) $transaction->qty * (float) $transaction->price, 2, '.', ''),
+                        $dealerName,
+                        $customerName,
+                        $mfi,
+                        $center,
+                        $item,
+                        $transaction->points_dealer,
+                        $transaction->points_client,
+                        $transaction->payment_method,
+                    ]);
+                }
+            });
+
+            fclose($output);
+        }, 200, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Cache-Control' => 'no-store, no-cache, must-revalidate',
+        ]);
+    }
+
     public function adTransactions(Request $request)
     {
         $filters = $request->validate([

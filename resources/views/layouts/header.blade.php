@@ -913,6 +913,125 @@
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
         }
 
+        .main-layout .dropdown-menu.account-menu {
+            width: min(350px, calc(100vw - 24px)) !important;
+            min-width: 0 !important;
+            margin-top: 10px !important;
+            padding: 8px !important;
+            overflow: hidden;
+            border: 1px solid #e5edf4 !important;
+            border-radius: 18px !important;
+            background: #fff;
+            box-shadow: 0 18px 48px rgba(15, 39, 64, .2) !important;
+        }
+
+        .main-layout .account-menu .account-menu-header {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            padding: 14px 12px 16px !important;
+            margin: 0 0 7px !important;
+            border: 0 !important;
+            border-bottom: 1px solid #edf2f6 !important;
+        }
+
+        .main-layout .account-menu-avatar {
+            width: 48px;
+            height: 48px;
+            flex: 0 0 48px;
+            object-fit: cover;
+            border: 2px solid #fff;
+            border-radius: 15px !important;
+            background: #e8f7fc;
+            box-shadow: 0 0 0 1px #dceaf2;
+        }
+
+        .main-layout .account-menu-identity {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .main-layout .account-menu-name {
+            display: block;
+            max-width: 100%;
+            overflow: hidden;
+            color: #18334e !important;
+            font-size: 14px !important;
+            font-weight: 750 !important;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .main-layout .account-menu-email {
+            display: block;
+            max-width: 100%;
+            margin-top: 3px;
+            overflow: hidden;
+            color: #77899c !important;
+            font-size: 12px !important;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .main-layout .account-menu-role {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 7px;
+            padding: 4px 8px;
+            border-radius: 999px;
+            background: #eaf7fb;
+            color: #087da1;
+            font-size: 10px;
+            font-weight: 750;
+            line-height: 1.2;
+        }
+
+        .main-layout .account-menu .account-menu-link {
+            min-height: 46px;
+            padding: 10px 12px !important;
+            border-radius: 10px !important;
+            color: #344b61 !important;
+            font-size: 13px !important;
+            font-weight: 650;
+        }
+
+        .main-layout .account-menu .account-menu-link:hover,
+        .main-layout .account-menu .account-menu-link:focus-visible {
+            background: #f0f8fb !important;
+            color: #087da1 !important;
+            outline: none;
+        }
+
+        .main-layout .account-menu-link-icon {
+            display: grid;
+            width: 30px;
+            height: 30px;
+            flex: 0 0 30px;
+            place-items: center;
+            border-radius: 9px;
+            background: #edf7fb;
+            color: #138eb1;
+            font-size: 15px;
+        }
+
+        .main-layout .account-menu-link.logout-link .account-menu-link-icon {
+            background: #fff1f0;
+            color: #e1534e;
+        }
+
+        .main-layout .account-menu .dropdown-divider {
+            margin: 5px 10px !important;
+            border-color: #edf2f6;
+        }
+
+        @media (max-width: 480px) {
+            .main-layout .dropdown-menu.account-menu {
+                width: min(330px, calc(100vw - 16px)) !important;
+                margin-top: 7px !important;
+            }
+        }
+
         /* Mobile Responsiveness */
         @media (max-width: 768px) {
             .sidebar {
@@ -1512,16 +1631,6 @@
                         </a>
                     </div>
                     @endif
-                    @if(auth()->user()->hasModuleAccess('users'))
-                    <div class="nav-item">
-                        <a href="{{url('/users')}}" class="nav-link @if(Route::currentRouteName() == 'users')active @endif">
-                            <div class="nav-icon">
-                                <i class="bi bi-person-bounding-box"></i>
-                            </div>
-                            <span class="nav-text">Users</span>
-                        </a>
-                    </div>
-                    @endif
                     @if(auth()->user()->hasModuleAccess('center_chiefs'))
                     <div class="nav-item">
                         <a href="{{ route('center-chiefs.index') }}" class="nav-link @if(Route::currentRouteName() == 'center-chiefs.index') active @endif">
@@ -1561,6 +1670,16 @@
                             <span class="nav-text">Serial Numbers</span>
                         </a>
                     </div>
+                    @endif
+                    @if(auth()->user()->hasModuleAccess('users'))
+                        <div class="nav-item">
+                            <a href="{{url('/users')}}" class="nav-link @if(Route::currentRouteName() == 'users')active @endif">
+                                <div class="nav-icon">
+                                    <i class="bi bi-person-bounding-box"></i>
+                                </div>
+                                <span class="nav-text">Users</span>
+                            </a>
+                        </div>
                     @endif
                     {{-- <div class="nav-item">
                         <a href="{{url('/rewards')}}" class="nav-link @if(Route::currentRouteName() == 'rewards')active @endif">
@@ -1944,28 +2063,27 @@
                 @endif
 
                 <div class="dropdown">
-                    <button class="profile-dropdown" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <button class="profile-dropdown" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Open account menu" title="Account menu">
                         <img src="{{auth()->user()->avatar}}" onerror="this.src='{{url('design/assets/images/profile/user-1.png')}}';" alt="Profile" class="profile-img">
                     </button>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li class="profile-info">
-                            <div class="d-flex align-items-center">
-                                <img src="{{auth()->user()->avatar}}" onerror="this.src='{{url('design/assets/images/profile/user-1.png')}}';" alt="user" width="40" class="rounded-circle me-3" />
-                                <div>
-                                    <h6 class="mb-0">{{auth()->user()->name}}</h6>
-                                    <small class="text-muted">{{auth()->user()->email}}</small>
-                                </div>
+                    <ul class="dropdown-menu dropdown-menu-end account-menu">
+                        <li class="account-menu-header">
+                            <img src="{{ auth()->user()->avatar ?: asset('design/assets/images/profile/user-1.png') }}" onerror="this.src='{{ asset('design/assets/images/profile/user-1.png') }}';" alt="" class="account-menu-avatar">
+                            <div class="account-menu-identity">
+                                <span class="account-menu-name">{{ auth()->user()->name ?: 'User' }}</span>
+                                <span class="account-menu-email">{{ auth()->user()->email }}</span>
+                                <span class="account-menu-role"><i class="bi bi-shield-check" aria-hidden="true"></i>{{ auth()->user()->role ?: 'Account' }}</span>
                             </div>
                         </li>
-                        @if(auth()->user()->role != "Admin" && auth()->user()->role != "Area Distributor")
-                        <li><a class="dropdown-item" href="{{url('user-profile')}}">
-                            <i class="bi bi-person"></i>
-                            <span>My Profile</span>
-                        </a></li>
-                        @endif
+                        <li>
+                            <a class="dropdown-item account-menu-link" href="{{ route('user-profile') }}">
+                                <span class="account-menu-link-icon"><i class="bi bi-person" aria-hidden="true"></i></span>
+                                <span>My Profile</span>
+                            </a>
+                        </li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="#" onclick="logout(); show();">
-                            <i class="bi bi-box-arrow-right text-danger"></i>
+                        <li><a class="dropdown-item account-menu-link logout-link" href="#" onclick="logout(); show();">
+                            <span class="account-menu-link-icon"><i class="bi bi-box-arrow-right" aria-hidden="true"></i></span>
                             <span>Log Out</span>
                         </a></li>
                     </ul>
