@@ -30,7 +30,7 @@
   .dashboard-table { margin: 0; }
   .dashboard-table th { padding: 10px 12px; color: var(--dashboard-muted); font-size: 9px; font-weight: 900; letter-spacing: .05em; text-transform: uppercase; background: var(--dashboard-soft); border-color: var(--dashboard-line); }
   .dashboard-table td { padding: 10px 12px; color: #344054; font-size: 11px; border-color: #eef1f5; vertical-align: middle; }
-  .dashboard-list { display: grid; gap: 8px; max-height: 500px; overflow-x: hidden; overflow-y: auto; padding-right: 3px; }
+  .dashboard-list { display: grid; max-height: 500px; overflow-x: hidden; overflow-y: auto; }
   .dashboard-list-item { padding: 12px 14px; background: #fff; border: 1px solid #edf0f4; border-radius: 11px; transition: .18s ease; }
   .dashboard-list-item:hover { background: #fbfdff; border-color: #cfeaf1; transform: translateY(-1px); }
   .dashboard-avatar { width: 42px; height: 42px; flex: 0 0 auto; overflow: hidden; background: #eef2f6; border-radius: 50%; }

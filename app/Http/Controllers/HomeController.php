@@ -668,11 +668,15 @@ class HomeController extends Controller
         }
         
         $availableMonths = $this->getAvailableMonths($year);
-
+        $now = Carbon::now();
+        $selectedYear = (int) $year;
+        $selectedMonth = $month ? (int) $month : null;
+        $periodStart = Carbon::create($selectedYear, $selectedMonth ?: 1, 1)->startOfDay();
         $groupColumn = $month ? 'DAY(created_at)' : 'MONTH(created_at)';
         $refillRows = DB::table('transaction_details')
-            ->selectRaw($groupColumn . ' as period_number, COALESCE(SUM(qty), 0) as refills, COUNT(DISTINCT client_id) as beneficiaries')
+            ->selectRaw($groupColumn . ' as period_number, COALESCE(SUM(qty), 0) as refills')
             ->whereYear('created_at', $year)
+            ->where('created_at', '<=', $now)
             ->when($month, function ($query) use ($month) {
                 return $query->whereMonth('created_at', $month);
             })
@@ -682,14 +686,45 @@ class HomeController extends Controller
             ->get()
             ->keyBy('period_number');
 
-        $periodNumbers = $month
-            ? range(1, Carbon::create((int) $year, (int) $month, 1)->daysInMonth)
-            : range(1, 12);
+        $beneficiaryRows = DB::table('clients')
+            ->selectRaw($groupColumn . ' as period_number, COUNT(*) as beneficiaries')
+            ->whereYear('created_at', $year)
+            ->where('created_at', '<=', $now)
+            ->when($month, function ($query) use ($month) {
+                return $query->whereMonth('created_at', $month);
+            })
+            ->groupBy(DB::raw($groupColumn))
+            ->orderBy('period_number')
+            ->get()
+            ->keyBy('period_number');
 
-        $periods = collect($periodNumbers)->map(function ($periodNumber) use ($month, $year, $refillRows) {
+        if ($selectedYear > (int) $now->year) {
+            $periodNumbers = [];
+        } elseif ($selectedMonth) {
+            if ($selectedYear === (int) $now->year && $selectedMonth > (int) $now->month) {
+                $periodNumbers = [];
+            } else {
+                $lastPeriod = $selectedYear === (int) $now->year && $selectedMonth === (int) $now->month
+                    ? (int) $now->day
+                    : Carbon::create($selectedYear, $selectedMonth, 1)->daysInMonth;
+                $periodNumbers = range(1, $lastPeriod);
+            }
+        } else {
+            $lastPeriod = $selectedYear === (int) $now->year ? (int) $now->month : 12;
+            $periodNumbers = range(1, $lastPeriod);
+        }
+
+        $runningBeneficiaries = DB::table('clients')
+            ->whereNotNull('created_at')
+            ->where('created_at', '<', $periodStart)
+            ->count();
+
+        $periods = collect($periodNumbers)->map(function ($periodNumber) use ($month, $year, $refillRows, $beneficiaryRows, &$runningBeneficiaries) {
             $row = $refillRows->get($periodNumber);
+            $beneficiaryRow = $beneficiaryRows->get($periodNumber);
             $refills = $row ? (float) $row->refills : 0;
-            $beneficiaries = $row ? (int) $row->beneficiaries : 0;
+            $runningBeneficiaries += $beneficiaryRow ? (int) $beneficiaryRow->beneficiaries : 0;
+            $beneficiaries = $runningBeneficiaries;
             $label = $month
                 ? (string) $periodNumber
                 : Carbon::create((int) $year, (int) $periodNumber, 1)->format('M y');

@@ -1470,7 +1470,7 @@
         }
 
         .main-layout .content-area .dataTables_wrapper .pagination {
-            gap: 4px;
+            /* gap: 4px; */
             flex-wrap: wrap;
             margin: 10px 0 0;
         }
@@ -1478,7 +1478,7 @@
         .main-layout .content-area .dataTables_wrapper .pagination .page-link {
             min-width: 34px;
             border-color: var(--app-table-line);
-            border-radius: 7px;
+            /* border-radius: 7px; */
             color: #456078;
             text-align: center;
         }
