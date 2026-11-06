@@ -49,7 +49,7 @@
   .customer-status-pill { display:inline-flex; padding:6px 9px; border-radius:99px; font-size:10px; font-weight:900; text-transform:uppercase; white-space:nowrap; }
   .customer-status-pill.active { background:#e8f8ee; color:#16834a; }
   .customer-status-pill.inactive { background:#fff0ef; color:#c43c31; }
-  .customers-panel .dataTables_wrapper { padding:0 21px 15px; }
+  .customers-panel .dataTables_wrapper { padding:0 0 15px; }
   .customers-panel .dataTables_filter,.customers-panel .dataTables_length { display:none; }
   .customers-dt-footer { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; padding-top:13px; border-top:1px solid #edf2f5; }
   .customers-panel .dataTables_info { padding:0; color:#77889a; font-size:11px; }
@@ -126,6 +126,7 @@
             <th>Total points</th>
             <th>Center</th>
             <th>SPO</th>
+            <th>MFI</th>
             <th>Status</th>
           </tr>
         </thead>
@@ -182,6 +183,7 @@ $(document).ready(function() {
       { data: 'points', orderable: false, searchable: false },
       { data: 'center', name: 'clients.center' },
       { data: 'spo', name: 'clients.spo' },
+      { data: 'mfi', name: 'clients.mfi' },
       { data: 'status_badge', name: 'clients.status' }
     ],
     language: {

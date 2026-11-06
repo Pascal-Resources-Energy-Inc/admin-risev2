@@ -43,77 +43,54 @@
 </style> --}}
 
 <style>
-  .profile-card {
-    border-radius: 16px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.06);
-    border: none;
-  }
-
-  .profile-avatar {
-    width: 120px;
-    height: 120px;
-    object-fit: cover;
-    border-radius: 50%;
-    border: 4px solid #f1f3f5;
-  }
-
-  .profile-name {
-    font-size: 18px;
-    font-weight: 600;
-    margin-top: 10px;
-    color: #5BC2E7;
-  }
-
-  .profile-info p {
-    font-size: 15px;
-    margin-bottom: 10px;
-    color: #555;
-  }
-
-  .profile-info .bi {
-    margin-right: 10px;
-    color: #5BC2E7;
-  }
-
-  .info-card {
-    border-radius: 14px;
-    border: none;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.05);
-    height: 100%;
-  }
-
-  .info-card .card-body {
-    padding: 18px;
-  }
-
-  .icon-box {
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #f1f3f5;
-  }
-
-  .section-title {
-    font-weight: 600;
-    font-size: 14px;
-  }
-
-  .table-modern {
-    border-radius: 12px;
-    overflow: hidden;
-  }
-
-  .table-modern thead {
-    background: #f8f9fa;
-  }
-
-  .table-modern tbody tr:hover {
-    background: #f5f7fa;
-    transition: 0.2s;
-  }
+  .dealer-detail-page { padding: 8px 0 26px; }
+  .dealer-detail-grid { display:grid; grid-template-columns:minmax(280px,.82fr) minmax(0,1.8fr); gap:18px; align-items:start; }
+  .dealer-detail-grid > .dealer-profile-col,.dealer-detail-grid > .dealer-detail-main { width:auto; max-width:none; min-width:0; padding:0; }
+  .dealer-profile-card,.dealer-summary-card .card,.dealer-transactions-card { height:100%; overflow:hidden; border:1px solid #dfe8f0!important; border-radius:13px!important; background:#fff; box-shadow:0 10px 26px rgba(25,57,85,.055)!important; }
+  .dealer-profile-card .card-header,.dealer-transactions-card .card-header { padding:17px 20px; border-bottom:1px solid #edf1f4; background:linear-gradient(135deg,#fff,#f8fbfc); }
+  .dealer-profile-card .card-header h5,.dealer-transactions-card .card-header h5 { margin:0; color:#172f4a; font-size:16px; font-weight:850; }
+  .dealer-profile-card .card-body { padding:22px; }
+  .profile-avatar { width:104px; height:104px; object-fit:cover; border:4px solid #e8f4f8; border-radius:50%; background:#f2f8fb; box-shadow:0 4px 14px rgba(18,89,120,.1); }
+  .profile-name { margin-top:12px; color:#163b58; font-size:17px; font-weight:850; line-height:1.35; overflow-wrap:anywhere; }
+  .dealer-store-name { margin-top:3px; color:#8191a1; font-size:12px; font-weight:650; }
+  .dealer-profile-actions { display:flex; justify-content:center; gap:8px; margin:16px 0 18px; }
+  .dealer-profile-actions .btn { width:36px; height:36px; display:inline-flex; align-items:center; justify-content:center; border:0; border-radius:9px; box-shadow:none; }
+  .dealer-profile-divider { margin:0 0 16px; border-color:#e8eef3; opacity:1; }
+  .profile-info { display:grid; gap:2px; }
+  .profile-info p { display:flex; align-items:flex-start; gap:10px; margin:0; padding:9px 0; color:#40566c; font-size:12px; line-height:1.45; overflow-wrap:anywhere; }
+  .profile-info .bi { flex:0 0 16px; margin:1px 0 0; color:#1688b3; font-size:15px; text-align:center; }
+  #qrcode { display:flex; justify-content:center; max-width:100%; overflow:hidden; }
+  #qrcode img,#qrcode canvas { max-width:100%; height:auto!important; }
+  .dealer-detail-main { display:grid; gap:18px; }
+  .dealer-summary-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; }
+  .dealer-summary-grid > .dealer-summary-card { width:auto; max-width:none; min-width:0; padding:0; }
+  .dealer-summary-grid > .dealer-transactions-card-wrap { grid-column:1/-1; width:auto; max-width:none; min-width:0; padding:0; }
+  .dealer-summary-card .card,.dealer-transactions-card { margin:0; }
+  .dealer-summary-card .card-body { padding:19px; }
+  .dealer-summary-title { display:flex; align-items:center; gap:9px; margin:0; color:#203a54; font-size:14px; font-weight:850; }
+  .dealer-summary-title > i { color:#1688b3; font-size:17px; }
+  .dealer-id-badge { display:inline-flex; width:30px; height:30px; align-items:center; justify-content:center; margin-left:auto; border-radius:8px; background:#e7f6fb; color:#1688b3; }
+  .dealer-summary-divider { margin:13px 0; border-color:#e8eef3; opacity:1; }
+  .dealer-summary-copy { margin:7px 0 0; color:#65788b; font-size:12px; line-height:1.5; overflow-wrap:anywhere; }
+  .dealer-summary-copy strong { color:#415a70; font-weight:750; }
+  .dealer-summary-action { margin-top:12px; }
+  .dealer-summary-action .btn { display:inline-flex; align-items:center; gap:6px; border-radius:8px; font-size:12px; font-weight:750; }
+  .dealer-contract-card .card-body { display:flex; min-height:108px; align-items:center; justify-content:center; flex-direction:column; gap:10px; text-align:center; }
+  .dealer-contract-card .card-title { margin:0; color:#203a54; font-size:14px; font-weight:850; }
+  .dealer-contract-card .btn { display:inline-flex; align-items:center; gap:6px; border-radius:8px; font-size:12px; font-weight:750; }
+  .dealer-contract-card .text-muted { max-width:260px; margin:0; font-size:12px; }
+  .dealer-transactions-card .card-body { padding:0; }
+  .dealer-transactions-head { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .dealer-transactions-count { display:inline-flex; padding:6px 9px; border-radius:99px; background:#e4f7fd; color:#18799b; font-size:11px; font-weight:800; white-space:nowrap; }
+  .dealer-transactions-scroll { width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  .dealer-transactions-table { min-width:690px; margin:0!important; }
+  .dealer-transactions-table thead th { padding:12px!important; border-color:#e8eef3!important; background:#f7fafc; color:#718196; font-size:10px; font-weight:900; letter-spacing:.04em; text-transform:uppercase; white-space:nowrap; }
+  .dealer-transactions-table tbody td { padding:11px 12px!important; border-color:#edf2f5; color:#40566c; font-size:12px; vertical-align:middle; white-space:nowrap; }
+  .dealer-transactions-table tbody tr:hover { background:#f7fcfe; }
+  .dealer-transactions-table .points-earned { color:#16834a; font-weight:800; }
+  @media(max-width:1050px) { .dealer-detail-grid { grid-template-columns:minmax(250px,.75fr) minmax(0,1.5fr); gap:14px; }.dealer-detail-main,.dealer-summary-grid { gap:14px; } }
+  @media(max-width:820px) { .dealer-detail-grid { grid-template-columns:minmax(0,1fr); }.dealer-profile-card .card-body { padding:18px; }.dealer-detail-main { gap:14px; } }
+  @media(max-width:560px) { .dealer-detail-page { padding-top:0; }.dealer-summary-grid { grid-template-columns:minmax(0,1fr); gap:12px; }.dealer-summary-grid > .dealer-transactions-card-wrap { grid-column:auto; }.dealer-profile-card .card-header,.dealer-transactions-card .card-header { padding:15px; }.dealer-profile-card .card-body,.dealer-summary-card .card-body { padding:15px; }.dealer-transactions-table { min-width:650px; }.dealer-transactions-count { font-size:10px; } }
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.6/dist/signature_pad.umd.min.js"></script>
@@ -121,23 +98,22 @@
 @endsection
 
 @section('content')
-<section class="welcome">
-  <div class="row">
-    <div class="col-md-4">
-      <div class="card">
+<section class="welcome dealer-detail-page">
+  <div class="dealer-detail-grid">
+    <aside class="dealer-profile-col">
+      <div class="card dealer-profile-card">
         <div class="card-header" style="padding-bottom: 0px">
           <h5>{{ $profileLabel }} Information</h5>
         </div>
         <div class="card-body">
           <div class='text-center'>
             {{-- <img src="{{$dealer->avatar ? asset($dealer->avatar) : asset('design/assets/images/profile/user-1.png')}}" alt="Avatar Image" class="img-fluid rounded-circle" style="width: 100px; height: 100px;"> --}}
-            <img src="{{$dealer->avatar ? asset($dealer->avatar) : asset('design/assets/images/profile/user-1.png')}}" class="profile-avatar mx-auto">
+            <img src="{{$dealer->avatar ? asset($dealer->avatar) : asset('design/assets/images/profile/user-1.png')}}" onerror="this.onerror=null;this.src='{{ asset('design/assets/images/profile/user-1.png') }}';" alt="{{ $profileLabel }} profile" class="profile-avatar mx-auto">
             {{-- <div class="profile-name">{{ trim(strtoupper($dealer->user->first_name ?? '')) . ' ' . strtoupper(($dealer->user->last_name ?? '')) ?: ( strtoupper($dealer->name ?? '')) }}</div> --}}
             <div class="profile-name">{{ strtoupper($dealer->name) }}</div>
-            <div class="text-muted small">{{ strtoupper($dealer->store_name) }}</div>
+            <div class="dealer-store-name">{{ strtoupper($dealer->store_name) }}</div>
           </div>  
-          <br>
-          <div class='text-center mb-3'>
+          <div class='dealer-profile-actions'>
             <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#uploadAvatarModal" title="Upload Avatar">
               <i class="fas fa-camera"></i>
               <span class="sr-only">Upload Avatar</span>
@@ -146,7 +122,7 @@
               <i class="fas fa-edit"></i>
             </button>
           </div>
-          <hr>
+          <hr class="dealer-profile-divider">
           <!-- Customer Personal Details -->
           <div class="profile-info text-start">
             @if($isMegaDealer)<p><i class="bi bi-upc-scan"></i> {{ strtoupper($dealer->partner_code ?: '-') }}</p>@endif
@@ -161,41 +137,41 @@
           <div id="qrcode" class="mt-4 text-center"></div>
         </div>
       </div>
-    </div>
+    </aside>
     
-    <div class="col-xl-8 col-lg-8 col-md-12 col-sm-12 col-xs-12">
-      <div class='row'>
-        <div class="col-6">
+    <div class="dealer-detail-main">
+      <div class='dealer-summary-grid'>
+        <div class="dealer-summary-card">
           <div class="card shadow-sm stretch">
             @if($dealer->valid_id)
               <div class="card-body">
-                <h5 class="card-title">
+                <h5 class="dealer-summary-title">
                   <i class="bi bi-person-vcard-fill me-2"></i> Valid ID Information  &nbsp;
                   <button type="button" data-bs-toggle="modal"  data-bs-target="#viewValidId" class="btn btn-primary btn-sm btn-radius">
                     <i class="bi bi-file-earmark"></i>
                   </button>
                 </h5>
                 <hr>
-                <p class="mb-2">
+                <p class="dealer-summary-copy">
                   <strong><i class="bi bi-card-text me-2"></i>ID Type:</strong> {{$dealer->valid_id}}
                 </p>
-                <p class="mb-0">
+                <p class="dealer-summary-copy">
                   <strong><i class="bi bi-hash me-2"></i>ID Number:</strong> {{$dealer->valid_id_number}}
                 </p>
               </div>
             @else
-              <div class="card-body text-center">
-                <h5 class="card-title"><i class="bi bi-person-vcard"></i> Upload Valid ID</h5>
-                <p class="card-text">Submit a valid government-issued ID.</p>
-                <button class="btn btn-danger" type='button' data-bs-toggle="modal"  data-bs-target="#uploadIdModal">
+              <div class="card-body">
+                <h5 class="dealer-summary-title"><i class="bi bi-person-vcard"></i> Valid ID</h5>
+                <p class="dealer-summary-copy">No valid ID uploaded yet. Add an ID to complete this dealer profile.</p>
+                <div class="dealer-summary-action"><button class="btn btn-outline-primary" type='button' data-bs-toggle="modal"  data-bs-target="#uploadIdModal">
                   <i class="bi bi-upload"></i> Upload ID
-                </button>
+                </button></div>
               </div>
             @endif
           </div>
         </div>
 
-        <div class="col-6">
+        <div class="dealer-summary-card dealer-contract-card">
           @if($dealer->signature)
             <div class="card shadow-sm stretch" >
               <div class="card-body text-center">
@@ -222,14 +198,15 @@
           @endif
         </div>
 
-        <div class="col-md-12">
-          <div class="card">
-            <div class="card-header">
-                <h5>Transactions</h5>
+        <div class="dealer-transactions-card-wrap">
+          <div class="card dealer-transactions-card">
+            <div class="card-header dealer-transactions-head">
+                <div><h5>Transactions</h5><small class="text-muted">Purchase history and points earned.</small></div>
+                <span class="dealer-transactions-count">{{ number_format($transactions->count()) }} records</span>
             </div>
             <div class="card-body">
-              <!-- Purchase History Table -->
-              <table class="table table-bordered" style='font-size:12px;'>
+              <div class="dealer-transactions-scroll" role="region" aria-label="Dealer transactions" tabindex="0">
+              <table class="table dealer-transactions-table">
                 <thead>
                   <tr>
                     <th>Transaction No.</th>
@@ -246,21 +223,14 @@
                         <td>{{$transaction->id}}</td>
                         <td>{{$transaction->item}}</td>
                         <td>{{$transaction->qty}}</td>
-                        <td><span class='text-success'>{{$transaction->points_client}}</span></td>
+                        <td><span class='points-earned'>{{$transaction->points_client}}</span></td>
                         <td>{{number_format($transaction->qty*$transaction->price,2)}}</td>
                         <td>{{date('M d, Y',strtotime($transaction->created_at))}}</td>
                     </tr>
                     @endforeach
-                    <!-- Sample Purchase 1 -->
-                    {{-- <tr>
-                        <td>123</td>
-                        <td>330g LPG Cylinder</td>
-                        <td>5</td>
-                        <td>PHP XXX.00</td>
-                        <td>March 1, 2025</td>
-                    </tr> --}}
                 </tbody>
               </table>
+              </div>
             </div>
           </div>
         </div>
